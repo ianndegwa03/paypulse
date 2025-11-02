@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "171006748371",
+    "project_id": "paypulse-8b158",
+    "storage_bucket": "paypulse-8b158.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:171006748371:android:f2b116fb10f343fb0c5626",
+        "android_client_info": {
+          "package_name": "com.example.paypulse"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDziUPo-AY18KZ5vop0XlIudgncdEsgtws"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

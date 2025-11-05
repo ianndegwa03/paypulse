@@ -1,26 +1,21 @@
-import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
-import 'app/app.dart';
-
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  runApp(const PayPulseApp());
-}
-
-
 // lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:paypulse/app/app.dart';
 import 'package:paypulse/app/di/service_locator.dart';
 import 'package:paypulse/app/di/setup/di_setup.dart';
 
+import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'app/app.dart';
+
+
 void main() async {
   // Ensure Flutter binding is initialized
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   
   // Setup error handling
   await setupErrorHandling();

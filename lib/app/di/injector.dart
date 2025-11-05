@@ -9,5 +9,6 @@ final GetIt getIt = GetIt.instance;
   initializerName: r'$initGetIt',
   preferRelativeImports: true,
   asExtension: false,
+  generateForDir: ['lib/app/di/modules'],
 )
 void configureDependencies() => $initGetIt(getIt);

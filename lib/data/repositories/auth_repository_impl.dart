@@ -1,18 +1,24 @@
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
+import 'package:get_it/get_it.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:paypulse/core/errors/exceptions.dart';
+import 'package:paypulse/data/local/secure_storage_service.dart';
 import 'package:paypulse/domain/entities/user_entity.dart';
 import 'package:paypulse/domain/repositories/auth_repository.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final firebase_auth.FirebaseAuth _firebaseAuth;
   final GoogleSignIn _googleSignIn;
+  final SecureStorageService _secureStorageService;
 
   AuthRepositoryImpl({
     firebase_auth.FirebaseAuth? firebaseAuth,
     GoogleSignIn? googleSignIn,
+    SecureStorageService? secureStorageService,
   })  : _firebaseAuth = firebaseAuth ?? firebase_auth.FirebaseAuth.instance,
-        _googleSignIn = googleSignIn ?? GoogleSignIn();
+        _googleSignIn = googleSignIn ?? GoogleSignIn(),
+        _secureStorageService = secureStorageService ?? GetIt.instance<SecureStorageService>();
 
   @override
   Stream<User?> get user {
@@ -36,6 +42,8 @@ class AuthRepositoryImpl implements AuthRepository {
         password: password,
       );
       final firebaseUser = userCredential.user!;
+      final idToken = await firebaseUser.getIdToken();
+      await _secureStorageService.write('id_token', idToken!);
       return User(
         id: firebaseUser.uid,
         email: firebaseUser.email ?? '',
@@ -56,6 +64,8 @@ class AuthRepositoryImpl implements AuthRepository {
         password: password,
       );
       final firebaseUser = userCredential.user!;
+      final idToken = await firebaseUser.getIdToken();
+      await _secureStorageService.write('id_token', idToken!);
       return User(
         id: firebaseUser.uid,
         email: firebaseUser.email ?? '',
@@ -82,6 +92,37 @@ class AuthRepositoryImpl implements AuthRepository {
       );
       final userCredential = await _firebaseAuth.signInWithCredential(credential);
       final firebaseUser = userCredential.user!;
+      final idToken = await firebaseUser.getIdToken();
+      await _secureStorageService.write('id_token', idToken!);
+      return User(
+        id: firebaseUser.uid,
+        email: firebaseUser.email ?? '',
+        name: firebaseUser.displayName,
+      );
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      throw _convertFirebaseError(e);
+    } catch (e) {
+      throw ServerException('An unexpected error occurred.');
+    }
+  }
+
+  @override
+  Future<User> signInWithApple() async {
+    try {
+      final appleCredential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+      );
+      final oauthCredential = firebase_auth.OAuthProvider('apple.com').credential(
+        idToken: appleCredential.identityToken,
+        accessToken: appleCredential.authorizationCode,
+      );
+      final userCredential = await _firebaseAuth.signInWithCredential(oauthCredential);
+      final firebaseUser = userCredential.user!;
+      final idToken = await firebaseUser.getIdToken();
+      await _secureStorageService.write('id_token', idToken!);
       return User(
         id: firebaseUser.uid,
         email: firebaseUser.email ?? '',
@@ -98,6 +139,7 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<void> signOut() async {
     await _firebaseAuth.signOut();
     await _googleSignIn.signOut();
+    await _secureStorageService.delete('id_token');
   }
 
   Exception _convertFirebaseError(firebase_auth.FirebaseAuthException e) {

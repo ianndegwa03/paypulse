@@ -5,6 +5,7 @@ import 'package:paypulse/app/app.dart';
 import 'package:paypulse/app/di/modules/auth_module.dart';
 import 'package:paypulse/app/di/modules/network_module.dart';
 import 'package:paypulse/app/di/modules/repository_module.dart';
+import 'package:paypulse/app/di/modules/secure_storage_service_module.dart';
 import 'package:paypulse/app/di/modules/storage_module.dart';
 import 'package:paypulse/app/di/modules/storage_service_module.dart';
 import 'package:paypulse/firebase_options.dart';
@@ -20,6 +21,7 @@ void main() async {
   registerNetworkModule();
   await registerStorageModule();
   registerStorageServiceModule();
+  registerSecureStorageServiceModule();
   registerAuthModule();
   registerRepositoryModule();
 

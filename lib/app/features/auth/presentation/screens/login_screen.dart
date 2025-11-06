@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:paypulse/app/features/auth/presentation/state/auth_providers.dart';
@@ -54,6 +55,13 @@ class LoginScreen extends ConsumerWidget {
                   ref.read(authStateProvider.notifier).signInWithGoogle();
                 },
                 child: const Text('Sign in with Google'),
+              ),
+            if (defaultTargetPlatform == TargetPlatform.iOS && authState is! AuthLoading)
+              ElevatedButton(
+                onPressed: () {
+                  ref.read(authStateProvider.notifier).signInWithApple();
+                },
+                child: const Text('Sign in with Apple'),
               ),
           ],
         ),

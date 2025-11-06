@@ -11,6 +11,9 @@ abstract class AuthRepository {
   /// Signs in a user with Google.
   Future<User> signInWithGoogle();
 
+  /// Signs in a user with Apple.
+  Future<User> signInWithApple();
+
   /// Signs out the current user.
   Future<void> signOut();
 

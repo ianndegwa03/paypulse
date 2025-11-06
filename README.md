@@ -145,34 +145,35 @@ cp .env.example .env
 ```bash
 flutter run
 ```
-## Development Commands
+### Development Commands
 
-# Create new feature module
+### Create new feature module
 ```bash
 dart run tools/create_module.dart feature_name
 ```
 
-# Run tests
+### Run tests
 ```bash
 flutter test
 ```
 
-# Build for production
+### Build for production
 ```bash
 flutter build apk --release
 flutter build ios --release
 ```
 
-# Code analysis
+### Code analysis
 ```bash
 flutter analyze
 dart format .
 ```
 
 ## 🚀 Deployment
-# **Build for Production**
-```bash
+### **Build for Production**
+
 # Android
+```bash
 flutter build apk --release
 flutter build appbundle --release
 ```

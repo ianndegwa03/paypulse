@@ -8,23 +8,26 @@
 
 PayPulse follows a **Clean Architecture + Feature-First** approach with clear separation of concerns:
 
-lib/
-├── app/ # Application layer & DI
-├── core/ # Core framework & services
-├── data/ # Data layer & repositories
-├── domain/ # Business logic & entities
-├── features/ # Feature modules
-│ ├── engagement/ # User engagement features
-│ ├── core_finance/ # Core financial features
-│ ├── intelligence/ # AI & smart features
-│ ├── automation/ # Automation features
-│ ├── marketplace/ # Financial marketplace
-│ ├── open_banking/ # Multi-bank integration
-│ ├── community_finance/ # Social finance
-│ ├── premium/ # Premium features
-│ └── web3/ # Blockchain & Web3
-└── shared/ # Shared components
+## 📁 Project Structure
 
+```bash
+lib/
+├── app/                   # Application layer & dependency injection
+├── core/                  # Core framework & shared services
+├── data/                  # Data layer & repositories
+├── domain/                # Business logic & entities
+├── features/              # Feature modules
+│   ├── engagement/         # User engagement features
+│   ├── core_finance/       # Core financial operations
+│   ├── intelligence/       # AI & smart analytics
+│   ├── automation/         # Workflow automation
+│   ├── marketplace/        # Financial marketplace
+│   ├── open_banking/       # Multi-bank integration
+│   ├── community_finance/  # Social and group finance
+│   ├── premium/            # Premium feature modules
+│   └── web3/               # Blockchain & Web3 integrations
+└── shared/                # Shared UI components & utilities
+```
 
 ## 🌟 Key Features
 

@@ -5,5 +5,4 @@ abstract class AppEnvironment {
   bool get enableAnalytics;
   bool get enableCrashReporting;
   Map<String, bool> get featureFlags;
-  LogLevel get logLevel;
 }

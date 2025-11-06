@@ -42,6 +42,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  Future<void> signInWithApple() async {
+    state = AuthLoading();
+    try {
+      await _authRepository.signInWithApple();
+    } catch (e) {
+      state = AuthError(e.toString());
+    }
+  }
+
   Future<void> signOut() async {
     await _authRepository.signOut();
   }

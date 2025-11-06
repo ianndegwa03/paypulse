@@ -148,19 +148,26 @@ flutter run
 ## Development Commands
 
 # Create new feature module
+```bash
 dart run tools/create_module.dart feature_name
+```
 
 # Run tests
+```bash
 flutter test
+```
 
 # Build for production
+```bash
 flutter build apk --release
 flutter build ios --release
+```
 
 # Code analysis
+```bash
 flutter analyze
 dart format .
-
+```
 
 ## 🚀 Deployment
 # **Build for Production**
@@ -168,7 +175,9 @@ dart format .
 # Android
 flutter build apk --release
 flutter build appbundle --release
+```
 
 # iOS
+```bash
 flutter build ios --release
 ```

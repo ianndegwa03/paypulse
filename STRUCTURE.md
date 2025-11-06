@@ -1,14 +1,14 @@
 # **💡 Fun Fact**
-# This project structure was brought to you by Kandemark — who clearly had too much coffee and not enough folder limits.
-
+```bash
+This project structure was brought to you by Kandemark — who clearly had too much coffee and not enough folder limits.
+```
 ## 📁 Project Structure
-
-# Navigate wisely… one cd command at a time.
 
 ```bash
 
 note : “I didn’t choose modularity. Modularity chose me.” — Kandemark, 2025
 
+Navigate wisely… one cd command at a time.
 lib/
 ┣ app/                                  ← Application Layer
 ┃ ┣ app.dart

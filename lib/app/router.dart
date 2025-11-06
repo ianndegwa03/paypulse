@@ -39,17 +39,31 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
     ],
     redirect: (context, state) {
-      final isAuthenticated = authState is Authenticated;
-      final isLoggingIn = state.uri.toString() == '/login' || state.uri.toString() == '/register';
+      // Handle loading or unknown states safely
+      if (authState is AuthLoading || authState is AuthInitial) {
+        return state.uri.toString() == '/splash' ? null : '/splash';
+      }
 
-      if (!isAuthenticated && !isLoggingIn) {
+      // Handle errors gracefully
+      if (authState is AuthError) {
+        debugPrint('Auth Error: ${authState.message}');
         return '/login';
       }
 
-      if (isAuthenticated && isLoggingIn) {
+      // Now safely check authentication
+      final isAuthenticated = authState is Authenticated;
+      final isAuthRoute =
+          state.uri.toString() == '/login' || state.uri.toString() == '/register';
+
+      if (!isAuthenticated && !isAuthRoute) {
+        return '/login';
+      }
+
+      if (isAuthenticated && isAuthRoute) {
         return '/dashboard';
       }
 
+      // No redirect needed
       return null;
     },
   );

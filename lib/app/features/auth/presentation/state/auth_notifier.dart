@@ -5,6 +5,9 @@ import 'package:paypulse/app/features/auth/presentation/state/auth_state.dart';
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthRepository _authRepository;
 
+  // Expose the auth state changes stream
+  Stream<dynamic> get authStateChanges => _authRepository.user;
+
   AuthNotifier(this._authRepository) : super(AuthInitial()) {
     _authRepository.user.listen((user) {
       if (user != null) {

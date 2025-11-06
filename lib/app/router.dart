@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,6 +16,9 @@ final routerProvider = Provider<GoRouter>((ref) {
 
   return GoRouter(
     initialLocation: '/splash',
+    refreshListenable: GoRouterRefreshStream(
+      ref.watch(authStateProvider.notifier).authStateChanges,
+    ),
     routes: [
       GoRoute(
         path: '/splash',
@@ -34,6 +38,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/dashboard',
         builder: (context, state) => const DashboardScreen(),
       ),
+      // ✅ Jules’ additions merged properly
       GoRoute(
         path: '/profile',
         builder: (context, state) => const Scaffold(
@@ -54,7 +59,8 @@ final routerProvider = Provider<GoRouter>((ref) {
     ],
     redirect: (context, state) {
       final isAuthenticated = authState is Authenticated;
-      final isLoggingIn = state.location == '/login' || state.location == '/register';
+      final isLoggingIn =
+          state.uri.toString() == '/login' || state.uri.toString() == '/register';
 
       if (!isAuthenticated && !isLoggingIn) {
         return '/login';
@@ -68,3 +74,18 @@ final routerProvider = Provider<GoRouter>((ref) {
     },
   );
 });
+
+class GoRouterRefreshStream extends ChangeNotifier {
+  GoRouterRefreshStream(Stream<dynamic> stream) {
+    notifyListeners();
+    _subscription = stream.asBroadcastStream().listen((_) => notifyListeners());
+  }
+
+  late final StreamSubscription<dynamic> _subscription;
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
+}

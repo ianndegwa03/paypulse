@@ -1,10 +1,10 @@
 import 'package:equatable/equatable.dart';
 
-class Category extends Equatable {
+class PaymentMethod extends Equatable {
   final String id;
   final String name;
 
-  const Category({
+  const PaymentMethod({
     required this.id,
     required this.name,
   });

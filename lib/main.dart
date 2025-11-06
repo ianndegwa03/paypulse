@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:paypulse/app/app.dart';
 import 'package:paypulse/app/di/modules/auth_module.dart';
+import 'package:paypulse/app/di/modules/firestore_module.dart';
 import 'package:paypulse/app/di/modules/network_module.dart';
 import 'package:paypulse/app/di/modules/repository_module.dart';
 import 'package:paypulse/app/di/modules/secure_storage_service_module.dart';
@@ -18,6 +19,7 @@ void main() async {
   );
 
   // Initialize dependency injection modules
+  registerFirestoreModule();
   registerNetworkModule();
   await registerStorageModule();
   registerStorageServiceModule();

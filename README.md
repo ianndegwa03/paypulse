@@ -172,13 +172,13 @@ dart format .
 ## 🚀 Deployment
 ### **Build for Production**
 
-# Android
+**Android**
 ```bash
 flutter build apk --release
 flutter build appbundle --release
 ```
 
-# iOS
+**iOS**
 ```bash
 flutter build ios --release
 ```

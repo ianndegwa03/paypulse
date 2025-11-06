@@ -1,0 +1,109 @@
+import 'package:dio/dio.dart';
+import 'package:get_it/get_it.dart';
+import 'package:paypulse/core/errors/exceptions.dart';
+
+/// A wrapper class for the Dio client that handles API requests.
+class ApiClient {
+  final Dio _dio;
+
+  ApiClient({Dio? dio}) : _dio = dio ?? GetIt.instance<Dio>();
+
+  /// Makes a GET request to the specified path.
+  Future<Response<T>> get<T>(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    try {
+      return await _dio.get<T>(
+        path,
+        queryParameters: queryParameters,
+        options: options,
+      );
+    } on DioError catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  /// Makes a POST request to the specified path.
+  Future<Response<T>> post<T>(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    try {
+      return await _dio.post<T>(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+      );
+    } on DioError catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  /// Makes a PUT request to the specified path.
+  Future<Response<T>> put<T>(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    try {
+      return await _dio.put<T>(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+      );
+    } on DioError catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  /// Makes a DELETE request to the specified path.
+  Future<Response<T>> delete<T>(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    try {
+      return await _dio.delete<T>(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+      );
+    } on DioError catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  /// Handles Dio errors and converts them to custom exceptions.
+  Exception _handleDioError(DioError e) {
+    if (e.response != null) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      switch (e.response!.statusCode) {
+        case 400:
+          return BadRequestException(e.response!.data['message']);
+        case 401:
+          return UnauthorizedException(e.response!.data['message']);
+        case 403:
+          return ForbiddenException(e.response!.data['message']);
+        case 404:
+          return NotFoundException(e.response!.data['message']);
+        case 500:
+          return ServerException(e.response!.data['message']);
+        default:
+          return ServerException('An unexpected error occurred.');
+      }
+    } else {
+      // Something happened in setting up or sending the request that triggered an Error
+      return ServerException('An unexpected error occurred.');
+    }
+  }
+}

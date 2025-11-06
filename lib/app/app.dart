@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
-import 'router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:paypulse/app/router.dart';
+import 'package:paypulse/core/theme/theme_provider.dart';
 
-class PayPulseApp extends StatelessWidget {
+class PayPulseApp extends ConsumerWidget {
   const PayPulseApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(routerProvider);
+    final theme = ref.watch(themeProvider);
+
+    return MaterialApp.router(
       title: 'PayPulse',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.deepPurple,
-        scaffoldBackgroundColor: Colors.white,
-      ),
-      initialRoute: '/',
-      onGenerateRoute: AppRouter.generateRoute,
+      theme: theme,
+      routerConfig: router,
     );
   }
 }

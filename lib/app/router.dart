@@ -6,6 +6,9 @@ import 'package:paypulse/app/features/auth/presentation/state/auth_state.dart';
 import 'package:paypulse/app/features/auth/presentation/screens/login_screen.dart';
 import 'package:paypulse/app/features/auth/presentation/screens/register_screen.dart';
 import 'package:paypulse/app/features/dashboard/presentation/screens/dashboard_screen.dart';
+import 'package:paypulse/app/features/wallet/presentation/screens/add_transaction_screen.dart';
+import 'package:paypulse/app/features/wallet/presentation/screens/transaction_details_screen.dart';
+import 'package:paypulse/domain/entities/transaction_entity.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
@@ -36,6 +39,17 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const Scaffold(
           body: Center(child: Text('Profile Screen')),
         ),
+      ),
+      GoRoute(
+        path: '/add-transaction',
+        builder: (context, state) => const AddTransactionScreen(),
+      ),
+      GoRoute(
+        path: '/transaction-details',
+        builder: (context, state) {
+          final transaction = state.extra as Transaction;
+          return TransactionDetailsScreen(transaction: transaction);
+        },
       ),
     ],
     redirect: (context, state) {

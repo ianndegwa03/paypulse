@@ -3,13 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:paypulse/app/features/dashboard/presentation/screens/home_tab_screen.dart';
 import 'package:paypulse/app/features/dashboard/presentation/screens/insights_tab_screen.dart';
 import 'package:paypulse/app/features/dashboard/presentation/screens/transactions_tab_screen.dart';
-import 'package:paypulse/app/features/dashboard/presentation/screens/wallet_tab_screen.dart';
+import 'package:paypulse/app/features/wallet/presentation/screens/wallet_overview_screen.dart';
 import 'package:paypulse/core/theme/theme_provider.dart';
 
 final _dashboardTabs = [
   const HomeTabScreen(),
   const TransactionsTabScreen(),
-  const WalletTabScreen(),
+  const WalletOverviewScreen(),
   const InsightsTabScreen(),
   const Scaffold(body: Center(child: Text('Profile Tab'))),
 ];

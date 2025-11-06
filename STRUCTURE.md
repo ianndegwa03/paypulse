@@ -8,7 +8,8 @@ This project structure was brought to you by Kandemark — who clearly had too m
 
 note : “I didn’t choose modularity. Modularity chose me.” — Kandemark, 2025
 
-Navigate wisely… one cd command at a time.
+                       😂 Just Saying: Navigate wisely… one cd command at a time.
+
 lib/
 ┣ app/                                  ← Application Layer
 ┃ ┣ app.dart

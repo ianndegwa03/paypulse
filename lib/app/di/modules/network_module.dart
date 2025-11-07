@@ -1,32 +1,24 @@
-// lib/app/di/modules/network_module.dart
 import 'package:dio/dio.dart';
-import 'package:injectable/injectable.dart';
-import 'package:paypulse/core/network/api/base_api_service.dart';
-import 'package:paypulse/core/network/api/dio_client.dart';
-import 'package:paypulse/core/network/api/interceptors/auth_interceptor.dart';
-import 'package:paypulse/core/network/api/interceptors/logging_interceptor.dart';
-import 'package:paypulse/core/network/api/interceptors/error_interceptor.dart';
-import 'package:paypulse/core/network/connectivity/connectivity_service.dart';
+import 'package:get_it/get_it.dart';
 
-@module
-abstract class NetworkModule {
-  
-  @singleton
-  Dio get dio => Dio()
-    ..options.connectTimeout = const Duration(seconds: 30)
-    ..options.receiveTimeout = const Duration(seconds: 30)
-    ..interceptors.addAll([
-      AuthInterceptor(),
-      LoggingInterceptor(),
-      ErrorInterceptor(),
-    ]);
-  
-  @singleton
-  DioClient get dioClient => DioClient(dio);
-  
-  @singleton
-  BaseApiService get baseApiService => BaseApiService(dioClient);
-  
-  @singleton
-  ConnectivityService get connectivityService => ConnectivityService();
+/// The service locator instance.
+final sl = GetIt.instance;
+
+/// Registers the network module.
+///
+/// This function is responsible for setting up and registering the `Dio` client
+/// for making network requests. It configures the base URL, connect timeout,
+/// and receive timeout for the client.
+void registerNetworkModule() {
+  sl.registerLazySingleton<Dio>(
+    () {
+      final dio = Dio();
+      dio.options.baseUrl = 'https://api.paypulse.com'; // TODO: Replace with your API base URL
+      dio.options.connectTimeout = const Duration(milliseconds: 15000);
+      dio.options.receiveTimeout = const Duration(milliseconds: 15000);
+      // Add interceptors for logging, authentication, etc.
+      dio.interceptors.add(LogInterceptor(responseBody: true));
+      return dio;
+    },
+  );
 }

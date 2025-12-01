@@ -1,6 +1,8 @@
 import 'package:get_it/get_it.dart';
 import 'package:paypulse/data/repositories/auth_repository_impl.dart';
+import 'package:paypulse/data/repositories/wallet_repository_impl.dart';
 import 'package:paypulse/domain/repositories/auth_repository.dart';
+import 'package:paypulse/domain/repositories/wallet_repository.dart';
 
 /// The service locator instance.
 final sl = GetIt.instance;
@@ -11,4 +13,5 @@ final sl = GetIt.instance;
 /// so that they can be injected into other parts of the application.
 void registerRepositoryModule() {
   sl.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl());
+  sl.registerLazySingleton<WalletRepository>(() => WalletRepositoryImpl());
 }

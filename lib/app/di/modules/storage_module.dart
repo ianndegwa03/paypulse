@@ -1,10 +1,7 @@
-import 'package:get_it/get_it.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path_provider/path_provider.dart';
-
-/// The service locator instance.
-final sl = GetIt.instance;
+import 'package:paypulse/app/di/service_locator.dart';
 
 /// Registers the storage module.
 ///

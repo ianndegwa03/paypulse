@@ -1,9 +1,10 @@
 import 'package:equatable/equatable.dart';
+import 'package:paypulse/domain/entities/enums.dart';
 
 class Wallet extends Equatable {
   final String id;
   final double balance;
-  final String currency;
+  final CurrencyType currency;
 
   const Wallet({
     required this.id,

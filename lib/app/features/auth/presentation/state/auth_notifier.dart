@@ -1,60 +1,129 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:paypulse/domain/repositories/auth_repository.dart';
+import 'package:get_it/get_it.dart';
+import 'package:paypulse/domain/use_cases/auth/login_use_case.dart';
+import 'package:paypulse/domain/use_cases/auth/register_use_case.dart';
+import 'package:paypulse/domain/use_cases/auth/logout_use_case.dart';
 import 'package:paypulse/app/features/auth/presentation/state/auth_state.dart';
 
 class AuthNotifier extends StateNotifier<AuthState> {
-  final AuthRepository _authRepository;
+  final LoginUseCase loginUseCase;
+  final RegisterUseCase registerUseCase;
+  final LogoutUseCase logoutUseCase;
 
-  // Expose the auth state changes stream
-  Stream<dynamic> get authStateChanges => _authRepository.user;
+  AuthNotifier({
+    required this.loginUseCase,
+    required this.registerUseCase,
+    required this.logoutUseCase,
+  }) : super(const AuthState());
 
-  AuthNotifier(this._authRepository) : super(AuthInitial()) {
-    _authRepository.user.listen((user) {
-      if (user != null) {
-        state = Authenticated(user);
-      } else {
-        state = Unauthenticated();
-      }
-    });
-  }
+  Future<void> login(String email, String password) async {
+    state = state.copyWith(isLoading: true);
 
-  Future<void> signInWithEmailAndPassword(String email, String password) async {
-    state = AuthLoading();
     try {
-      await _authRepository.signInWithEmailAndPassword(email, password);
+      final result = await loginUseCase.execute(email, password);
+
+      result.fold(
+        (failure) {
+          state = state.copyWith(
+            isLoading: false,
+            errorMessage: failure.message,
+          );
+        },
+        (user) {
+          state = state.copyWith(
+            isAuthenticated: true,
+            userId: user.id,
+            email: user.email.value,
+            currentUser: user,
+            isLoading: false,
+          );
+        },
+      );
     } catch (e) {
-      state = AuthError(e.toString());
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString(),
+      );
     }
   }
 
-  Future<void> signUpWithEmailAndPassword(String email, String password) async {
-    state = AuthLoading();
+  Future<void> register(
+    String email,
+    String password,
+    String firstName,
+    String lastName,
+  ) async {
+    state = state.copyWith(isLoading: true);
+
     try {
-      await _authRepository.signUpWithEmailAndPassword(email, password);
+      final result = await registerUseCase.execute(
+        email: email,
+        password: password,
+        firstName: firstName,
+        lastName: lastName,
+      );
+
+      result.fold(
+        (failure) {
+          state = state.copyWith(
+            isLoading: false,
+            errorMessage: failure.message,
+          );
+        },
+        (user) {
+          state = state.copyWith(
+            isAuthenticated: true,
+            userId: user.id,
+            email: user.email.value,
+            currentUser: user,
+            isLoading: false,
+            successMessage: 'Registration successful!',
+          );
+        },
+      );
     } catch (e) {
-      state = AuthError(e.toString());
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString(),
+      );
     }
   }
 
-  Future<void> signInWithGoogle() async {
-    state = AuthLoading();
-    try {
-      await _authRepository.signInWithGoogle();
-    } catch (e) {
-      state = AuthError(e.toString());
-    }
-  }
+  Future<void> logout() async {
+    state = state.copyWith(isLoading: true);
 
-  Future<void> signInWithApple() async {
-    state = AuthLoading();
     try {
-      await _authRepository.signInWithApple();
-    } catch (e) {
-      state = AuthError(e.toString());
-    }
-  }
+      final result = await logoutUseCase.execute();
 
-  Future<void> signOut() async {
-    await _authRepository.signOut();
+      result.fold(
+        (failure) {
+          state = state.copyWith(
+            isLoading: false,
+            errorMessage: failure.message,
+          );
+        },
+        (_) {
+          state = const AuthState(
+            isAuthenticated: false,
+            isLoading: false,
+          );
+        },
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString(),
+      );
+    }
   }
 }
+
+// Riverpod Provider
+final authNotifierProvider =
+    StateNotifierProvider<AuthNotifier, AuthState>((ref) {
+  return AuthNotifier(
+    loginUseCase: GetIt.instance<LoginUseCase>(),
+    registerUseCase: GetIt.instance<RegisterUseCase>(),
+    logoutUseCase: GetIt.instance<LogoutUseCase>(),
+  );
+});

@@ -1,22 +1,35 @@
+import 'package:dartz/dartz.dart';
+import 'package:paypulse/core/errors/failures.dart';
 import 'package:paypulse/domain/entities/user_entity.dart';
 
-/// An interface for the authentication repository.
 abstract class AuthRepository {
-  /// Signs in a user with the given email and password.
-  Future<User> signInWithEmailAndPassword(String email, String password);
-
-  /// Signs up a user with the given email and password.
-  Future<User> signUpWithEmailAndPassword(String email, String password);
-
-  /// Signs in a user with Google.
-  Future<User> signInWithGoogle();
-
-  /// Signs in a user with Apple.
-  Future<User> signInWithApple();
-
-  /// Signs out the current user.
-  Future<void> signOut();
-
-  /// Gets the current user.
-  Stream<User?> get user;
+  Future<Either<Failure, UserEntity>> login(String email, String password);
+  
+  Future<Either<Failure, UserEntity>> register(
+    String email,
+    String password,
+    String firstName,
+    String lastName,
+  );
+  
+  Future<Either<Failure, void>> logout();
+  
+  Future<Either<Failure, bool>> isAuthenticated();
+  
+  Future<Either<Failure, UserEntity>> getCurrentUser();
+  
+  Future<Either<Failure, void>> forgotPassword(String email);
+  
+  Future<Either<Failure, void>> resetPassword(
+    String token,
+    String newPassword,
+  );
+  
+  Future<Either<Failure, void>> updateProfile(UserEntity user);
+  
+  Future<Either<Failure, void>> enableBiometric(bool enable);
+  
+  Future<Either<Failure, void>> verifyEmail(String token);
+  
+  Future<Either<Failure, void>> verifyPhone(String code);
 }

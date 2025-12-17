@@ -1,9 +1,12 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:paypulse/app/features/auth/presentation/state/auth_providers.dart';
-import 'package:paypulse/app/features/auth/presentation/state/auth_state.dart';
+import 'package:paypulse/app/features/auth/presentation/state/auth_notifier.dart';
+import 'package:paypulse/core/theme/app_theme.dart';
+import 'package:paypulse/core/utils/validators/email_validator.dart';
+import 'package:paypulse/core/utils/validators/password_validator.dart';
+import 'package:paypulse/core/widgets/buttons/primary_button.dart';
+import 'package:paypulse/core/widgets/inputs/text_field.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -13,9 +16,12 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
+  final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
+
+  bool _isPasswordVisible = false;
+  bool _rememberMe = false;
 
   @override
   void dispose() {
@@ -24,117 +30,288 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
+  Future<void> _handleLogin() async {
+    if (_formKey.currentState?.validate() ?? false) {
+      final notifier = ref.read(authNotifierProvider.notifier);
+      await notifier.login(
+        _emailController.text.trim(),
+        _passwordController.text,
+      );
+
+      // Check state after login attempt
+      if (mounted) {
+        final state = ref.read(authNotifierProvider);
+        if (state.isAuthenticated) {
+          context.go('/dashboard');
+        }
+      }
+    }
+  }
+
+  void _handleForgotPassword() {
+    context.push('/forgot-password');
+  }
+
+  void _handleRegister() {
+    context.push('/register');
+  }
+
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authStateProvider);
-
-    ref.listen<AuthState>(authStateProvider, (previous, next) {
-      if (next is AuthError) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(next.message),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      } else if (next is Authenticated) {
-        // Redirect when authenticated
-        context.go('/dashboard');
-      }
-    });
+    final theme = Theme.of(context);
+    final state = ref.watch(authNotifierProvider);
+    // notifier not used in build directly, removed to fix lint
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Login'),
-        centerTitle: true,
-      ),
-      body: Center(
+      body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(24),
           child: Form(
             key: _formKey,
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  "Welcome back to PayPulse 💳",
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 24),
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) =>
-                      value == null || value.isEmpty ? 'Email is required' : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Password',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) => value == null || value.isEmpty
-                      ? 'Password is required'
-                      : null,
-                ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 48),
 
-                // Login Button
-                if (authState is AuthLoading)
-                  const CircularProgressIndicator()
-                else
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          ref
-                              .read(authStateProvider.notifier)
-                              .signInWithEmailAndPassword(
-                                _emailController.text.trim(),
-                                _passwordController.text.trim(),
-                              );
-                        }
-                      },
-                      child: const Text('Login'),
-                    ),
-                  ),
-                const SizedBox(height: 12),
-
-                //  Register Link
-                TextButton(
-                  onPressed: () => context.go('/register'),
-                  child: const Text("Don't have an account? Register here"),
-                ),
-                const SizedBox(height: 16),
-
-                //  Social logins
-                if (authState is! AuthLoading)
-                  Column(
+                // Logo and Title
+                Center(
+                  child: Column(
                     children: [
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          ref.read(authStateProvider.notifier).signInWithGoogle();
-                        },
-                        icon: const Icon(Icons.login),
-                        label: const Text('Sign in with Google'),
+                      Image.asset(
+                        'assets/images/logo.png',
+                        height: 80,
+                        width: 80,
                       ),
-                      if (defaultTargetPlatform == TargetPlatform.iOS)
-                        ElevatedButton.icon(
-                          onPressed: () {
-                            ref
-                                .read(authStateProvider.notifier)
-                                .signInWithApple();
-                          },
-                          icon: const Icon(Icons.apple),
-                          label: const Text('Sign in with Apple'),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Welcome to PayPulse',
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
                         ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Sign in to continue',
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                        ),
+                      ),
                     ],
                   ),
+                ),
+
+                const SizedBox(height: 48),
+
+                // Email Field
+                AppTextField(
+                  controller: _emailController,
+                  label: 'Email Address',
+                  hintText: 'Enter your email',
+                  prefixIcon: Icons.email_outlined,
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (value) => EmailValidator.validate(value),
+                  autofillHints: const [AutofillHints.email],
+                ),
+
+                const SizedBox(height: 16),
+
+                // Password Field
+                AppTextField(
+                  controller: _passwordController,
+                  label: 'Password',
+                  hintText: 'Enter your password',
+                  prefixIcon: Icons.lock_outline,
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _isPasswordVisible
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isPasswordVisible = !_isPasswordVisible;
+                      });
+                    },
+                  ),
+                  obscureText: !_isPasswordVisible,
+                  validator: (value) => PasswordValidator.validate(value),
+                  autofillHints: const [AutofillHints.password],
+                ),
+
+                const SizedBox(height: 8),
+
+                // Remember Me & Forgot Password
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: _rememberMe,
+                          onChanged: (value) {
+                            setState(() {
+                              _rememberMe = value ?? false;
+                            });
+                          },
+                        ),
+                        Text(
+                          'Remember me',
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                      ],
+                    ),
+                    TextButton(
+                      onPressed: _handleForgotPassword,
+                      child: Text(
+                        'Forgot Password?',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 32),
+
+                // Login Button
+                PrimaryButton(
+                  onPressed: state.isLoading ? null : _handleLogin,
+                  isLoading: state.isLoading,
+                  label: 'Sign In',
+                ),
+
+                const SizedBox(height: 24),
+
+                // Error Message
+                if (state.hasError)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.error.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      state.errorMessage!,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.error,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+
+                const SizedBox(height: 32),
+
+                // Divider
+                Row(
+                  children: [
+                    Expanded(
+                      child: Divider(color: theme.colorScheme.outline),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        'Or continue with',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Divider(color: theme.colorScheme.outline),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 24),
+
+                // Social Login Buttons
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      onPressed: () {
+                        // Handle Google login
+                      },
+                      icon: Image.asset(
+                        'assets/icons/google.png',
+                        height: 24,
+                        width: 24,
+                      ),
+                      style: IconButton.styleFrom(
+                        backgroundColor: theme.colorScheme.surface,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          side: BorderSide(color: theme.colorScheme.outline),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    IconButton(
+                      onPressed: () {
+                        // Handle Apple login
+                      },
+                      icon: Image.asset(
+                        'assets/icons/apple.png',
+                        height: 24,
+                        width: 24,
+                      ),
+                      style: IconButton.styleFrom(
+                        backgroundColor: theme.colorScheme.surface,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          side: BorderSide(color: theme.colorScheme.outline),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    IconButton(
+                      onPressed: () {
+                        // Handle Facebook login
+                      },
+                      icon: Image.asset(
+                        'assets/icons/facebook.png',
+                        height: 24,
+                        width: 24,
+                      ),
+                      style: IconButton.styleFrom(
+                        backgroundColor: theme.colorScheme.surface,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          side: BorderSide(color: theme.colorScheme.outline),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 32),
+
+                // Register Link
+                Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "Don't have an account? ",
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: _handleRegister,
+                        child: Text(
+                          'Sign Up',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),

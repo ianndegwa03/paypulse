@@ -1,20 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:paypulse/app/features/auth/presentation/state/auth_providers.dart';
-import 'package:paypulse/app/features/auth/presentation/state/auth_state.dart';
+import 'package:paypulse/app/features/auth/presentation/state/auth_notifier.dart';
+import 'package:paypulse/core/utils/validators/email_validator.dart';
+import 'package:paypulse/core/utils/validators/password_validator.dart';
+import 'package:paypulse/core/widgets/buttons/primary_button.dart';
+import 'package:paypulse/core/widgets/inputs/text_field.dart';
 
-class RegistrationScreen extends ConsumerStatefulWidget {
-  const RegistrationScreen({super.key});
+class RegisterScreen extends ConsumerStatefulWidget {
+  const RegisterScreen({super.key});
 
   @override
-  ConsumerState<RegistrationScreen> createState() => _RegistrationScreenState();
+  ConsumerState<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
+class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -22,26 +27,40 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleRegister() async {
+    if (_formKey.currentState!.validate()) {
+      final notifier = ref.read(authNotifierProvider.notifier);
+      await notifier.register(
+        _emailController.text.trim(),
+        _passwordController.text,
+        _firstNameController.text.trim(),
+        _lastNameController.text.trim(),
+      );
+
+      if (mounted) {
+        final state = ref.read(authNotifierProvider);
+        if (state.isAuthenticated) {
+          context.go('/dashboard');
+        } else if (state.errorMessage != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.errorMessage!),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+        }
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authStateProvider);
-
-    ref.listen<AuthState>(authStateProvider, (previous, next) {
-      if (next is AuthError) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(next.message),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      } else if (next is Authenticated) {
-        // Redirect when successfully registered
-        context.go('/dashboard');
-      }
-    });
+    final state = ref.watch(authNotifierProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -61,54 +80,57 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
                 ),
                 const SizedBox(height: 24),
 
+                // First Name
+                AppTextField(
+                  controller: _firstNameController,
+                  label: 'First Name',
+                  hintText: 'Enter your first name',
+                  prefixIcon: Icons.person_outline,
+                  validator: (value) =>
+                      value?.isEmpty == true ? 'Required' : null,
+                ),
+                const SizedBox(height: 16),
+
+                // Last Name
+                AppTextField(
+                  controller: _lastNameController,
+                  label: 'Last Name',
+                  hintText: 'Enter your last name',
+                  prefixIcon: Icons.person_outline,
+                  validator: (value) =>
+                      value?.isEmpty == true ? 'Required' : null,
+                ),
+                const SizedBox(height: 16),
+
                 // Email
-                TextFormField(
+                AppTextField(
                   controller: _emailController,
+                  label: 'Email',
+                  hintText: 'Enter your email',
+                  prefixIcon: Icons.email_outlined,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Email is required';
-                    }
-                    if (!value.contains('@')) {
-                      return 'Enter a valid email';
-                    }
-                    return null;
-                  },
+                  validator: (value) => EmailValidator.validate(value),
                 ),
                 const SizedBox(height: 16),
 
                 // Password
-                TextFormField(
+                AppTextField(
                   controller: _passwordController,
+                  label: 'Password',
+                  hintText: 'Enter your password',
+                  prefixIcon: Icons.lock_outline,
                   obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Password',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Password is required';
-                    }
-                    if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
-                    }
-                    return null;
-                  },
+                  validator: (value) => PasswordValidator.validate(value),
                 ),
                 const SizedBox(height: 16),
 
                 // Confirm Password
-                TextFormField(
+                AppTextField(
                   controller: _confirmPasswordController,
+                  label: 'Confirm Password',
+                  hintText: 'Re-enter your password',
+                  prefixIcon: Icons.lock_outline,
                   obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Confirm Password',
-                    border: OutlineInputBorder(),
-                  ),
                   validator: (value) {
                     if (value != _passwordController.text) {
                       return 'Passwords do not match';
@@ -119,25 +141,11 @@ class _RegistrationScreenState extends ConsumerState<RegistrationScreen> {
                 const SizedBox(height: 24),
 
                 // Register Button
-                if (authState is AuthLoading)
-                  const CircularProgressIndicator()
-                else
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          ref
-                              .read(authStateProvider.notifier)
-                              .signUpWithEmailAndPassword(
-                                _emailController.text.trim(),
-                                _passwordController.text.trim(),
-                              );
-                        }
-                      },
-                      child: const Text('Register'),
-                    ),
-                  ),
+                PrimaryButton(
+                  onPressed: state.isLoading ? null : _handleRegister,
+                  label: 'Register',
+                  isLoading: state.isLoading,
+                ),
 
                 const SizedBox(height: 16),
 

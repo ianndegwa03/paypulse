@@ -46,6 +46,7 @@ dependencies:
   ml_preprocessing: ^7.0.2
   pointycastle: ^3.9.1
   asn1lib: ^1.6.5
+  fl_chart: ^0.66.1
 
 dev_dependencies:
   flutter_test:

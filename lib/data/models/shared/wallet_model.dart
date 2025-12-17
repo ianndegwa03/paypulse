@@ -1,6 +1,6 @@
 import 'package:hive/hive.dart';
 import 'package:json_annotation/json_annotation.dart';
-import 'package:paypulse/core/utils/enums/currency_type.dart';
+import 'package:paypulse/domain/entities/enums.dart';
 import 'package:paypulse/data/models/shared/transaction_model.dart';
 
 part 'wallet_model.g.dart';

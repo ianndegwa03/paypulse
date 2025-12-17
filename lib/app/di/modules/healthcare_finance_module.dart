@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:paypulse/core/ai/ai_client.dart';
 import 'package:paypulse/core/analytics/analytics_service.dart';
 import 'package:paypulse/core/services/local_storage/storage_service.dart';
@@ -25,20 +24,20 @@ abstract class HealthcareFinanceService {
 }
 
 class HealthcareFinanceServiceImpl implements HealthcareFinanceService {
+  final DIConfig _config;
   final AIClient _aiClient;
   final AnalyticsService _analyticsService;
   final StorageService _storageService;
-  final DIConfig _config;
 
   HealthcareFinanceServiceImpl({
+    required DIConfig config,
     required AIClient aiClient,
     required AnalyticsService analyticsService,
     required StorageService storageService,
-    required DIConfig config,
-  })  : _aiClient = aiClient,
+  })  : _config = config,
+        _aiClient = aiClient,
         _analyticsService = analyticsService,
-        _storageService = storageService,
-        _config = config;
+        _storageService = storageService;
 
   @override
   Future<Map<String, dynamic>> analyzeMedicalExpenses(

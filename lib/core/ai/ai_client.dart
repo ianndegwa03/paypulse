@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:paypulse/app/config/app_config.dart';
+import 'package:paypulse/app/config/feature_flags.dart';
 import 'package:paypulse/core/errors/exceptions.dart';
 import 'package:paypulse/core/ai/models/ai_model_config.dart';
 import 'package:paypulse/core/ai/models/cost_tracker.dart';

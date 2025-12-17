@@ -30,7 +30,7 @@ abstract class BlockchainClient {
 
 class BlockchainClientImpl implements BlockchainClient {
   final web3.Web3Client _web3Client;
-  final String _chainId;
+  final int _chainId;
 
   BlockchainClientImpl({
     required DIConfig config,
@@ -38,7 +38,7 @@ class BlockchainClientImpl implements BlockchainClient {
             config.environment.web3RpcUrl ??
                 'https://mainnet.infura.io/v3/YOUR_INFURA_KEY',
             http.Client()),
-        _chainId = config.environment.web3ChainId ?? '1';
+        _chainId = config.environment.web3ChainId ?? 1;
 
   @override
   Future<String> getWalletAddress() async {
@@ -73,15 +73,14 @@ class BlockchainClientImpl implements BlockchainClient {
 
       final transaction = web3.Transaction(
         to: recipient,
-        value: web3.EtherAmount.fromUnitAndValue(
-            web3.EtherUnit.ether, BigInt.from(amount * 1e18)),
+        value: web3.EtherAmount.fromBigInt(web3.EtherUnit.ether, BigInt.from(amount * 1e18)),
         // Note: amount * 1e18 conversion is crucial for consistent ether handling
       );
 
       final txHash = await _web3Client.sendTransaction(
         credentials,
         transaction,
-        chainId: int.tryParse(_chainId) ?? 1,
+        chainId: _chainId,
       );
 
       return txHash;
@@ -132,7 +131,7 @@ class BlockchainClientImpl implements BlockchainClient {
     try {
       final credentials = web3.EthPrivateKey.fromHex(privateKey);
       final signature =
-          await credentials.signPersonalMessage(utf8.encode(message));
+          credentials.signPersonalMessageToUint8List(utf8.encode(message));
       // Convert signature to hex string if needed, or use the bytes directly
       return bytesToHex(signature, include0x: true);
     } catch (e) {

@@ -10,9 +10,9 @@ class TransactionModel extends entity.Transaction {
     required DateTime date,
     required String categoryId,
     required String paymentMethodId,
-    entity.TransactionType type = entity.TransactionType.debit,
-    entity.CurrencyType currency = entity.CurrencyType.USD,
-    entity.TransactionStatus status = entity.TransactionStatus.completed,
+    TransactionType type = TransactionType.debit,
+    CurrencyType currency = CurrencyType.USD,
+    TransactionStatus status = TransactionStatus.completed,
   }) : super(
           id: id,
           amount: amount,
@@ -34,17 +34,17 @@ class TransactionModel extends entity.Transaction {
       date: (data['date'] as Timestamp?)?.toDate() ?? DateTime.now(),
       categoryId: data['categoryId'] as String? ?? '',
       paymentMethodId: data['paymentMethodId'] as String? ?? '',
-      type: entity.TransactionType.values.firstWhere(
+      type: TransactionType.values.firstWhere(
         (e) => e.name == (data['type'] as String? ?? 'debit'),
-        orElse: () => entity.TransactionType.debit,
+        orElse: () => TransactionType.debit,
       ),
-      currency: entity.CurrencyType.values.firstWhere(
+      currency: CurrencyType.values.firstWhere(
         (e) => e.name == (data['currency'] as String? ?? 'USD'),
-        orElse: () => entity.CurrencyType.USD,
+        orElse: () => CurrencyType.USD,
       ),
-      status: entity.TransactionStatus.values.firstWhere(
+      status: TransactionStatus.values.firstWhere(
         (e) => e.name == (data['status'] as String? ?? 'completed'),
-        orElse: () => entity.TransactionStatus.completed,
+        orElse: () => TransactionStatus.completed,
       ),
     );
   }
@@ -56,9 +56,9 @@ class TransactionModel extends entity.Transaction {
     DateTime? date,
     String? categoryId,
     String? paymentMethodId,
-    entity.TransactionType? type,
-    entity.CurrencyType? currency,
-    entity.TransactionStatus? status,
+    TransactionType? type,
+    CurrencyType? currency,
+    TransactionStatus? status,
   }) {
     return TransactionModel(
       id: id ?? this.id,

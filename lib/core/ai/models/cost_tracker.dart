@@ -13,7 +13,7 @@ class CostTracker {
   
   double _totalCost = 0;
   int _totalTokens = 0;
-  final Map<String, int> _modelUsage = {};
+  Map<String, int> _modelUsage = {};
   
   CostTracker({StorageService? storage}) 
       : _storage = storage ?? StorageServiceImpl() {
@@ -154,7 +154,7 @@ class CostTracker {
     final daysRemaining = daysInMonth - daysElapsed;
     
     final dailyBudget = budget / daysInMonth;
-    final expectedSpendSoFar = dailyBudget * daysElapsed;
+    // final expectedSpendSoFar = dailyBudget * daysElapsed;
     final remainingBudget = budget - _totalCost;
     final dailyRemainingBudget = remainingBudget / daysRemaining;
     

@@ -89,17 +89,17 @@ class ApiClient {
       // that falls out of the range of 2xx
       switch (e.response!.statusCode) {
         case 400:
-          return BadRequestException(e.response!.data['message']);
+          throw NetworkException(message: e.response!.data['message'] ?? 'Bad request');
         case 401:
-          return UnauthorizedException(e.response!.data['message']);
+          throw AuthException(message: e.response!.data['message'] ?? 'Unauthorized');
         case 403:
-          return ForbiddenException(e.response!.data['message']);
+          throw PermissionException(message: e.response!.data['message'] ?? 'Forbidden');
         case 404:
-          return NotFoundException(e.response!.data['message']);
+          throw NetworkException(message: e.response!.data['message'] ?? 'Not found');
         case 500:
-          return ServerException(e.response!.data['message']);
+          throw ServerException(message: e.response!.data['message'] ?? 'Server error');
         default:
-          return ServerException('An unexpected error occurred.');
+          throw ServerException(message: 'An unexpected error occurred.');
       }
     } else {
       // Something happened in setting up or sending the request that triggered an Error

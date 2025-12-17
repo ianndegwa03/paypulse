@@ -1,4 +1,3 @@
-import 'package:get_it/get_it.dart';
 import 'package:paypulse/app/di/injector.dart';
 import 'package:paypulse/data/remote/api/interfaces/auth_api_interface.dart';
 import 'package:paypulse/data/remote/api/implementations/auth_api_impl.dart';

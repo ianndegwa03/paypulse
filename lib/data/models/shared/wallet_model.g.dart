@@ -21,11 +21,11 @@ class WalletModelAdapter extends TypeAdapter<WalletModel> {
       userId: fields[1] as String,
       name: fields[2] as String,
       balance: fields[3] as double,
-      currency: fields[4] as InvalidType,
+      currency: fields[4] as CurrencyType,
       isDefault: fields[5] as bool,
       createdAt: fields[6] as DateTime,
       updatedAt: fields[7] as DateTime,
-      transactions: (fields[8] as List).cast<InvalidType>(),
+      transactions: (fields[8] as List).cast<TransactionModel>(),
       metadata: (fields[9] as Map).cast<String, dynamic>(),
     );
   }

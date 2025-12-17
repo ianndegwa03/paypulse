@@ -12,6 +12,11 @@ class UserPreferenceManager {
     await _storageService.init();
   }
   
+  Future<Map<String, Map<String, dynamic>>> _getAllPreferences() async {
+    final data = await _storageService.getObject(_preferencesKey);
+    return Map<String, Map<String, dynamic>>.from(data ?? {});
+  }
+  
   Future<void> savePreferences({
     required String userId,
     required Map<String, dynamic> preferences,
@@ -281,4 +286,12 @@ class UserPreferenceManager {
         'goal_priorities': preferences['goal_priorities'] ?? ['retirement', 'emergency fund', 'debt repayment'],
         'timeline_preferences': preferences['timeline_preferences'] ?? {'short_term': 1, 'medium_term': 5, 'long_term': 20},
         'risk_tolerance_for_goals': preferences['risk_tolerance_for_goals'] ?? 'moderate',
-        'automated_s
+        'automated_savings': preferences['automated_savings'] ?? true,
+      };
+    } catch (e) {
+      throw AIException(
+        message: 'Failed to get goal preferences: $e',
+        data: {'userId': userId, 'error': e.toString()},
+      );
+    }
+  }

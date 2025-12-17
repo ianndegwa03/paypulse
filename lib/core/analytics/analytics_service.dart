@@ -49,7 +49,7 @@ class AnalyticsServiceImpl implements AnalyticsService {
     try {
       await _firebaseAnalytics.logEvent(
         name: name,
-        parameters: parameters,
+        parameters: parameters?.cast<String, Object>(),
       );
     } catch (e) {
       // Don't throw in production, just log

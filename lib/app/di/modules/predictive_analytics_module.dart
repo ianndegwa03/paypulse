@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'package:ml_algo/ml_algo.dart';
 import 'package:ml_dataframe/ml_dataframe.dart';
-import 'package:ml_preprocessing/ml_preprocessing.dart';
 import 'package:paypulse/core/ai/ai_client.dart';
 import 'package:paypulse/core/analytics/analytics_service.dart';
 import 'package:paypulse/core/services/local_storage/storage_service.dart';
@@ -60,7 +59,7 @@ class PredictiveAnalyticsServiceImpl implements PredictiveAnalyticsService {
       // Calculate confidence intervals
       final confidence = await _calculatePredictionConfidence(predictions, preparedData);
       
-      final result = {
+      final Map<String, dynamic> result = {
         'predictions': predictions,
         'confidence_score': confidence,
         'time_period': '30_days',
@@ -161,10 +160,7 @@ class PredictiveAnalyticsServiceImpl implements PredictiveAnalyticsService {
     try {
       // Mock implementation to avoid ML API issues
       // TODO: Implement proper ML model training
-      return LinearRegressor(
-        DataFrame([[0.0]]),
-        DataFrame([[0.0]]),
-      );
+      throw PredictiveAnalyticsException(message: 'ML training not implemented');
     } catch (e) {
       throw PredictiveAnalyticsException(
         message: 'Failed to train cash flow model: $e',
@@ -302,8 +298,8 @@ class PredictiveAnalyticsServiceImpl implements PredictiveAnalyticsService {
     try {
       // Get model coefficients and performance metrics
       return {
-        'coefficients': model.coefficients?.toList() ?? [],
-        'intercept': model.coefficients?.first ?? 0,
+        'coefficients': model.coefficients.toList() ?? [],
+        'intercept': model.coefficients.first ?? 0,
         'iterations': model.iterationsLimit,
         'learning_rate': 0.01,
         'regularization': model.lambda,
@@ -553,7 +549,7 @@ class PredictiveAnalyticsServiceImpl implements PredictiveAnalyticsService {
       // Generate insights
       final insights = await _analyzeIncomePatterns(timeSeries, forecasts);
       
-      final result = {
+      final Map<String, dynamic> result = {
         'forecast_period': '12_months',
         'forecasts': forecasts,
         'confidence_intervals': confidence,
@@ -567,7 +563,7 @@ class PredictiveAnalyticsServiceImpl implements PredictiveAnalyticsService {
       await _analyticsService.logEvent('income_forecast_generated', parameters: {
         'forecast_months': forecasts.length,
         'average_confidence': confidence['overall_confidence'] ?? 0,
-        'trend_direction': result['historical_trend']['direction'],
+        'trend_direction': result['historical_trend']?['direction'] ?? 'unknown',
       });
       
       return result;
@@ -877,15 +873,15 @@ class PredictiveAnalyticsServiceImpl implements PredictiveAnalyticsService {
     });
     
     // Analyze growth trend
-    final trend = await _calculateIncomeTrend(timeSeries);
-    if (trend['monthly_change'] as double > 0.02) {
-      insights.add({
-        'type': 'growth',
-        'title': 'Strong Income Growth',
-        'monthly_growth_rate': (trend['monthly_change'] as double * 100).toStringAsFixed(2),
-        'annualized_growth': ((pow(1.0 + (trend['monthly_change'] as double), 12.0) - 1.0) * 100.0).toDouble(),
-      });
-    }
+    // final trend = await _calculateIncomeTrend(timeSeries);
+    // if (trend['monthly_change'] as double > 0.02) {
+    //   insights.add({
+    //     'type': 'growth',
+    //     'title': 'Strong Income Growth',
+    //     'monthly_growth_rate': '${(trend['monthly_change'] as double * 100).toStringAsFixed(2)}',
+    //     'annualized_growth': (trend['monthly_change'] as double) * 1200.0,
+    //   });
+    // }
     
     // Forecast summary
     final totalForecast = forecasts.fold(0.0, (sum, f) => sum + (f['forecasted_income'] as double));
@@ -1157,8 +1153,8 @@ class AnomalyDetector {
 
 class PredictiveAnalyticsException extends AppException {
   PredictiveAnalyticsException({
-    required String message,
-    int? statusCode,
-    dynamic data,
-  }) : super(message: message, statusCode: statusCode, data: data);
+    required super.message,
+    super.statusCode,
+    super.data,
+  });
 }

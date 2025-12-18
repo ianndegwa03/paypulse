@@ -1,9 +1,9 @@
+// lib/app/di/injector.dart
 import 'package:get_it/get_it.dart';
 
-/// Global GetIt instance for dependency injection
 final GetIt getIt = GetIt.instance;
 
-/// Convenience class for accessing dependencies
-class Injector {
-  static T get<T extends Object>() => getIt.get<T>();
+void initInjector() {
+  // Initialize all modules here
+  // Example: CoreModule().init();
 }

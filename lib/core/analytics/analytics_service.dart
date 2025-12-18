@@ -1,4 +1,5 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:logger/logger.dart';
 import 'package:paypulse/app/config/app_config.dart';
 import 'package:paypulse/core/errors/exceptions.dart';
 
@@ -18,6 +19,7 @@ abstract class AnalyticsService {
 
 class AnalyticsServiceImpl implements AnalyticsService {
   final FirebaseAnalytics _firebaseAnalytics;
+  final Logger _logger = Logger();
 
   AnalyticsServiceImpl({FirebaseAnalytics? firebaseAnalytics})
       : _firebaseAnalytics = firebaseAnalytics ?? FirebaseAnalytics.instance;
@@ -53,7 +55,7 @@ class AnalyticsServiceImpl implements AnalyticsService {
       );
     } catch (e) {
       // Don't throw in production, just log
-      print('Failed to log event $name: $e');
+      _logger.e('Failed to log event $name: $e');
     }
   }
 
@@ -81,7 +83,7 @@ class AnalyticsServiceImpl implements AnalyticsService {
     try {
       await _firebaseAnalytics.setUserProperty(name: name, value: value);
     } catch (e) {
-      print('Failed to set user property $name: $e');
+      _logger.e('Failed to set user property $name: $e');
     }
   }
 
@@ -94,7 +96,7 @@ class AnalyticsServiceImpl implements AnalyticsService {
     try {
       await _firebaseAnalytics.setUserId(id: userId);
     } catch (e) {
-      print('Failed to set user ID: $e');
+      _logger.e('Failed to set user ID: $e');
     }
   }
 
@@ -107,7 +109,7 @@ class AnalyticsServiceImpl implements AnalyticsService {
     try {
       await _firebaseAnalytics.resetAnalyticsData();
     } catch (e) {
-      print('Failed to reset analytics data: $e');
+      _logger.e('Failed to reset analytics data: $e');
     }
   }
 
@@ -230,8 +232,8 @@ class AnalyticsServiceImpl implements AnalyticsService {
 
 class AnalyticsException extends AppException {
   AnalyticsException({
-    required String message,
-    int? statusCode,
-    dynamic data,
-  }) : super(message: message, statusCode: statusCode, data: data);
+    required super.message,
+    super.statusCode,
+    super.data,
+  });
 }

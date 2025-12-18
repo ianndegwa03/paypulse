@@ -19,7 +19,7 @@ class Bootstrapper {
       final flavor = FlavorConfig.determineFlavor();
 
       // 3. Load feature flags
-      final featureFlags = await FeatureFlags.defaultFlags();
+      final featureFlags = FeatureFlags.defaultFlags();
 
       // 4. Initialize app configuration
       AppConfig.initialize(

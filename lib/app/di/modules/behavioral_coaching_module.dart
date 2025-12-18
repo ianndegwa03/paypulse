@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:logger/logger.dart';
 import 'package:paypulse/core/ai/ai_client.dart';
 import 'package:paypulse/core/analytics/analytics_service.dart';
 import 'package:paypulse/core/services/local_storage/storage_service.dart';
@@ -27,6 +28,7 @@ class BehavioralCoachingServiceImpl implements BehavioralCoachingService {
   final AnalyticsService _analyticsService;
   final StorageService _storageService;
   final DIConfig _config;
+  final Logger _logger = Logger();
 
   BehavioralCoachingServiceImpl({
     required AIClient aiClient,
@@ -549,8 +551,9 @@ class BehavioralCoachingServiceImpl implements BehavioralCoachingService {
   }
 
   String _estimateImpact(double score) {
-    if (score < 30)
+    if (score < 30) {
       return 'High impact - could significantly improve financial health';
+    }
     if (score < 60) return 'Medium impact - good opportunity for improvement';
     return 'Low impact - maintaining good habits';
   }
@@ -867,7 +870,7 @@ class BehavioralCoachingServiceImpl implements BehavioralCoachingService {
       final message = notifications[random.nextInt(notifications.length)];
 
       // In production, this would integrate with your notification service
-      print('Sending motivational notification to user $userId: $message');
+      _logger.d('Sending motivational notification to user $userId: $message');
 
       await _analyticsService
           .logEvent('motivational_notification_sent', parameters: {
@@ -875,7 +878,7 @@ class BehavioralCoachingServiceImpl implements BehavioralCoachingService {
         'message': message,
       });
     } catch (e) {
-      print('Failed to send motivational notification: $e');
+      _logger.e('Failed to send motivational notification: $e');
     }
   }
 
@@ -905,12 +908,15 @@ class BehavioralCoachingServiceImpl implements BehavioralCoachingService {
   List<String> _identifyPredictionFactors(Map<String, dynamic> historicalData) {
     final factors = <String>[];
 
-    if (historicalData['seasonal_patterns'] == true)
+    if (historicalData['seasonal_patterns'] == true) {
       factors.add('Seasonal spending patterns');
-    if (historicalData['income_regularity'] == true)
+    }
+    if (historicalData['income_regularity'] == true) {
       factors.add('Regular income schedule');
-    if (historicalData['life_events'] != null)
+    }
+    if (historicalData['life_events'] != null) {
       factors.add('Upcoming life events');
+    }
 
     return factors.isNotEmpty ? factors : ['Historical spending averages'];
   }
@@ -983,6 +989,8 @@ class BehavioralCoachingModule {
 }
 
 class _MockBehavioralCoachingService implements BehavioralCoachingService {
+  final Logger _logger = Logger();
+
   @override
   Future<Map<String, dynamic>> analyzeSpendingHabits(
       Map<String, dynamic> transactionData) async {
@@ -1038,7 +1046,7 @@ class _MockBehavioralCoachingService implements BehavioralCoachingService {
 
   @override
   Future<void> sendMotivationalNotification(String userId) async {
-    print('Behavioral coaching features disabled - skipping notification');
+    _logger.d('Behavioral coaching features disabled - skipping notification');
   }
 
   @override
@@ -1217,8 +1225,8 @@ class FinancialCoach {
 
 class BehavioralCoachingException extends AppException {
   BehavioralCoachingException({
-    required String message,
-    int? statusCode,
-    dynamic data,
-  }) : super(message: message, statusCode: statusCode, data: data);
+    required super.message,
+    super.statusCode,
+    super.data,
+  });
 }

@@ -20,7 +20,7 @@ class ApiClient {
         queryParameters: queryParameters,
         options: options,
       );
-    } on DioError catch (e) {
+    } on DioException catch (e) {
       throw _handleDioError(e);
     }
   }
@@ -39,7 +39,7 @@ class ApiClient {
         queryParameters: queryParameters,
         options: options,
       );
-    } on DioError catch (e) {
+    } on DioException catch (e) {
       throw _handleDioError(e);
     }
   }
@@ -58,7 +58,7 @@ class ApiClient {
         queryParameters: queryParameters,
         options: options,
       );
-    } on DioError catch (e) {
+    } on DioException catch (e) {
       throw _handleDioError(e);
     }
   }
@@ -77,33 +77,38 @@ class ApiClient {
         queryParameters: queryParameters,
         options: options,
       );
-    } on DioError catch (e) {
+    } on DioException catch (e) {
       throw _handleDioError(e);
     }
   }
 
   /// Handles Dio errors and converts them to custom exceptions.
-  Exception _handleDioError(DioError e) {
+  Exception _handleDioError(DioException e) {
     if (e.response != null) {
       // The request was made and the server responded with a status code
       // that falls out of the range of 2xx
       switch (e.response!.statusCode) {
         case 400:
-          throw NetworkException(message: e.response!.data['message'] ?? 'Bad request');
+          throw NetworkException(
+              message: e.response!.data['message'] ?? 'Bad request');
         case 401:
-          throw AuthException(message: e.response!.data['message'] ?? 'Unauthorized');
+          throw AuthException(
+              message: e.response!.data['message'] ?? 'Unauthorized');
         case 403:
-          throw PermissionException(message: e.response!.data['message'] ?? 'Forbidden');
+          throw PermissionException(
+              message: e.response!.data['message'] ?? 'Forbidden');
         case 404:
-          throw NetworkException(message: e.response!.data['message'] ?? 'Not found');
+          throw NetworkException(
+              message: e.response!.data['message'] ?? 'Not found');
         case 500:
-          throw ServerException(message: e.response!.data['message'] ?? 'Server error');
+          throw ServerException(
+              message: e.response!.data['message'] ?? 'Server error');
         default:
-          throw ServerException(message: 'An unexpected error occurred.');
+          throw const ServerException(message: 'An unexpected error occurred.');
       }
     } else {
       // Something happened in setting up or sending the request that triggered an Error
-      return ServerException('An unexpected error occurred.');
+      return const ServerException(message: 'An unexpected error occurred.');
     }
   }
 }

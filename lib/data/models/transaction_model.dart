@@ -4,26 +4,16 @@ import 'package:paypulse/domain/entities/transaction_entity.dart' as entity;
 
 class TransactionModel extends entity.Transaction {
   const TransactionModel({
-    required String id,
-    required double amount,
-    required String description,
-    required DateTime date,
-    required String categoryId,
-    required String paymentMethodId,
-    TransactionType type = TransactionType.debit,
-    CurrencyType currency = CurrencyType.USD,
-    TransactionStatus status = TransactionStatus.completed,
-  }) : super(
-          id: id,
-          amount: amount,
-          description: description,
-          date: date,
-          categoryId: categoryId,
-          paymentMethodId: paymentMethodId,
-          type: type,
-          currency: currency,
-          status: status,
-        );
+    required super.id,
+    required super.amount,
+    required super.description,
+    required super.date,
+    required super.categoryId,
+    required super.paymentMethodId,
+    super.type,
+    super.currency,
+    super.status,
+  });
 
   factory TransactionModel.fromSnapshot(DocumentSnapshot snap) {
     final data = snap.data() as Map<String, dynamic>? ?? {};

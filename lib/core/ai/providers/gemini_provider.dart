@@ -11,7 +11,7 @@ class GeminiProvider {
 
   Future<String> generateText(String prompt) async {
     if (_apiKey == null || _apiKey!.isEmpty) {
-      throw ServerException(message: 'Gemini API key not configured');
+      throw const ServerException(message: 'Gemini API key not configured');
     }
 
     try {

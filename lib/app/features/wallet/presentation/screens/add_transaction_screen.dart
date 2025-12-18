@@ -7,7 +7,8 @@ class AddTransactionScreen extends ConsumerStatefulWidget {
   const AddTransactionScreen({super.key});
 
   @override
-  ConsumerState<AddTransactionScreen> createState() => _AddTransactionScreenState();
+  ConsumerState<AddTransactionScreen> createState() =>
+      _AddTransactionScreenState();
 }
 
 class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
@@ -63,7 +64,9 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                       categoryId: '', // TODO: Add category selection
                       paymentMethodId: '', // TODO: Add payment method selection
                     );
-                    ref.read(walletStateProvider.notifier).addTransaction(transaction);
+                    ref
+                        .read(walletStateProvider.notifier)
+                        .addTransaction(transaction);
                     Navigator.of(context).pop();
                   }
                 },

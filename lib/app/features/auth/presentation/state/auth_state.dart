@@ -16,14 +16,10 @@ class AuthState extends BaseState {
     this.currentUser,
     this.isBiometricEnabled = false,
     this.isOnboardingComplete = false,
-    bool isLoading = false,
-    String? errorMessage,
-    String? successMessage,
-  }) : super(
-          isLoading: isLoading,
-          errorMessage: errorMessage,
-          successMessage: successMessage,
-        );
+    super.isLoading,
+    super.errorMessage,
+    super.successMessage,
+  });
 
   @override
   AuthState copyWith({

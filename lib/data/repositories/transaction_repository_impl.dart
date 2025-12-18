@@ -22,8 +22,9 @@ class TransactionRepositoryImpl implements TransactionRepository {
   Future<Either<Failure, entity.Transaction>> createTransaction(
       entity.Transaction transaction) async {
     try {
-      if (_userId.isEmpty)
+      if (_userId.isEmpty) {
         return const Left(AuthFailure(message: 'User not authenticated'));
+      }
 
       // Convert entity to model if needed, but DataSource expects Model
       // Ideally Repo converts Entity -> Model
@@ -55,8 +56,9 @@ class TransactionRepositoryImpl implements TransactionRepository {
     int offset = 0,
   }) async {
     try {
-      if (_userId.isEmpty)
-        return Left(AuthFailure(message: 'User not authenticated'));
+      if (_userId.isEmpty) {
+        return const Left(AuthFailure(message: 'User not authenticated'));
+      }
 
       final transactions = await _dataSource.getTransactions(
         _userId,
@@ -75,14 +77,15 @@ class TransactionRepositoryImpl implements TransactionRepository {
   @override
   Future<Either<Failure, entity.Transaction>> getTransaction(String id) async {
     try {
-      if (_userId.isEmpty)
-        return Left(AuthFailure(message: 'User not authenticated'));
+      if (_userId.isEmpty) {
+        return const Left(AuthFailure(message: 'User not authenticated'));
+      }
 
       final transaction = await _dataSource.getTransaction(_userId, id);
       return Right(transaction);
     } catch (e) {
       if (e.toString().contains('not found')) {
-        return Left(CacheFailure(message: 'Transaction not found'));
+        return const Left(CacheFailure(message: 'Transaction not found'));
       }
       return Left(ServerFailure(message: 'Failed to get transaction: $e'));
     }
@@ -118,8 +121,9 @@ class TransactionRepositoryImpl implements TransactionRepository {
   Future<Either<Failure, entity.Transaction>> categorizeTransaction(
       String id, String categoryId) async {
     try {
-      if (_userId.isEmpty)
-        return Left(AuthFailure(message: 'User not authenticated'));
+      if (_userId.isEmpty) {
+        return const Left(AuthFailure(message: 'User not authenticated'));
+      }
 
       final updated =
           await _dataSource.categorizeTransaction(_userId, id, categoryId);

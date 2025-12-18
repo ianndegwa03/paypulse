@@ -112,8 +112,8 @@ class HealthcareFinanceModule {
 
 class HealthcareFinanceException extends AppException {
   HealthcareFinanceException({
-    required String message,
-    int? statusCode,
-    dynamic data,
-  }) : super(message: message, statusCode: statusCode, data: data);
+    required super.message,
+    super.statusCode,
+    super.data,
+  });
 }

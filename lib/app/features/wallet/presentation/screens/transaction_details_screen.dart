@@ -15,8 +15,8 @@ class TransactionDetailsScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Transaction Details'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: const Padding(
+        padding: EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

@@ -15,128 +15,128 @@ abstract class AppException implements Exception {
 
 class ServerException extends AppException {
   const ServerException({
-    required String message,
-    int? statusCode,
-    dynamic data,
-  }) : super(message: message, statusCode: statusCode, data: data);
+    required super.message,
+    super.statusCode,
+    super.data,
+  });
 }
 
 class CacheException extends AppException {
   const CacheException({
-    required String message,
-    int? statusCode,
-    dynamic data,
-  }) : super(message: message, statusCode: statusCode, data: data);
+    required super.message,
+    super.statusCode,
+    super.data,
+  });
 }
 
 class NetworkException extends AppException {
   const NetworkException({
-    required String message,
-    int? statusCode,
-    dynamic data,
-  }) : super(message: message, statusCode: statusCode, data: data);
+    required super.message,
+    super.statusCode,
+    super.data,
+  });
 }
 
 class AuthException extends AppException {
   const AuthException({
-    required String message,
-    int? statusCode,
-    dynamic data,
-  }) : super(message: message, statusCode: statusCode, data: data);
+    required super.message,
+    super.statusCode,
+    super.data,
+  });
 }
 
 class ValidationException extends AppException {
   const ValidationException({
-    required String message,
-    int? statusCode,
-    dynamic data,
-  }) : super(message: message, statusCode: statusCode, data: data);
+    required super.message,
+    super.statusCode,
+    super.data,
+  });
 }
 
 class PermissionException extends AppException {
   const PermissionException({
-    required String message,
-    int? statusCode,
-    dynamic data,
-  }) : super(message: message, statusCode: statusCode, data: data);
+    required super.message,
+    super.statusCode,
+    super.data,
+  });
 }
 
 class DeviceException extends AppException {
   const DeviceException({
-    required String message,
-    int? statusCode,
-    dynamic data,
-  }) : super(message: message, statusCode: statusCode, data: data);
+    required super.message,
+    super.statusCode,
+    super.data,
+  });
 }
 
 class TimeoutException extends AppException {
   const TimeoutException({
-    required String message,
-    int? statusCode,
-    dynamic data,
-  }) : super(message: message, statusCode: statusCode, data: data);
+    required super.message,
+    super.statusCode,
+    super.data,
+  });
 }
 
 class SecurityException extends AppException {
   const SecurityException({
-    required String message,
-    int? statusCode,
-    dynamic data,
-  }) : super(message: message, statusCode: statusCode, data: data);
+    required super.message,
+    super.statusCode,
+    super.data,
+  });
 }
 
 class AIException extends AppException {
   const AIException({
-    required String message,
-    int? statusCode,
-    dynamic data,
-  }) : super(message: message, statusCode: statusCode, data: data);
+    required super.message,
+    super.statusCode,
+    super.data,
+  });
 }
 
 class AnalyticsException extends AppException {
   const AnalyticsException({
-    required String message,
-    int? statusCode,
-    dynamic data,
-  }) : super(message: message, statusCode: statusCode, data: data);
+    required super.message,
+    super.statusCode,
+    super.data,
+  });
 }
 
 class BiometricException extends AppException {
   const BiometricException({
-    required String message,
-    int? statusCode,
-    dynamic data,
-  }) : super(message: message, statusCode: statusCode, data: data);
+    required super.message,
+    super.statusCode,
+    super.data,
+  });
 }
 
 class NotificationException extends AppException {
   const NotificationException({
-    required String message,
-    int? statusCode,
-    dynamic data,
-  }) : super(message: message, statusCode: statusCode, data: data);
+    required super.message,
+    super.statusCode,
+    super.data,
+  });
 }
 
 class HealthcareFinanceException extends AppException {
   const HealthcareFinanceException({
-    required String message,
-    int? statusCode,
-    dynamic data,
-  }) : super(message: message, statusCode: statusCode, data: data);
+    required super.message,
+    super.statusCode,
+    super.data,
+  });
 }
 
 class PredictiveAnalyticsException extends AppException {
   const PredictiveAnalyticsException({
-    required String message,
-    int? statusCode,
-    dynamic data,
-  }) : super(message: message, statusCode: statusCode, data: data);
+    required super.message,
+    super.statusCode,
+    super.data,
+  });
 }
 
 class QuantumSecurityException extends AppException {
   const QuantumSecurityException({
-    required String message,
-    int? statusCode,
-    dynamic data,
-  }) : super(message: message, statusCode: statusCode, data: data);
+    required super.message,
+    super.statusCode,
+    super.data,
+  });
 }

@@ -220,7 +220,7 @@ class AuthRepositoryImpl implements AuthRepository {
         final updatedUser = currentUser.copyWith(
           firstName: user.firstName,
           lastName: user.lastName,
-          phoneNumber: user.phoneNumber,
+          phoneNumber: user.phoneNumber?.value,
         );
         await localDataSource.cacheUser(updatedUser);
       }

@@ -25,13 +25,17 @@ class WalletOverviewScreen extends ConsumerWidget {
       ),
       body: Builder(
         builder: (context) {
-          if (walletState is WalletLoading || walletState is WalletInitial) {
+          if (walletState.isLoading && walletState.wallet == null) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (walletState is WalletLoaded) {
+          if (walletState.errorMessage != null && walletState.wallet == null) {
+            return Center(child: Text(walletState.errorMessage!));
+          }
+          if (walletState.wallet != null) {
             return Column(
               children: [
-                Text('Balance: \${walletState.wallet.balance} \${walletState.wallet.currency}'),
+                Text(
+                    'Balance: ${walletState.wallet!.balance} ${walletState.wallet!.currency}'),
                 Expanded(
                   child: ListView.builder(
                     itemCount: walletState.transactions.length,
@@ -40,9 +44,10 @@ class WalletOverviewScreen extends ConsumerWidget {
                       return ListTile(
                         title: Text(transaction.description),
                         subtitle: Text(transaction.date.toString()),
-                        trailing: Text('\${transaction.amount}'),
+                        trailing: Text('${transaction.amount}'),
                         onTap: () {
-                          context.push('/transaction-details', extra: transaction);
+                          context.push('/transaction-details',
+                              extra: transaction);
                         },
                       );
                     },
@@ -51,10 +56,7 @@ class WalletOverviewScreen extends ConsumerWidget {
               ],
             );
           }
-          if (walletState is WalletError) {
-            return Center(child: Text(walletState.message));
-          }
-          return const SizedBox.shrink();
+          return const Center(child: Text('No wallet data found'));
         },
       ),
     );

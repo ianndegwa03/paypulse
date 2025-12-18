@@ -17,64 +17,64 @@ abstract class Failure extends Equatable {
 
 class ServerFailure extends Failure {
   const ServerFailure({
-    String message = 'Server error occurred',
-    int? code,
-    dynamic data,
-  }) : super(message: message, code: code, data: data);
+    super.message = 'Server error occurred',
+    super.code,
+    super.data,
+  });
 }
 
 class NetworkFailure extends Failure {
   const NetworkFailure({
-    String message = 'No internet connection',
-    int? code,
-    dynamic data,
-  }) : super(message: message, code: code, data: data);
+    super.message = 'No internet connection',
+    super.code,
+    super.data,
+  });
 }
 
 class CacheFailure extends Failure {
   const CacheFailure({
-    String message = 'Cache error occurred',
-    int? code,
-    dynamic data,
-  }) : super(message: message, code: code, data: data);
+    super.message = 'Cache error occurred',
+    super.code,
+    super.data,
+  });
 }
 
 class AuthFailure extends Failure {
   const AuthFailure({
-    String message = 'Authentication failed',
-    int? code,
-    dynamic data,
-  }) : super(message: message, code: code, data: data);
+    super.message = 'Authentication failed',
+    super.code,
+    super.data,
+  });
 }
 
 class ValidationFailure extends Failure {
   const ValidationFailure({
-    String message = 'Validation failed',
-    int? code,
-    dynamic data,
-  }) : super(message: message, code: code, data: data);
+    super.message = 'Validation failed',
+    super.code,
+    super.data,
+  });
 }
 
 class PermissionFailure extends Failure {
   const PermissionFailure({
-    String message = 'Permission denied',
-    int? code,
-    dynamic data,
-  }) : super(message: message, code: code, data: data);
+    super.message = 'Permission denied',
+    super.code,
+    super.data,
+  });
 }
 
 class TimeoutFailure extends Failure {
   const TimeoutFailure({
-    String message = 'Request timeout',
-    int? code,
-    dynamic data,
-  }) : super(message: message, code: code, data: data);
+    super.message = 'Request timeout',
+    super.code,
+    super.data,
+  });
 }
 
 class GenericFailure extends Failure {
   const GenericFailure({
-    String message = 'An error occurred',
-    int? code,
-    dynamic data,
-  }) : super(message: message, code: code, data: data);
+    super.message = 'An error occurred',
+    super.code,
+    super.data,
+  });
 }

@@ -18,7 +18,7 @@ abstract class BaseRepository {
       if (requiresInternet) {
         final isConnected = await networkInfo.isConnected;
         if (!isConnected) {
-          return Left(NetworkFailure());
+          return const Left(NetworkFailure());
         }
       }
 
@@ -42,7 +42,7 @@ abstract class BaseRepository {
     } on AppException catch (e) {
       return Left(GenericFailure(message: e.message));
     } catch (e) {
-      return Left(GenericFailure(message: 'An unexpected error occurred'));
+      return const Left(GenericFailure(message: 'An unexpected error occurred'));
     }
   }
 }

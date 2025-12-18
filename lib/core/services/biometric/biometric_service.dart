@@ -1,4 +1,5 @@
 import 'package:local_auth/local_auth.dart';
+import 'package:logger/logger.dart';
 import 'package:paypulse/core/errors/exceptions.dart';
 import 'package:paypulse/core/security/storage/secure_storage_service.dart';
 
@@ -16,6 +17,7 @@ abstract class BiometricService {
 class BiometricServiceImpl implements BiometricService {
   final LocalAuthentication _localAuth;
   final SecureStorageService _secureStorage;
+  final Logger _logger = Logger();
   
   BiometricServiceImpl({
     LocalAuthentication? localAuth,
@@ -48,10 +50,6 @@ class BiometricServiceImpl implements BiometricService {
       
       final didAuthenticate = await _localAuth.authenticate(
         localizedReason: reason,
-        options: const AuthenticationOptions(
-          stickyAuth: true,
-          biometricOnly: true,
-        ),
       );
       
       return didAuthenticate;
@@ -211,7 +209,7 @@ class BiometricServiceImpl implements BiometricService {
       await saveBiometricCredentials(userId, authToken);
       
       // Log the setup
-      print('Biometric authentication setup completed for user: $userId');
+      _logger.d('Biometric authentication setup completed for user: $userId');
     } catch (e) {
       throw BiometricException(
         message: 'Failed to setup biometric: $e',
@@ -223,8 +221,8 @@ class BiometricServiceImpl implements BiometricService {
 
 class BiometricException extends AppException {
   BiometricException({
-    required String message,
-    int? statusCode,
-    dynamic data,
-  }) : super(message: message, statusCode: statusCode, data: data);
+    required super.message,
+    super.statusCode,
+    super.data,
+  });
 }

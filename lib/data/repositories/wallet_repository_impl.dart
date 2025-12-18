@@ -33,14 +33,15 @@ class WalletRepositoryImpl implements WalletRepository {
   @override
   Future<Either<Failure, Wallet>> getWallet() async {
     try {
-      if (_userId.isEmpty)
-        return Left(AuthFailure(message: 'User not authenticated'));
+      if (_userId.isEmpty) {
+        return const Left(AuthFailure(message: 'User not authenticated'));
+      }
 
       final wallet = await _dataSource.getWallet(_userId);
       return Right(wallet);
     } catch (e) {
       if (e.toString().contains('Wallet not found')) {
-        return Left(CacheFailure(message: 'Wallet not found'));
+        return const Left(CacheFailure(message: 'Wallet not found'));
       }
       return Left(ServerFailure(message: 'Failed to get wallet: $e'));
     }
@@ -49,8 +50,9 @@ class WalletRepositoryImpl implements WalletRepository {
   @override
   Future<Either<Failure, void>> addMoney(String amount, String currency) async {
     try {
-      if (_userId.isEmpty)
-        return Left(AuthFailure(message: 'User not authenticated'));
+      if (_userId.isEmpty) {
+        return const Left(AuthFailure(message: 'User not authenticated'));
+      }
 
       await _dataSource.addMoney(_userId, amount, currency);
       return const Right(null);
@@ -66,8 +68,9 @@ class WalletRepositoryImpl implements WalletRepository {
     required String currency,
   }) async {
     try {
-      if (_userId.isEmpty)
-        return Left(AuthFailure(message: 'User not authenticated'));
+      if (_userId.isEmpty) {
+        return const Left(AuthFailure(message: 'User not authenticated'));
+      }
 
       await _dataSource.transferMoney(
         userId: _userId,
@@ -85,8 +88,9 @@ class WalletRepositoryImpl implements WalletRepository {
   Future<Either<Failure, List<domain.Transaction>>> getTransactions(
       {int limit = 10, int offset = 0}) async {
     try {
-      if (_userId.isEmpty)
-        return Left(AuthFailure(message: 'User not authenticated'));
+      if (_userId.isEmpty) {
+        return const Left(AuthFailure(message: 'User not authenticated'));
+      }
 
       final transactions = await _dataSource.getTransactions(
         _userId,
@@ -102,8 +106,9 @@ class WalletRepositoryImpl implements WalletRepository {
   @override
   Future<Either<Failure, Map<String, dynamic>>> getWalletAnalytics() async {
     try {
-      if (_userId.isEmpty)
-        return Left(AuthFailure(message: 'User not authenticated'));
+      if (_userId.isEmpty) {
+        return const Left(AuthFailure(message: 'User not authenticated'));
+      }
 
       final analytics = await _dataSource.getWalletAnalytics(_userId);
       return Right(analytics);

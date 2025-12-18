@@ -41,7 +41,7 @@ class UserPreferenceManager {
   Future<Map<String, dynamic>> getPreferences(String userId) async {
     try {
       final allPreferences = await _getAllPreferences();
-      return allPreferences[userId] as Map<String, dynamic>? ?? {};
+      return allPreferences[userId] ?? {};
     } catch (e) {
       throw AIException(
         message: 'Failed to get preferences: $e',
@@ -295,3 +295,4 @@ class UserPreferenceManager {
       );
     }
   }
+}

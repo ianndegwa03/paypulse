@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:paypulse/app/features/auth/presentation/state/auth_notifier.dart';
-import 'package:paypulse/core/theme/app_theme.dart';
 import 'package:paypulse/core/utils/validators/email_validator.dart';
 import 'package:paypulse/core/utils/validators/password_validator.dart';
 import 'package:paypulse/core/widgets/buttons/primary_button.dart';

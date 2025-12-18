@@ -1,8 +1,6 @@
-import 'package:pointycastle/pointycastle.dart';
-import 'package:pointycastle/api.dart';
-import 'package:asn1lib/asn1lib.dart';
 import 'dart:convert';
 import 'dart:math';
+import 'package:logger/logger.dart';
 import 'package:paypulse/app/config/feature_flags.dart';
 import 'package:paypulse/core/errors/exceptions.dart';
 import 'package:get_it/get_it.dart';
@@ -28,6 +26,7 @@ abstract class QuantumSecurityService {
 class QuantumSecurityServiceImpl implements QuantumSecurityService {
   final KeyManager _keyManager;
   final DIConfig _config;
+  final Logger _logger = Logger();
 
   // Lattice-based cryptography parameters (simplified for demonstration)
   static const int _latticeDimension = 256;
@@ -395,8 +394,9 @@ class QuantumSecurityServiceImpl implements QuantumSecurityService {
 
   Future<String> _getCurrentKeyId() async {
     final keyData = await _keyManager.getDerivedKey('current_quantum_key');
-    if (keyData == null)
+    if (keyData == null) {
       throw QuantumSecurityException(message: 'No quantum keys found');
+    }
 
     final data = json.decode(keyData) as Map<String, dynamic>;
     return data['current_key_id'] as String;
@@ -431,7 +431,7 @@ class QuantumSecurityServiceImpl implements QuantumSecurityService {
   @override
   Future<void> rotateToQuantumResistantKeys() async {
     try {
-      print('Starting quantum-resistant key rotation...');
+      _logger.d('Starting quantum-resistant key rotation...');
 
       // Generate new quantum-resistant keys
       final newKeys = await generateQuantumResistantKeyPair();
@@ -454,7 +454,8 @@ class QuantumSecurityServiceImpl implements QuantumSecurityService {
   Future<void> _reencryptSensitiveData(String newPrivateKey) async {
     // Implementation would re-encrypt all sensitive data with new keys
     // This is a placeholder for the actual implementation
-    print('Re-encrypting sensitive data with new quantum-resistant keys...');
+    _logger
+        .d('Re-encrypting sensitive data with new quantum-resistant keys...');
     await Future.delayed(const Duration(milliseconds: 500));
   }
 
@@ -517,6 +518,8 @@ class QuantumSecurityModule {
 }
 
 class _MockQuantumSecurityService implements QuantumSecurityService {
+  final Logger _logger = Logger();
+
   @override
   Future<Map<String, dynamic>> generateQuantumResistantKeyPair() async {
     return {
@@ -572,12 +575,13 @@ class _MockQuantumSecurityService implements QuantumSecurityService {
 
   @override
   Future<void> rotateToQuantumResistantKeys() async {
-    print('Quantum security features disabled - skipping key rotation');
+    _logger.d('Quantum security features disabled - skipping key rotation');
   }
 }
 
 class QuantumKeyManager {
   final QuantumSecurityService _service;
+  final Logger _logger = Logger();
 
   QuantumKeyManager({required QuantumSecurityService service})
       : _service = service;
@@ -605,7 +609,7 @@ class QuantumKeyManager {
   Future<void> rotateKeysPeriodically() async {
     // Schedule periodic key rotation
     // This would be called from a background service
-    print('Scheduling periodic quantum key rotation...');
+    _logger.d('Scheduling periodic quantum key rotation...');
   }
 
   Future<Map<String, dynamic>> auditKeySecurity() async {
@@ -758,8 +762,8 @@ class PostQuantumMigrationService {
 
 class QuantumSecurityException extends AppException {
   QuantumSecurityException({
-    required String message,
-    int? statusCode,
-    dynamic data,
-  }) : super(message: message, statusCode: statusCode, data: data);
+    required super.message,
+    super.statusCode,
+    super.data,
+  });
 }

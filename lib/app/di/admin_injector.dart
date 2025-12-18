@@ -1,4 +1,4 @@
-import 'package:get_it/get_it.dart';
+import 'package:paypulse/app/di/injector.dart';
 import 'package:paypulse/app/di/config/di_config.dart';
 import 'package:paypulse/app/di/modules/core_module.dart';
 import 'package:paypulse/app/di/modules/auth_module.dart';
@@ -13,9 +13,7 @@ import 'package:paypulse/app/di/modules/savings_module.dart';
 import 'package:paypulse/app/di/modules/bills_module.dart';
 import 'package:paypulse/app/di/modules/gamification_module.dart';
 import 'package:paypulse/app/di/modules/social_module.dart';
-import 'package:paypulse/app/di/modules/admin_module.dart'; // Import AdminModule
-
-final GetIt getIt = GetIt.instance;
+import 'package:paypulse/app/di/modules/admin_module.dart';
 
 class AdminInjector {
   static Future<void> init({

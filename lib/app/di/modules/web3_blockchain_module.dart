@@ -105,7 +105,7 @@ class BlockchainClientImpl implements BlockchainClient {
             transaction.value.getValueInUnit(web3.EtherUnit.ether).toString(),
         'gas': transaction.gas,
         'gas_price': transaction.gasPrice
-            ?.getValueInUnit(web3.EtherUnit.gwei)
+            .getValueInUnit(web3.EtherUnit.gwei)
             .toString(),
         'nonce': transaction.nonce,
         'block_number': transaction.blockNumber.toString(),
@@ -158,10 +158,10 @@ class BlockchainClientImpl implements BlockchainClient {
 
 class Web3Exception extends AppException {
   Web3Exception({
-    required String message,
-    int? statusCode,
-    dynamic data,
-  }) : super(message: message, statusCode: statusCode, data: data);
+    required super.message,
+    super.statusCode,
+    super.data,
+  });
 }
 
 /// Module for providing Web3 blockchain dependencies

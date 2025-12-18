@@ -1,8 +1,10 @@
+import 'package:logger/logger.dart';
 import 'package:paypulse/core/errors/exceptions.dart';
 import 'package:paypulse/core/services/local_storage/secure_storage.dart';
 
 class KeyManager {
   static final KeyManager _instance = KeyManager._internal();
+  final Logger _logger = Logger();
   
   factory KeyManager() => _instance;
   
@@ -50,7 +52,7 @@ class KeyManager {
     try {
       final key = await _secureStorage.read('master_key');
       if (key == null) {
-        throw SecurityException(message: 'Master key not found');
+        throw const SecurityException(message: 'Master key not found');
       }
       return key;
     } catch (e) {
@@ -65,7 +67,7 @@ class KeyManager {
     try {
       final iv = await _secureStorage.read('encryption_iv');
       if (iv == null) {
-        throw SecurityException(message: 'Encryption IV not found');
+        throw const SecurityException(message: 'Encryption IV not found');
       }
       return iv;
     } catch (e) {
@@ -197,7 +199,7 @@ class KeyManager {
   
   void _logSecurityEvent(String event) {
     // Log security events (implement with your logging system)
-    print('Security Event: $event');
+    _logger.d('Security Event: $event');
   }
   
   // Cleanup

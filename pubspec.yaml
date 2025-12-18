@@ -47,6 +47,8 @@ dependencies:
   pointycastle: ^3.9.1
   asn1lib: ^1.6.5
   fl_chart: ^0.66.1
+  json_annotation: ^4.8.1
+  logger: ^2.6.2
 
 dev_dependencies:
   flutter_test:
@@ -57,6 +59,7 @@ dev_dependencies:
   mocktail: ^1.0.1
   flutter_launcher_icons: ^0.13.1
   flutter_native_splash: ^2.3.1
+  json_serializable: ^6.7.1
 
 flutter:
   uses-material-design: true

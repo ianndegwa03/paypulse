@@ -312,6 +312,6 @@ class SecureStorageServiceImpl implements SecureStorageService {
   String _generateSessionId() {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final random = DateTime.now().microsecondsSinceEpoch;
-    return '${timestamp}_${random}';
+    return '${timestamp}_$random';
   }
 }

@@ -66,3 +66,46 @@ class WalletModelAdapter extends TypeAdapter<WalletModel> {
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
+
+// **************************************************************************
+// JsonSerializableGenerator
+// **************************************************************************
+
+WalletModel _$WalletModelFromJson(Map<String, dynamic> json) => WalletModel(
+      id: json['id'] as String,
+      userId: json['user_id'] as String,
+      name: json['name'] as String,
+      balance: (json['balance'] as num).toDouble(),
+      currency: $enumDecode(_$CurrencyTypeEnumMap, json['currency']),
+      isDefault: json['is_default'] as bool? ?? false,
+      createdAt: DateTime.parse(json['created_at'] as String),
+      updatedAt: DateTime.parse(json['updated_at'] as String),
+      transactions: (json['transactions'] as List<dynamic>?)
+              ?.map((e) => TransactionModel.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+      metadata: json['metadata'] as Map<String, dynamic>? ?? const {},
+    );
+
+Map<String, dynamic> _$WalletModelToJson(WalletModel instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'user_id': instance.userId,
+      'name': instance.name,
+      'balance': instance.balance,
+      'currency': _$CurrencyTypeEnumMap[instance.currency]!,
+      'is_default': instance.isDefault,
+      'created_at': instance.createdAt.toIso8601String(),
+      'updated_at': instance.updatedAt.toIso8601String(),
+      'transactions': instance.transactions,
+      'metadata': instance.metadata,
+    };
+
+const _$CurrencyTypeEnumMap = {
+  CurrencyType.USD: 'USD',
+  CurrencyType.EUR: 'EUR',
+  CurrencyType.GBP: 'GBP',
+  CurrencyType.JPY: 'JPY',
+  CurrencyType.ETH: 'ETH',
+  CurrencyType.BTC: 'BTC',
+};

@@ -10,7 +10,6 @@ class AppTheme {
       primary: AppColors.primary,
       secondary: AppColors.secondary,
       surface: AppColors.surfaceLight,
-      background: AppColors.backgroundLight,
       error: AppColors.error,
     ),
     scaffoldBackgroundColor: AppColors.backgroundLight,
@@ -72,7 +71,7 @@ class AppTheme {
         color: AppColors.textSecondary,
       ),
     ),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       color: AppColors.surfaceLight,
       elevation: 1,
       shape: RoundedRectangleBorder(
@@ -94,7 +93,6 @@ class AppTheme {
       primary: AppColors.primary,
       secondary: AppColors.secondary,
       surface: AppColors.surfaceDark,
-      background: AppColors.backgroundDark,
       error: AppColors.error,
     ),
     scaffoldBackgroundColor: AppColors.backgroundDark,
@@ -153,7 +151,7 @@ class AppTheme {
         color: AppColors.textSecondaryDark,
       ),
     ),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       color: AppColors.surfaceDark,
       elevation: 1,
       shape: RoundedRectangleBorder(

@@ -3,9 +3,9 @@ import 'package:paypulse/domain/entities/category_entity.dart';
 
 class CategoryModel extends Category {
   const CategoryModel({
-    required String id,
-    required String name,
-  }) : super(id: id, name: name);
+    required super.id,
+    required super.name,
+  });
 
   factory CategoryModel.fromSnapshot(DocumentSnapshot snap) {
     return CategoryModel(

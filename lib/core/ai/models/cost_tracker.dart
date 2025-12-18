@@ -1,8 +1,10 @@
+import 'package:logger/logger.dart';
 import 'package:paypulse/core/services/local_storage/storage_service.dart';
 
 class CostTracker {
   final StorageService _storage;
   static const String _storageKey = 'ai_cost_tracking';
+  final Logger _logger = Logger();
   
   final Map<String, double> _modelCosts = {
     'gpt-4-turbo-preview': 0.01, // $0.01 per 1K tokens
@@ -49,7 +51,7 @@ class CostTracker {
       
       await _storage.saveObject(_storageKey, data);
     } catch (e) {
-      print('Failed to save cost data: $e');
+      _logger.e('Failed to save cost data: $e');
     }
   }
   
@@ -73,13 +75,7 @@ class CostTracker {
     
     await _saveCostData();
     
-    print('AI Cost Tracking:');
-    print('  Model: $model');
-    print('  Prompt tokens: $promptTokens');
-    print('  Completion tokens: $completionTokens');
-    print('  Total tokens: $totalTokens');
-    print('  Cost: \$${cost.toStringAsFixed(4)}');
-    print('  Running total: \$${_totalCost.toStringAsFixed(2)}');
+    _logger.d('AI Cost Tracking - Model: $model, Prompt tokens: $promptTokens, Completion tokens: $completionTokens, Total tokens: $totalTokens, Cost: \$${cost.toStringAsFixed(4)}, Running total: \$${_totalCost.toStringAsFixed(2)}');
   }
   
   Map<String, dynamic> getCostSummary() {

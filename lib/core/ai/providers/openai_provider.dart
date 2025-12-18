@@ -10,7 +10,7 @@ class OpenAIProvider {
 
   Future<String> generateText(String prompt) async {
     if (_apiKey == null || _apiKey!.isEmpty) {
-      throw ServerException(message: 'OpenAI API key not configured');
+      throw const ServerException(message: 'OpenAI API key not configured');
     }
 
     try {

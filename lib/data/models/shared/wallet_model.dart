@@ -67,11 +67,11 @@ class WalletModel {
   Map<String, dynamic> toJson() => _$WalletModelToJson(this);
 
   double get totalIncome => transactions
-      .where((t) => t.type == TransactionType.income)
+      .where((t) => t.type == TransactionType.credit)
       .fold(0.0, (sum, t) => sum + t.amount);
 
   double get totalExpense => transactions
-      .where((t) => t.type == TransactionType.expense)
+      .where((t) => t.type == TransactionType.debit)
       .fold(0.0, (sum, t) => sum + t.amount);
 
   List<TransactionModel> get recentTransactions =>

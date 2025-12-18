@@ -5,10 +5,10 @@ import 'package:paypulse/domain/entities/enums.dart';
 
 class WalletModel extends Wallet {
   const WalletModel({
-    required String id,
-    required double balance,
-    required CurrencyType currency,
-  }) : super(id: id, balance: balance, currency: currency);
+    required super.id,
+    required super.balance,
+    required super.currency,
+  });
 
   factory WalletModel.fromSnapshot(DocumentSnapshot snap) {
     return WalletModel(

@@ -1,5 +1,6 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:logger/logger.dart';
 import 'package:paypulse/app/config/app_config.dart';
 import 'package:paypulse/core/errors/exceptions.dart';
 
@@ -25,6 +26,7 @@ abstract class NotificationService {
 class NotificationServiceImpl implements NotificationService {
   final FirebaseMessaging _firebaseMessaging;
   final FlutterLocalNotificationsPlugin _localNotifications;
+  final Logger _logger = Logger();
 
   static const AndroidNotificationDetails _androidPlatformChannelSpecifics =
       AndroidNotificationDetails(
@@ -35,7 +37,6 @@ class NotificationServiceImpl implements NotificationService {
     priority: Priority.high,
     ticker: 'ticker',
     enableVibration: true,
-    vibrationPattern: Int64List.fromList([0, 250, 250, 250]),
     playSound: true,
   );
 
@@ -85,21 +86,21 @@ class NotificationServiceImpl implements NotificationService {
     );
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      print('User granted permission');
+      _logger.d('User granted permission');
     } else if (settings.authorizationStatus ==
         AuthorizationStatus.provisional) {
-      print('User granted provisional permission');
+      _logger.d('User granted provisional permission');
     } else {
-      print('User declined or has not accepted permission');
+      _logger.d('User declined or has not accepted permission');
     }
 
     // Get token
     final token = await _firebaseMessaging.getToken();
-    print('FCM Token: $token');
+    _logger.d('FCM Token: $token');
 
     // Handle token refresh
     _firebaseMessaging.onTokenRefresh.listen((newToken) {
-      print('FCM Token refreshed: $newToken');
+      _logger.d('FCM Token refreshed: $newToken');
       // Send new token to your server
     });
   }
@@ -123,7 +124,6 @@ class NotificationServiceImpl implements NotificationService {
 
     await _localNotifications.initialize(
       initializationSettings,
-      onSelectNotification: _onSelectNotification,
     );
   }
 
@@ -157,7 +157,7 @@ class NotificationServiceImpl implements NotificationService {
 
   Future<void> _onSelectNotification(String? payload) async {
     if (payload != null) {
-      print('Notification payload: $payload');
+      _logger.d('Notification payload: $payload');
       // Handle notification tap
       // You might want to navigate to a specific screen based on payload
     }
@@ -205,10 +205,14 @@ class NotificationServiceImpl implements NotificationService {
   }) async {
     try {
       final notificationDetails = NotificationDetails(
-        android: _androidPlatformChannelSpecifics.copyWith(
-          channelId: channelId ?? _androidPlatformChannelSpecifics.channelId,
-          channelName:
-              channelName ?? _androidPlatformChannelSpecifics.channelName,
+        android: AndroidNotificationDetails(
+          channelId ?? _androidPlatformChannelSpecifics.channelId ?? 'default',
+          channelName ?? _androidPlatformChannelSpecifics.channelName ?? 'Default',
+          priority: _androidPlatformChannelSpecifics.priority,
+          importance: _androidPlatformChannelSpecifics.importance,
+          enableVibration: _androidPlatformChannelSpecifics.enableVibration,
+          vibrationPattern: _androidPlatformChannelSpecifics.vibrationPattern,
+          playSound: _androidPlatformChannelSpecifics.playSound,
         ),
         iOS: const DarwinNotificationDetails(
           presentAlert: true,
@@ -222,7 +226,7 @@ class NotificationServiceImpl implements NotificationService {
         title,
         body,
         notificationDetails,
-        payload: payload != null ? payload.toString() : null,
+        payload: payload?.toString(),
       );
     } catch (e) {
       throw NotificationException(
@@ -252,7 +256,7 @@ class NotificationServiceImpl implements NotificationService {
   Future<void> subscribeToTopic(String topic) async {
     try {
       await _firebaseMessaging.subscribeToTopic(topic);
-      print('Subscribed to topic: $topic');
+      _logger.d('Subscribed to topic: $topic');
     } catch (e) {
       throw NotificationException(
         message: 'Failed to subscribe to topic: $e',
@@ -265,7 +269,7 @@ class NotificationServiceImpl implements NotificationService {
   Future<void> unsubscribeFromTopic(String topic) async {
     try {
       await _firebaseMessaging.unsubscribeFromTopic(topic);
-      print('Unsubscribed from topic: $topic');
+      _logger.d('Unsubscribed from topic: $topic');
     } catch (e) {
       throw NotificationException(
         message: 'Failed to unsubscribe from topic: $e',
@@ -275,15 +279,14 @@ class NotificationServiceImpl implements NotificationService {
   }
 
   @override
-  Stream<RemoteMessage> get onMessage => _firebaseMessaging.onMessage;
+  Stream<RemoteMessage> get onMessage => FirebaseMessaging.onMessage;
 
   @override
   Stream<RemoteMessage> get onMessageOpenedApp =>
-      _firebaseMessaging.onMessageOpenedApp;
+      FirebaseMessaging.onMessageOpenedApp;
 
   @override
-  Stream<RemoteMessage> get onBackgroundMessage =>
-      FirebaseMessaging.onBackgroundMessage(_firebaseBackgroundMessageHandler);
+  Stream<RemoteMessage> get onBackgroundMessage => const Stream.empty();
 
   // Custom notification methods for PayPulse
 
@@ -371,20 +374,20 @@ class NotificationServiceImpl implements NotificationService {
 }
 
 Future<void> _firebaseBackgroundMessageHandler(RemoteMessage message) async {
-  print('Handling a background message: ${message.messageId}');
+  Logger().d('Handling a background message: ${message.messageId}');
 
   // You can handle background messages here
   // For example, show a local notification
   final notification = message.notification;
   if (notification != null) {
-    print('Notification: ${notification.title} - ${notification.body}');
+    Logger().d('Notification: ${notification.title} - ${notification.body}');
   }
 }
 
 class NotificationException extends AppException {
   NotificationException({
-    required String message,
-    int? statusCode,
-    dynamic data,
-  }) : super(message: message, statusCode: statusCode, data: data);
+    required super.message,
+    super.statusCode,
+    super.data,
+  });
 }

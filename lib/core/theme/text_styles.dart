@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:paypulse/core/theme/app_colors.dart';
 
 class TextStyles {
   static const TextStyle displayLarge = TextStyle(

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:get_it/get_it.dart';
+import 'package:paypulse/app/di/injector.dart';
+import 'package:paypulse/core/logging/logger_service.dart';
 import 'package:paypulse/domain/use_cases/auth/login_use_case.dart';
 import 'package:paypulse/domain/use_cases/auth/register_use_case.dart';
 import 'package:paypulse/domain/use_cases/auth/logout_use_case.dart';
@@ -9,6 +10,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   final LoginUseCase loginUseCase;
   final RegisterUseCase registerUseCase;
   final LogoutUseCase logoutUseCase;
+  final _logger = LoggerService.instance;
 
   AuthNotifier({
     required this.loginUseCase,
@@ -24,12 +26,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
       result.fold(
         (failure) {
+          _logger.e('Login failed: ${failure.message}', tag: 'AuthNotifier');
           state = state.copyWith(
             isLoading: false,
             errorMessage: failure.message,
           );
         },
         (user) {
+          _logger.i('User logged in successfully: ${user.id}',
+              tag: 'AuthNotifier');
           state = state.copyWith(
             isAuthenticated: true,
             userId: user.id,
@@ -40,6 +45,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         },
       );
     } catch (e) {
+      _logger.e('Unexpected error during login: $e', tag: 'AuthNotifier');
       state = state.copyWith(
         isLoading: false,
         errorMessage: e.toString(),
@@ -65,12 +71,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
       result.fold(
         (failure) {
+          _logger.e('Registration failed: ${failure.message}',
+              tag: 'AuthNotifier');
           state = state.copyWith(
             isLoading: false,
             errorMessage: failure.message,
           );
         },
         (user) {
+          _logger.i('User registered successfully: ${user.id}',
+              tag: 'AuthNotifier');
           state = state.copyWith(
             isAuthenticated: true,
             userId: user.id,
@@ -82,6 +92,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
         },
       );
     } catch (e) {
+      _logger.e('Unexpected error during registration: $e',
+          tag: 'AuthNotifier');
       state = state.copyWith(
         isLoading: false,
         errorMessage: e.toString(),
@@ -97,12 +109,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
       result.fold(
         (failure) {
+          _logger.e('Logout failed: ${failure.message}', tag: 'AuthNotifier');
           state = state.copyWith(
             isLoading: false,
             errorMessage: failure.message,
           );
         },
         (_) {
+          _logger.i('User logged out successfully', tag: 'AuthNotifier');
           state = const AuthState(
             isAuthenticated: false,
             isLoading: false,
@@ -110,6 +124,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         },
       );
     } catch (e) {
+      _logger.e('Unexpected error during logout: $e', tag: 'AuthNotifier');
       state = state.copyWith(
         isLoading: false,
         errorMessage: e.toString(),
@@ -122,8 +137,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
 final authNotifierProvider =
     StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier(
-    loginUseCase: GetIt.instance<LoginUseCase>(),
-    registerUseCase: GetIt.instance<RegisterUseCase>(),
-    logoutUseCase: GetIt.instance<LogoutUseCase>(),
+    loginUseCase: getIt<LoginUseCase>(),
+    registerUseCase: getIt<RegisterUseCase>(),
+    logoutUseCase: getIt<LogoutUseCase>(),
   );
 });

@@ -19,13 +19,9 @@ class SecureStorageImpl implements SecureStorage {
     accessibility: KeychainAccessibility.unlocked,
   );
   
-  static const LinuxOptions _linuxOptions = LinuxOptions(
-    applicationId: 'com.paypulse.app',
-  );
+  static const LinuxOptions _linuxOptions = LinuxOptions();
   
-  static const WindowsOptions _windowsOptions = WindowsOptions(
-    applicationId: 'com.paypulse.app',
-  );
+  static const WindowsOptions _windowsOptions = WindowsOptions();
   
   late final FlutterSecureStorage _storage;
 

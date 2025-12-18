@@ -463,8 +463,8 @@ class AppDatabaseImpl implements AppDatabase {
 
 class DatabaseException extends AppException {
   DatabaseException({
-    required String message,
-    int? statusCode,
-    dynamic data,
-  }) : super(message: message, statusCode: statusCode, data: data);
+    required super.message,
+    super.statusCode,
+    super.data,
+  });
 }

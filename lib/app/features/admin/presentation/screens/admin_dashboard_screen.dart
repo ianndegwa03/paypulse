@@ -22,8 +22,8 @@ class AdminDashboardScreen extends ConsumerWidget {
       ),
       body: state.isLoading
           ? const Center(child: CircularProgressIndicator())
-          : state.error != null
-              ? Center(child: Text('Error: ${state.error}'))
+          : state.errorMessage != null
+              ? Center(child: Text('Error: ${state.errorMessage}'))
               : _buildSettingsList(context, state.settings!, notifier),
     );
   }
@@ -80,7 +80,7 @@ class AdminDashboardScreen extends ConsumerWidget {
                 'Restrict access to the app for all non-admin users'),
             value: settings.isMaintenanceMode,
             onChanged: (val) => notifier.toggleFeature('maintenance'),
-            activeColor: Colors.red,
+            activeThumbColor: Colors.red,
           ),
         ),
       ],

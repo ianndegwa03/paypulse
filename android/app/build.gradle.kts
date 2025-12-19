@@ -14,6 +14,7 @@ android {
     ndkVersion = "27.0.12077973"
 
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true 
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
@@ -32,6 +33,9 @@ android {
 
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        // Required for desugaring
+        multiDexEnabled = true
     }
 
     buildTypes {
@@ -40,8 +44,21 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+
+    configurations.all {
+        resolutionStrategy {
+            // Force versions compatible with AGP 8.7.3
+            force("androidx.core:core:1.10.0")
+            force("androidx.core:core-ktx:1.10.0")
+        }
+    }
 }
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // ADD DESUGARING DEPENDENCY HERE
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }

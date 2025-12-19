@@ -98,6 +98,9 @@ class NotificationServiceImpl implements NotificationService {
     final token = await _firebaseMessaging.getToken();
     _logger.d('FCM Token: $token');
 
+    // Set background message handler
+    FirebaseMessaging.onBackgroundMessage(_firebaseBackgroundMessageHandler);
+
     // Handle token refresh
     _firebaseMessaging.onTokenRefresh.listen((newToken) {
       _logger.d('FCM Token refreshed: $newToken');
@@ -155,14 +158,6 @@ class NotificationServiceImpl implements NotificationService {
         ?.createNotificationChannel(channel);
   }
 
-  Future<void> _onSelectNotification(String? payload) async {
-    if (payload != null) {
-      _logger.d('Notification payload: $payload');
-      // Handle notification tap
-      // You might want to navigate to a specific screen based on payload
-    }
-  }
-
   @override
   Future<String?> getFCMToken() async {
     try {
@@ -204,21 +199,20 @@ class NotificationServiceImpl implements NotificationService {
     String? channelName,
   }) async {
     try {
+      final effectiveChannelId = channelId ?? _androidPlatformChannelSpecifics.channelId;
+      final effectiveChannelName = channelName ?? _androidPlatformChannelSpecifics.channelName;
+
       final notificationDetails = NotificationDetails(
         android: AndroidNotificationDetails(
-          channelId ?? _androidPlatformChannelSpecifics.channelId ?? 'default',
-          channelName ?? _androidPlatformChannelSpecifics.channelName ?? 'Default',
+          effectiveChannelId,
+          effectiveChannelName,
           priority: _androidPlatformChannelSpecifics.priority,
           importance: _androidPlatformChannelSpecifics.importance,
           enableVibration: _androidPlatformChannelSpecifics.enableVibration,
           vibrationPattern: _androidPlatformChannelSpecifics.vibrationPattern,
           playSound: _androidPlatformChannelSpecifics.playSound,
         ),
-        iOS: const DarwinNotificationDetails(
-          presentAlert: true,
-          presentBadge: true,
-          presentSound: true,
-        ),
+        iOS: _iosPlatformChannelSpecifics,
       );
 
       await _localNotifications.show(

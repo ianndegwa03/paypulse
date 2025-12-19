@@ -1,6 +1,3 @@
-import 'package:paypulse/core/ai/ai_client.dart';
-import 'package:paypulse/core/analytics/analytics_service.dart';
-import 'package:paypulse/core/services/local_storage/storage_service.dart';
 import 'package:paypulse/app/di/config/di_config.dart';
 import 'package:paypulse/app/config/feature_flags.dart';
 import 'package:paypulse/core/errors/exceptions.dart';
@@ -25,19 +22,10 @@ abstract class HealthcareFinanceService {
 
 class HealthcareFinanceServiceImpl implements HealthcareFinanceService {
   final DIConfig _config;
-  final AIClient _aiClient;
-  final AnalyticsService _analyticsService;
-  final StorageService _storageService;
 
   HealthcareFinanceServiceImpl({
     required DIConfig config,
-    required AIClient aiClient,
-    required AnalyticsService analyticsService,
-    required StorageService storageService,
-  })  : _config = config,
-        _aiClient = aiClient,
-        _analyticsService = analyticsService,
-        _storageService = storageService;
+  })  : _config = config;
 
   @override
   Future<Map<String, dynamic>> analyzeMedicalExpenses(
@@ -100,9 +88,6 @@ class HealthcareFinanceModule {
     if (!getIt.isRegistered<HealthcareFinanceService>()) {
       getIt.registerLazySingleton<HealthcareFinanceService>(
         () => HealthcareFinanceServiceImpl(
-          aiClient: getIt<AIClient>(),
-          analyticsService: getIt<AnalyticsService>(),
-          storageService: getIt<StorageService>(),
           config: getIt<DIConfig>(),
         ),
       );

@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'package:ml_algo/ml_algo.dart';
 import 'package:ml_dataframe/ml_dataframe.dart';
-import 'package:paypulse/core/ai/ai_client.dart';
 import 'package:paypulse/core/analytics/analytics_service.dart';
 import 'package:paypulse/core/services/local_storage/storage_service.dart';
 import 'package:paypulse/app/di/config/di_config.dart';
@@ -21,17 +20,14 @@ abstract class PredictiveAnalyticsService {
 
 class PredictiveAnalyticsServiceImpl implements PredictiveAnalyticsService {
   final DIConfig _config;
-  final AIClient _aiClient;
   final AnalyticsService _analyticsService;
   final StorageService _storageService;
   
   PredictiveAnalyticsServiceImpl({
     required DIConfig config,
-    required AIClient aiClient,
     required AnalyticsService analyticsService,
     required StorageService storageService,
   })  : _config = config,
-        _aiClient = aiClient,
         _analyticsService = analyticsService,
         _storageService = storageService;
   
@@ -298,8 +294,8 @@ class PredictiveAnalyticsServiceImpl implements PredictiveAnalyticsService {
     try {
       // Get model coefficients and performance metrics
       return {
-        'coefficients': model.coefficients.toList() ?? [],
-        'intercept': model.coefficients.first ?? 0,
+        'coefficients': model.coefficients.toList(),
+        'intercept': model.coefficients.first,
         'iterations': model.iterationsLimit,
         'learning_rate': 0.01,
         'regularization': model.lambda,
@@ -916,7 +912,6 @@ class PredictiveAnalyticsModule {
              throw PredictiveAnalyticsException(message: 'Predictive analytics features are disabled');
          }
          return PredictiveAnalyticsServiceImpl(
-            aiClient: getIt<AIClient>(),
             analyticsService: getIt<AnalyticsService>(),
             storageService: getIt<StorageService>(),
             config: config,

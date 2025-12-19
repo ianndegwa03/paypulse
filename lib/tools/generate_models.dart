@@ -1,13 +1,13 @@
 import 'dart:io';
 import 'package:path/path.dart' as path;
+import 'package:logger/logger.dart';
 
 void main(List<String> arguments) {
+  final logger = Logger();
   final scriptDir = path.dirname(Platform.script.toFilePath());
   final projectRoot = path.normalize(path.join(scriptDir, '..'));
-  
-  print('Generating models...');
-  
-  // Run build_runner
+
+  logger.i('Generating models...');
   Process.runSync(
     'flutter',
     ['pub', 'run', 'build_runner', 'build', '--delete-conflicting-outputs'],
@@ -22,9 +22,9 @@ void main(List<String> arguments) {
     workingDirectory: projectRoot,
     runInShell: true,
   );
-  
-  print('Models generated successfully!');
-  
+
+  logger.i('Models generated successfully!');
+
   // Format generated files
   Process.runSync(
     'dart',
@@ -32,6 +32,6 @@ void main(List<String> arguments) {
     workingDirectory: projectRoot,
     runInShell: true,
   );
-  
-  print('Code formatted!');
+
+  logger.i('Code formatted!');
 }

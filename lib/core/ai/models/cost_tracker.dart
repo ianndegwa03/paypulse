@@ -144,7 +144,6 @@ class CostTracker {
     }
     
     final now = DateTime.now();
-    final startOfMonth = DateTime(now.year, now.month, 1);
     final daysInMonth = DateTime(now.year, now.month + 1, 0).day;
     final daysElapsed = now.day;
     final daysRemaining = daysInMonth - daysElapsed;

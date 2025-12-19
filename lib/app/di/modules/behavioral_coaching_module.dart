@@ -975,7 +975,7 @@ class BehavioralCoachingModule {
     // Register HabitTracker
     if (!getIt.isRegistered<HabitTracker>()) {
       getIt.registerLazySingleton<HabitTracker>(
-        () => HabitTracker(service: getIt<BehavioralCoachingService>()),
+        () => HabitTracker(),
       );
     }
 
@@ -1060,14 +1060,10 @@ class _MockBehavioralCoachingService implements BehavioralCoachingService {
 }
 
 class HabitTracker {
-  final BehavioralCoachingService _service;
-
-  HabitTracker({required BehavioralCoachingService service})
-      : _service = service;
+  HabitTracker();
 
   Future<Map<String, dynamic>> trackDailyHabits(String userId) async {
     try {
-      final userData = await _loadUserData(userId);
       final today = DateTime.now().toIso8601String().split('T')[0];
 
       const dailyHabits = [
@@ -1097,11 +1093,6 @@ class HabitTracker {
         data: {'userId': userId, 'error': e.toString()},
       );
     }
-  }
-
-  Future<Map<String, dynamic>> _loadUserData(String userId) async {
-    // Simplified user data loading
-    return {'user_id': userId};
   }
 
   Future<int> _calculateStreak(

@@ -445,11 +445,6 @@ class AppDatabaseImpl implements AppDatabase {
   
   Future<void> backup(String backupPath) async {
     try {
-      final db = await database;
-      final databasesPath = await getDatabasesPath();
-      final originalPath = join(databasesPath, _databaseName);
-      
-      // Copy database file
       // Note: This is a simplified version
       // In production, you might want to use proper backup strategy
     } catch (e) {

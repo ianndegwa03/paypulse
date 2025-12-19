@@ -28,10 +28,6 @@ class QuantumSecurityServiceImpl implements QuantumSecurityService {
   final DIConfig _config;
   final Logger _logger = Logger();
 
-  // Lattice-based cryptography parameters (simplified for demonstration)
-  static const int _latticeDimension = 256;
-  static const int _modulus = 7681;
-
   QuantumSecurityServiceImpl({
     required KeyManager keyManager,
     required DIConfig config,
@@ -89,9 +85,6 @@ class QuantumSecurityServiceImpl implements QuantumSecurityService {
     required String publicKey,
   }) async {
     final keyId = 'quantum_${DateTime.now().millisecondsSinceEpoch}';
-
-    // Derive encryption key for quantum keys
-    final encryptionKey = await _keyManager.generateDataKey('quantum_keys');
 
     // Store encrypted keys
     final encryptedPrivateKey = _encryptWithMasterKey(privateKey);
@@ -442,7 +435,7 @@ class QuantumSecurityServiceImpl implements QuantumSecurityService {
       // Update key rotation history
       await _updateKeyRotationHistory(newKeys);
 
-      print('Quantum-resistant key rotation completed successfully');
+      _logger.d('Quantum-resistant key rotation completed successfully');
     } catch (e) {
       throw QuantumSecurityException(
         message: 'Failed to rotate to quantum-resistant keys: $e',
@@ -510,7 +503,6 @@ class QuantumSecurityModule {
       getIt.registerLazySingleton<PostQuantumMigrationService>(
         () => PostQuantumMigrationService(
           quantumService: getIt<QuantumSecurityService>(),
-          keyManager: getIt<KeyManager>(),
         ),
       );
     }
@@ -646,17 +638,15 @@ class QuantumKeyManager {
 
 class PostQuantumMigrationService {
   final QuantumSecurityService _quantumService;
-  final KeyManager _keyManager;
+  final Logger _logger = Logger();
 
   PostQuantumMigrationService({
     required QuantumSecurityService quantumService,
-    required KeyManager keyManager,
-  })  : _quantumService = quantumService,
-        _keyManager = keyManager;
+  })  : _quantumService = quantumService;
 
   Future<Map<String, dynamic>> migrateToPostQuantum() async {
     try {
-      print('Starting post-quantum migration...');
+      _logger.d('Starting post-quantum migration...');
 
       // Step 1: Generate post-quantum keys
       final postQuantumKeys = await _quantumService.generatePostQuantumKeys();
@@ -679,7 +669,7 @@ class PostQuantumMigrationService {
         migrationResults,
       );
 
-      print('Post-quantum migration completed successfully');
+      _logger.d('Post-quantum migration completed successfully');
 
       return report;
     } catch (e) {
@@ -715,7 +705,7 @@ class PostQuantumMigrationService {
 
     for (final data in classicalData) {
       final dataType = data['data_type'] as String;
-      print('Re-encrypting $dataType with post-quantum algorithms...');
+      _logger.d('Re-encrypting $dataType with post-quantum algorithms...');
 
       // Simulate re-encryption
       await Future.delayed(const Duration(milliseconds: 100));
@@ -737,7 +727,7 @@ class PostQuantumMigrationService {
   Future<void> _updateSystemsForPostQuantum(
       Map<String, dynamic> postQuantumKeys) async {
     // Update system configurations to use post-quantum algorithms
-    print('Updating systems for post-quantum cryptography...');
+    _logger.d('Updating systems for post-quantum cryptography...');
     await Future.delayed(const Duration(milliseconds: 200));
   }
 

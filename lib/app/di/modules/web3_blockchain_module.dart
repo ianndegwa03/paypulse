@@ -35,10 +35,9 @@ class BlockchainClientImpl implements BlockchainClient {
   BlockchainClientImpl({
     required DIConfig config,
   })  : _web3Client = web3.Web3Client(
-            config.environment.web3RpcUrl ??
-                'https://mainnet.infura.io/v3/YOUR_INFURA_KEY',
+            config.environment.web3RpcUrl,
             http.Client()),
-        _chainId = config.environment.web3ChainId ?? 1;
+        _chainId = config.environment.web3ChainId;
 
   @override
   Future<String> getWalletAddress() async {

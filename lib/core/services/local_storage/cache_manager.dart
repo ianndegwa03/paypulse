@@ -13,7 +13,6 @@ abstract class CacheManager {
 }
 
 class CacheManagerImpl implements CacheManager {
-  static const String _cacheBoxName = 'app_cache';
   static const Duration _defaultTTL = Duration(days: 7);
   
   late final Map<String, _CacheEntry> _memoryCache;
@@ -326,13 +325,5 @@ class _CacheEntry {
       'ttl': ttl.inMilliseconds,
       'created_at': createdAt.toIso8601String(),
     };
-  }
-  
-  factory _CacheEntry.fromJson(Map<String, dynamic> json) {
-    return _CacheEntry(
-      value: json['value'],
-      ttl: Duration(milliseconds: json['ttl']),
-      createdAt: DateTime.parse(json['created_at']),
-    );
   }
 }

@@ -9,7 +9,6 @@ class LoggerService {
 
   bool _enableFileLogging = false;
   bool _enableCrashlytics = false;
-  bool _isInitialized = false;
 
   /// Initialize the logger with optional configurations
   Future<void> initialize({
@@ -18,7 +17,6 @@ class LoggerService {
   }) async {
     _enableFileLogging = enableFileLogging;
     _enableCrashlytics = enableCrashlytics;
-    _isInitialized = true;
     d('LoggerService initialized');
   }
 

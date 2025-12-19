@@ -4,7 +4,7 @@ import 'package:encrypt/encrypt.dart';
 import 'package:paypulse/core/errors/exceptions.dart';
 
 class CryptoUtils {
-  static const String _algorithm = 'AES/CBC/PKCS7';
+
   static const int _keyLength = 32; // 256 bits
   static const int _ivLength = 16; // 128 bits
   

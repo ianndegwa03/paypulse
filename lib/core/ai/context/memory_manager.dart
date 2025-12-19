@@ -6,7 +6,6 @@ class MemoryManager {
   final StorageService _storageService;
   static const String _memoryKey = 'ai_conversation_memory';
   static const int _maxConversations = 50;
-  static const int _maxTokensPerConversation = 1000;
   
   MemoryManager({StorageService? storageService})
       : _storageService = storageService ?? StorageServiceImpl();

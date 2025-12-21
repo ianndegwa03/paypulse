@@ -1,4 +1,5 @@
 import 'dart:developer' as developer;
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 /// Logger service for centralized logging throughout the application.
@@ -74,8 +75,16 @@ class LoggerService {
   }
 
   void _writeToFile(String message) {
-    // File logging implementation can be added here
-    // For now, this is a placeholder
+    try {
+      final logDir = Directory('${Directory.current.path}${Platform.pathSeparator}logs');
+      if (!logDir.existsSync()) {
+        logDir.createSync(recursive: true);
+      }
+      final logFile = File('${logDir.path}${Platform.pathSeparator}paypulse_runtime.log');
+      logFile.writeAsStringSync('$message\n', mode: FileMode.append, flush: true);
+    } catch (_) {
+      // Swallow IO errors to avoid cascading failures during logging
+    }
   }
 
   void _reportToCrashlytics(Object error, StackTrace? stackTrace) {

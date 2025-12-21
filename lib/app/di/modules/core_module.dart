@@ -2,6 +2,8 @@ import 'package:get_it/get_it.dart';
 import 'package:paypulse/core/logging/logger_service.dart';
 import 'package:paypulse/core/network/connectivity/network_info.dart';
 import 'package:paypulse/core/network/api/dio_client.dart';
+import 'package:paypulse/data/remote/mappers/user_mapper.dart';
+import 'package:paypulse/data/local/datasources/local_datasource.dart';
 import 'package:paypulse/core/services/local_storage/storage_service.dart';
 import 'package:paypulse/core/services/local_storage/secure_storage.dart';
 import 'package:paypulse/core/security/storage/secure_storage_service.dart';
@@ -16,8 +18,16 @@ class CoreModule {
     // Storage Service
     if (!getIt.isRegistered<StorageService>()) {
       final storageService = StorageServiceImpl();
-      await storageService.init();
-      getIt.registerSingleton<StorageService>(storageService);
+      try {
+        await storageService.init();
+        getIt.registerSingleton<StorageService>(storageService);
+      } catch (e, st) {
+        // If storage initialization fails (file locks, permission issues),
+        // fall back to an in-memory storage implementation so the app
+        // can still start and DI registrations complete.
+        LoggerService.instance.e('Storage init failed, using in-memory fallback', error: e, stackTrace: st);
+        getIt.registerSingleton<StorageService>(InMemoryStorageService());
+      }
     }
 
     // Secure Storage
@@ -56,6 +66,18 @@ class CoreModule {
     // Network Info
     if (!getIt.isRegistered<NetworkInfo>()) {
       getIt.registerSingleton<NetworkInfo>(NetworkInfoImpl());
+    }
+
+    // User Mapper (used by repositories)
+    if (!getIt.isRegistered<UserMapper>()) {
+      getIt.registerSingleton<UserMapper>(UserMapper());
+    }
+
+    // Local Data Source (persistent local storage wrapper)
+    if (!getIt.isRegistered<LocalDataSource>()) {
+      getIt.registerLazySingleton<LocalDataSource>(
+        () => LocalDataSourceImpl(getIt<StorageService>()),
+      );
     }
 
     // Logger Service

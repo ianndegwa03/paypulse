@@ -52,9 +52,9 @@ class StorageServiceImpl implements StorageService {
       // Initialize SharedPreferences
       _prefs = await SharedPreferences.getInstance();
       
-      // Initialize Hive
-      final appDocumentDir = await getApplicationDocumentsDirectory();
-      await Hive.initFlutter(appDocumentDir.path);
+      // Initialize Hive in an app-specific support directory (avoids OneDrive locks)
+      final appSupportDir = await getApplicationSupportDirectory();
+      await Hive.initFlutter(appSupportDir.path);
       
       // Register adapters
       _registerAdapters();
@@ -302,5 +302,98 @@ class StorageServiceImpl implements StorageService {
     } catch (_) {
       return null;
     }
+  }
+}
+
+/// Simple in-memory fallback storage used when persistent storage fails to
+/// initialize (for example when file locks prevent Hive from opening).
+class InMemoryStorageService implements StorageService {
+  final Map<String, dynamic> _store = {};
+
+  @override
+  Future<void> init() async {
+    // Nothing to initialize for in-memory storage
+    return;
+  }
+
+  @override
+  Future<void> saveString(String key, String value) async {
+    _store[key] = value;
+  }
+
+  @override
+  Future<String?> getString(String key) async {
+    final v = _store[key];
+    return v is String ? v : null;
+  }
+
+  @override
+  Future<void> saveInt(String key, int value) async {
+    _store[key] = value;
+  }
+
+  @override
+  Future<int?> getInt(String key) async {
+    final v = _store[key];
+    return v is int ? v : null;
+  }
+
+  @override
+  Future<void> saveDouble(String key, double value) async {
+    _store[key] = value;
+  }
+
+  @override
+  Future<double?> getDouble(String key) async {
+    final v = _store[key];
+    return v is double ? v : null;
+  }
+
+  @override
+  Future<void> saveBool(String key, bool value) async {
+    _store[key] = value;
+  }
+
+  @override
+  Future<bool?> getBool(String key) async {
+    final v = _store[key];
+    return v is bool ? v : null;
+  }
+
+  @override
+  Future<void> saveObject(String key, Map<String, dynamic> value) async {
+    _store[key] = value;
+  }
+
+  @override
+  Future<Map<String, dynamic>?> getObject(String key) async {
+    final v = _store[key];
+    return v is Map<String, dynamic> ? v : null;
+  }
+
+  @override
+  Future<void> saveList(String key, List<dynamic> value) async {
+    _store[key] = value;
+  }
+
+  @override
+  Future<List<dynamic>?> getList(String key) async {
+    final v = _store[key];
+    return v is List<dynamic> ? v : null;
+  }
+
+  @override
+  Future<void> delete(String key) async {
+    _store.remove(key);
+  }
+
+  @override
+  Future<void> clearAll() async {
+    _store.clear();
+  }
+
+  @override
+  Future<bool> containsKey(String key) async {
+    return _store.containsKey(key);
   }
 }

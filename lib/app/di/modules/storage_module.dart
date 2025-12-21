@@ -12,9 +12,10 @@ final sl = GetIt.instance;
 /// `SharedPreferences` for local data storage. It initializes Hive and
 /// opens the necessary boxes.
 Future<void> registerStorageModule() async {
-  // Initialize Hive
-  final appDocumentDir = await getApplicationDocumentsDirectory();
-  await Hive.initFlutter(appDocumentDir.path);
+  // Initialize Hive in application support directory to avoid OneDrive/Documents
+  // redirections and file-lock issues on Windows.
+  final appSupportDir = await getApplicationSupportDirectory();
+  await Hive.initFlutter(appSupportDir.path);
   sl.registerLazySingleton<HiveInterface>(() => Hive);
 
   // Register SharedPreferences

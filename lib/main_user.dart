@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:paypulse/app/app.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:paypulse/app/config/flavor_config.dart';
 import 'package:paypulse/app/di/config/di_config.dart';
 import 'package:paypulse/app/di/user_injector.dart'; // Standard User Injector only
@@ -49,8 +50,10 @@ Future<void> main() async {
     ),
   );
 
-  // 3. Run User App
-  runApp(PayPulseApp(
-    routerConfig: UserRouter.router,
+  // 3. Run User App (wrap with ProviderScope for Riverpod)
+  runApp(ProviderScope(
+    child: PayPulseApp(
+      routerConfig: UserRouter.router,
+    ),
   ));
 }

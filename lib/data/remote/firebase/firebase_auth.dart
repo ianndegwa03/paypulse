@@ -28,8 +28,14 @@ class FirebaseAuthService {
       }
 
       // Get additional user data from Firestore
-      final userDoc = await _firestore.collection('users').doc(user.uid).get();
-      final userData = userDoc.data() ?? {};
+      Map<String, dynamic> userData = {};
+      try {
+        final userDoc =
+            await _firestore.collection('users').doc(user.uid).get();
+        userData = userDoc.data() ?? {};
+      } catch (e) {
+        // proceed with empty user data if firestore fails
+      }
 
       // Get ID token for API authentication
       final idToken = await user.getIdToken();

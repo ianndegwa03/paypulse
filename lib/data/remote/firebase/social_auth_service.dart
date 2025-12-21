@@ -49,37 +49,42 @@ class SocialAuthService {
         throw const AuthException(message: 'Google sign-in failed');
       }
 
-      // Store/update user info in Firestore
-      final userDoc = _firestore.collection('users').doc(user.uid);
-      final docSnapshot = await userDoc.get();
+      Map<String, dynamic> userData = {};
+      try {
+        // Store/update user info in Firestore
+        final userDoc = _firestore.collection('users').doc(user.uid);
+        final docSnapshot = await userDoc.get();
 
-      if (!docSnapshot.exists) {
-        // New user - create profile
-        final nameParts = (user.displayName ?? '').split(' ');
-        final firstName = nameParts.isNotEmpty ? nameParts.first : '';
-        final lastName =
-            nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+        if (!docSnapshot.exists) {
+          // New user - create profile
+          final nameParts = (user.displayName ?? '').split(' ');
+          final firstName = nameParts.isNotEmpty ? nameParts.first : '';
+          final lastName =
+              nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
 
-        await userDoc.set({
-          'userId': user.uid,
-          'email': user.email ?? '',
-          'firstName': firstName,
-          'lastName': lastName,
-          'photoUrl': user.photoURL,
-          'provider': 'google',
-          'emailVerified': user.emailVerified,
-          'createdAt': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-      } else {
-        // Existing user - update last login
-        await userDoc.update({
-          'updatedAt': FieldValue.serverTimestamp(),
-          'lastLoginAt': FieldValue.serverTimestamp(),
-        });
+          await userDoc.set({
+            'userId': user.uid,
+            'email': user.email ?? '',
+            'firstName': firstName,
+            'lastName': lastName,
+            'photoUrl': user.photoURL,
+            'provider': 'google',
+            'emailVerified': user.emailVerified,
+            'createdAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        } else {
+          // Existing user - update last login
+          await userDoc.update({
+            'updatedAt': FieldValue.serverTimestamp(),
+            'lastLoginAt': FieldValue.serverTimestamp(),
+          });
+        }
+
+        userData = docSnapshot.exists ? docSnapshot.data() ?? {} : {};
+      } catch (e) {
+        // Continue without firestore data
       }
-
-      final userData = docSnapshot.exists ? docSnapshot.data() ?? {} : {};
       final idToken = await user.getIdToken();
 
       return AuthResponse(
@@ -134,34 +139,39 @@ class SocialAuthService {
         throw const AuthException(message: 'Apple sign-in failed');
       }
 
-      // Store/update user info in Firestore
-      final userDoc = _firestore.collection('users').doc(user.uid);
-      final docSnapshot = await userDoc.get();
+      Map<String, dynamic> userData = {};
+      try {
+        // Store/update user info in Firestore
+        final userDoc = _firestore.collection('users').doc(user.uid);
+        final docSnapshot = await userDoc.get();
 
-      if (!docSnapshot.exists) {
-        // New user - create profile
-        final firstName = appleCredential.givenName ?? '';
-        final lastName = appleCredential.familyName ?? '';
+        if (!docSnapshot.exists) {
+          // New user - create profile
+          final firstName = appleCredential.givenName ?? '';
+          final lastName = appleCredential.familyName ?? '';
 
-        await userDoc.set({
-          'userId': user.uid,
-          'email': user.email ?? appleCredential.email ?? '',
-          'firstName': firstName,
-          'lastName': lastName,
-          'provider': 'apple',
-          'emailVerified': user.emailVerified,
-          'createdAt': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-      } else {
-        // Existing user - update last login
-        await userDoc.update({
-          'updatedAt': FieldValue.serverTimestamp(),
-          'lastLoginAt': FieldValue.serverTimestamp(),
-        });
+          await userDoc.set({
+            'userId': user.uid,
+            'email': user.email ?? appleCredential.email ?? '',
+            'firstName': firstName,
+            'lastName': lastName,
+            'provider': 'apple',
+            'emailVerified': user.emailVerified,
+            'createdAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        } else {
+          // Existing user - update last login
+          await userDoc.update({
+            'updatedAt': FieldValue.serverTimestamp(),
+            'lastLoginAt': FieldValue.serverTimestamp(),
+          });
+        }
+
+        userData = docSnapshot.exists ? docSnapshot.data() ?? {} : {};
+      } catch (e) {
+        // Continue without firestore data
       }
-
-      final userData = docSnapshot.exists ? docSnapshot.data() ?? {} : {};
       final idToken = await user.getIdToken();
 
       return AuthResponse(

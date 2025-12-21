@@ -8,19 +8,19 @@ plugins {
 
 android {
     namespace = "com.example.paypulse"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 36
 
     //  Use the correct NDK version for Firebase compatibility
     ndkVersion = "27.0.12077973"
 
     compileOptions {
         isCoreLibraryDesugaringEnabled = true 
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+        jvmTarget = JavaVersion.VERSION_17.toString()
     }
 
     defaultConfig {
@@ -28,8 +28,8 @@ android {
         applicationId = "com.example.paypulse"
 
         //  Set minimum SDK version required by Firebase
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        minSdk = 24 // Explicit minimum for Firebase/Flutter modern
+        targetSdk = 34
 
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -48,8 +48,8 @@ android {
     configurations.all {
         resolutionStrategy {
             // Use a known-published core version that includes the needed APIs
-            force("androidx.core:core:1.10.1")
-            force("androidx.core:core-ktx:1.10.1")
+            force("androidx.core:core:1.13.1")
+            force("androidx.core:core-ktx:1.13.1")
         }
     }
 }
@@ -62,6 +62,6 @@ dependencies {
     // ADD DESUGARING DEPENDENCY HERE
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
     // Ensure core libraries are present at runtime to avoid missing-method errors
-    implementation("androidx.core:core:1.10.1")
-    implementation("androidx.core:core-ktx:1.10.1")
+    implementation("androidx.core:core:1.13.1")
+    implementation("androidx.core:core-ktx:1.13.1")
 }

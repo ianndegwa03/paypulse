@@ -270,4 +270,66 @@ class AuthRepositoryImpl implements AuthRepository {
       return Left(ServerFailure(message: 'Failed to verify phone: $e'));
     }
   }
+
+  @override
+  Future<Either<Failure, UserEntity>> signInWithGoogle() async {
+    try {
+      final isConnected = await networkInfo.isConnected;
+      if (!isConnected) {
+        return const Left(NetworkFailure());
+      }
+
+      final response = await remoteDataSource.signInWithGoogle();
+      final userModel = userMapper.responseToModel(response);
+
+      // Cache user data
+      await localDataSource.cacheUser(userModel);
+      if (response.accessToken != null) {
+        await localDataSource.setAuthToken(response.accessToken!);
+      }
+      if (response.refreshToken != null) {
+        await localDataSource.setRefreshToken(response.refreshToken!);
+      }
+
+      final userEntity = userMapper.responseToEntity(response);
+      return Right(userEntity);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(message: e.message));
+    } on CacheException catch (e) {
+      return Left(CacheFailure(message: e.message));
+    } catch (e) {
+      return Left(GenericFailure(message: 'Google sign-in failed: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, UserEntity>> signInWithApple() async {
+    try {
+      final isConnected = await networkInfo.isConnected;
+      if (!isConnected) {
+        return const Left(NetworkFailure());
+      }
+
+      final response = await remoteDataSource.signInWithApple();
+      final userModel = userMapper.responseToModel(response);
+
+      // Cache user data
+      await localDataSource.cacheUser(userModel);
+      if (response.accessToken != null) {
+        await localDataSource.setAuthToken(response.accessToken!);
+      }
+      if (response.refreshToken != null) {
+        await localDataSource.setRefreshToken(response.refreshToken!);
+      }
+
+      final userEntity = userMapper.responseToEntity(response);
+      return Right(userEntity);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(message: e.message));
+    } on CacheException catch (e) {
+      return Left(CacheFailure(message: e.message));
+    } catch (e) {
+      return Left(GenericFailure(message: 'Apple sign-in failed: $e'));
+    }
+  }
 }

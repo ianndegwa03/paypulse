@@ -1,7 +1,7 @@
-import 'package:dio/dio.dart';
 import 'package:paypulse/core/errors/exceptions.dart';
 import 'package:paypulse/data/models/response/auth_response.dart';
-import 'package:paypulse/data/remote/api/interfaces/auth_api_interface.dart';
+import 'package:paypulse/data/remote/firebase/firebase_auth.dart';
+import 'package:paypulse/data/remote/firebase/social_auth_service.dart';
 
 abstract class AuthDataSource {
   Future<AuthResponse> login(String email, String password);
@@ -20,27 +20,26 @@ abstract class AuthDataSource {
     String? phoneNumber,
   });
   Future<void> resetPassword(String token, String newPassword);
+
+  // Social login methods
+  Future<AuthResponse> signInWithGoogle();
+  Future<AuthResponse> signInWithApple();
 }
 
 class AuthDataSourceImpl implements AuthDataSource {
-  final AuthApiInterface _api;
+  final FirebaseAuthService _firebaseAuth;
+  final SocialAuthService _socialAuth;
 
-  AuthDataSourceImpl(this._api);
+  AuthDataSourceImpl(this._firebaseAuth, this._socialAuth);
 
   @override
   Future<AuthResponse> login(String email, String password) async {
     try {
-      final response = await _api.login({
-        'email': email,
-        'password': password,
-      });
-      return response;
-    } on DioException catch (e) {
-      throw ServerException(
-        message: e.response?.data?['message'] ?? 'Login failed',
-        statusCode: e.response?.statusCode ?? 500,
-      );
+      return await _firebaseAuth.login(email, password);
     } catch (e) {
+      if (e is AuthException) {
+        throw ServerException(message: e.message);
+      }
       throw ServerException(message: 'Login failed: $e');
     }
   }
@@ -53,19 +52,16 @@ class AuthDataSourceImpl implements AuthDataSource {
     String lastName,
   ) async {
     try {
-      final response = await _api.register({
-        'email': email,
-        'password': password,
-        'firstName': firstName,
-        'lastName': lastName,
-      });
-      return response;
-    } on DioException catch (e) {
-      throw ServerException(
-        message: e.response?.data?['message'] ?? 'Registration failed',
-        statusCode: e.response?.statusCode ?? 500,
+      return await _firebaseAuth.register(
+        email: email,
+        password: password,
+        firstName: firstName,
+        lastName: lastName,
       );
     } catch (e) {
+      if (e is AuthException) {
+        throw ServerException(message: e.message);
+      }
       throw ServerException(message: 'Registration failed: $e');
     }
   }
@@ -73,13 +69,13 @@ class AuthDataSourceImpl implements AuthDataSource {
   @override
   Future<void> logout() async {
     try {
-      await _api.logout();
-    } on DioException catch (e) {
-      throw ServerException(
-        message: e.response?.data?['message'] ?? 'Logout failed',
-        statusCode: e.response?.statusCode ?? 500,
-      );
+      await _firebaseAuth.logout();
+      // Also sign out from Google if signed in
+      await _socialAuth.signOutGoogle();
     } catch (e) {
+      if (e is AuthException) {
+        throw ServerException(message: e.message);
+      }
       throw ServerException(message: 'Logout failed: $e');
     }
   }
@@ -87,13 +83,14 @@ class AuthDataSourceImpl implements AuthDataSource {
   @override
   Future<void> validateToken(String token) async {
     try {
-      await _api.validateToken(token);
-    } on DioException catch (e) {
-      throw ServerException(
-        message: e.response?.data?['message'] ?? 'Token validation failed',
-        statusCode: e.response?.statusCode ?? 401,
-      );
+      final isValid = await _firebaseAuth.validateToken(token);
+      if (!isValid) {
+        throw const AuthException(message: 'Invalid token');
+      }
     } catch (e) {
+      if (e is AuthException) {
+        throw ServerException(message: e.message);
+      }
       throw ServerException(message: 'Token validation failed: $e');
     }
   }
@@ -101,14 +98,12 @@ class AuthDataSourceImpl implements AuthDataSource {
   @override
   Future<void> forgotPassword(String email) async {
     try {
-      await _api.forgotPassword({'email': email});
-    } on DioException catch (e) {
-      throw ServerException(
-        message: e.response?.data?['message'] ?? 'Forgot password failed',
-        statusCode: e.response?.statusCode ?? 500,
-      );
+      await _firebaseAuth.forgotPassword(email);
     } catch (e) {
-      throw ServerException(message: 'Forgot password failed: $e');
+      if (e is AuthException) {
+        throw ServerException(message: e.message);
+      }
+      throw ServerException(message: 'Password reset failed: $e');
     }
   }
 
@@ -119,35 +114,49 @@ class AuthDataSourceImpl implements AuthDataSource {
     String? phoneNumber,
   }) async {
     try {
-      await _api.updateProfile({
-        if (firstName != null) 'firstName': firstName,
-        if (lastName != null) 'lastName': lastName,
-        if (phoneNumber != null) 'phoneNumber': phoneNumber,
-      });
-    } on DioException catch (e) {
-      throw ServerException(
-        message: e.response?.data?['message'] ?? 'Update profile failed',
-        statusCode: e.response?.statusCode ?? 500,
+      await _firebaseAuth.updateProfile(
+        firstName: firstName,
+        lastName: lastName,
+        phoneNumber: phoneNumber,
       );
     } catch (e) {
-      throw ServerException(message: 'Update profile failed: $e');
+      if (e is AuthException) {
+        throw ServerException(message: e.message);
+      }
+      throw ServerException(message: 'Profile update failed: $e');
     }
   }
 
   @override
   Future<void> resetPassword(String token, String newPassword) async {
+    // Firebase handles password reset via email link
+    // This method is not directly applicable to Firebase Auth
+    throw UnimplementedError(
+      'Password reset is handled via email link in Firebase Auth. Use forgotPassword instead.',
+    );
+  }
+
+  @override
+  Future<AuthResponse> signInWithGoogle() async {
     try {
-      await _api.resetPassword({
-        'token': token,
-        'newPassword': newPassword,
-      });
-    } on DioException catch (e) {
-      throw ServerException(
-        message: e.response?.data?['message'] ?? 'Password reset failed',
-        statusCode: e.response?.statusCode ?? 500,
-      );
+      return await _socialAuth.signInWithGoogle();
     } catch (e) {
-      throw ServerException(message: 'Password reset failed: $e');
+      if (e is AuthException) {
+        throw ServerException(message: e.message);
+      }
+      throw ServerException(message: 'Google sign-in failed: $e');
+    }
+  }
+
+  @override
+  Future<AuthResponse> signInWithApple() async {
+    try {
+      return await _socialAuth.signInWithApple();
+    } catch (e) {
+      if (e is AuthException) {
+        throw ServerException(message: e.message);
+      }
+      throw ServerException(message: 'Apple sign-in failed: $e');
     }
   }
 }

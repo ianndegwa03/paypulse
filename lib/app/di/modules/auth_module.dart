@@ -1,13 +1,14 @@
 import 'package:paypulse/app/di/injector.dart';
-import 'package:paypulse/data/remote/api/interfaces/auth_api_interface.dart';
-import 'package:paypulse/data/remote/api/implementations/auth_api_impl.dart';
-import 'package:paypulse/core/network/api/dio_client.dart';
+import 'package:paypulse/data/remote/firebase/firebase_auth.dart';
+import 'package:paypulse/data/remote/firebase/social_auth_service.dart';
 import 'package:paypulse/core/logging/logger_service.dart';
 import 'package:paypulse/domain/repositories/auth_repository.dart';
 import 'package:paypulse/domain/use_cases/auth/login_use_case.dart';
 import 'package:paypulse/domain/use_cases/auth/register_use_case.dart';
 import 'package:paypulse/domain/use_cases/auth/logout_use_case.dart';
 import 'package:paypulse/domain/use_cases/auth/forgot_password_use_case.dart';
+import 'package:paypulse/domain/use_cases/auth/google_signin_use_case.dart';
+import 'package:paypulse/domain/use_cases/auth/apple_signin_use_case.dart';
 import 'package:paypulse/data/repositories/auth_repository_impl.dart';
 import 'package:paypulse/data/remote/datasources/auth_datasource.dart';
 import 'package:paypulse/data/local/datasources/local_datasource.dart';
@@ -17,17 +18,27 @@ import 'package:paypulse/data/remote/mappers/user_mapper.dart';
 /// Auth module for dependency injection
 class AuthModule {
   Future<void> init() async {
-    // API
-    if (!getIt.isRegistered<AuthApiInterface>()) {
-      final dioClient = getIt<DioClient>();
-      getIt.registerSingleton<AuthApiInterface>(
-        AuthApiImpl(dioClient.instance),
+    // Firebase Auth Service
+    if (!getIt.isRegistered<FirebaseAuthService>()) {
+      getIt.registerSingleton<FirebaseAuthService>(
+        FirebaseAuthService(),
       );
     }
+
+    // Social Auth Service
+    if (!getIt.isRegistered<SocialAuthService>()) {
+      getIt.registerSingleton<SocialAuthService>(
+        SocialAuthService(),
+      );
+    }
+
     // Data Sources
     if (!getIt.isRegistered<AuthDataSource>()) {
       getIt.registerLazySingleton<AuthDataSource>(
-        () => AuthDataSourceImpl(getIt<AuthApiInterface>()),
+        () => AuthDataSourceImpl(
+          getIt<FirebaseAuthService>(),
+          getIt<SocialAuthService>(),
+        ),
       );
     }
 
@@ -62,6 +73,16 @@ class AuthModule {
     if (!getIt.isRegistered<ForgotPasswordUseCase>()) {
       getIt.registerLazySingleton<ForgotPasswordUseCase>(
         () => ForgotPasswordUseCase(getIt<AuthRepository>()),
+      );
+    }
+    if (!getIt.isRegistered<GoogleSignInUseCase>()) {
+      getIt.registerLazySingleton<GoogleSignInUseCase>(
+        () => GoogleSignInUseCase(getIt<AuthRepository>()),
+      );
+    }
+    if (!getIt.isRegistered<AppleSignInUseCase>()) {
+      getIt.registerLazySingleton<AppleSignInUseCase>(
+        () => AppleSignInUseCase(getIt<AuthRepository>()),
       );
     }
 

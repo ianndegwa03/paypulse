@@ -5,6 +5,8 @@ import 'package:paypulse/domain/use_cases/auth/login_use_case.dart';
 import 'package:paypulse/domain/use_cases/auth/register_use_case.dart';
 import 'package:paypulse/domain/use_cases/auth/forgot_password_use_case.dart';
 import 'package:paypulse/domain/use_cases/auth/logout_use_case.dart';
+import 'package:paypulse/domain/use_cases/auth/google_signin_use_case.dart';
+import 'package:paypulse/domain/use_cases/auth/apple_signin_use_case.dart';
 import 'package:paypulse/app/features/auth/presentation/state/auth_state.dart';
 
 class AuthNotifier extends StateNotifier<AuthState> {
@@ -12,6 +14,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
   final RegisterUseCase registerUseCase;
   final ForgotPasswordUseCase forgotPasswordUseCase;
   final LogoutUseCase logoutUseCase;
+  final GoogleSignInUseCase googleSignInUseCase;
+  final AppleSignInUseCase appleSignInUseCase;
   final _logger = LoggerService.instance;
 
   AuthNotifier({
@@ -19,6 +23,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required this.registerUseCase,
     required this.logoutUseCase,
     required this.forgotPasswordUseCase,
+    required this.googleSignInUseCase,
+    required this.appleSignInUseCase,
   }) : super(const AuthState());
 
   Future<void> login(String email, String password) async {
@@ -49,6 +55,80 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
     } catch (e) {
       _logger.e('Unexpected error during login: $e', tag: 'AuthNotifier');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+
+  Future<void> signInWithGoogle() async {
+    state = state.copyWith(isLoading: true);
+
+    try {
+      final result = await googleSignInUseCase.execute();
+
+      result.fold(
+        (failure) {
+          _logger.e('Google Sign-In failed: ${failure.message}',
+              tag: 'AuthNotifier');
+          state = state.copyWith(
+            isLoading: false,
+            errorMessage: failure.message,
+          );
+        },
+        (user) {
+          _logger.i('User signed in with Google: ${user.id}',
+              tag: 'AuthNotifier');
+          state = state.copyWith(
+            isAuthenticated: true,
+            userId: user.id,
+            email: user.email.value,
+            currentUser: user,
+            isLoading: false,
+          );
+        },
+      );
+    } catch (e) {
+      _logger.e('Unexpected error during Google Sign-In: $e',
+          tag: 'AuthNotifier');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+
+  Future<void> signInWithApple() async {
+    state = state.copyWith(isLoading: true);
+
+    try {
+      final result = await appleSignInUseCase.execute();
+
+      result.fold(
+        (failure) {
+          _logger.e('Apple Sign-In failed: ${failure.message}',
+              tag: 'AuthNotifier');
+          state = state.copyWith(
+            isLoading: false,
+            errorMessage: failure.message,
+          );
+        },
+        (user) {
+          _logger.i('User signed in with Apple: ${user.id}',
+              tag: 'AuthNotifier');
+          state = state.copyWith(
+            isAuthenticated: true,
+            userId: user.id,
+            email: user.email.value,
+            currentUser: user,
+            isLoading: false,
+          );
+        },
+      );
+    } catch (e) {
+      _logger.e('Unexpected error during Apple Sign-In: $e',
+          tag: 'AuthNotifier');
       state = state.copyWith(
         isLoading: false,
         errorMessage: e.toString(),
@@ -90,7 +170,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
             email: user.email.value,
             currentUser: user,
             isLoading: false,
-            successMessage: 'Registration successful!',
+            successMessage:
+                'Registration successful! Please check your email for verification.',
           );
         },
       );
@@ -142,14 +223,19 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final result = await forgotPasswordUseCase.execute(email);
 
       result.fold((failure) {
-        _logger.e('Forgot password failed: ${failure.message}', tag: 'AuthNotifier');
+        _logger.e('Forgot password failed: ${failure.message}',
+            tag: 'AuthNotifier');
         state = state.copyWith(isLoading: false, errorMessage: failure.message);
       }, (_) {
         _logger.i('Forgot password request succeeded', tag: 'AuthNotifier');
-        state = state.copyWith(isLoading: false, successMessage: 'If the email exists, reset instructions were sent.');
+        state = state.copyWith(
+            isLoading: false,
+            successMessage:
+                'If the email exists, reset instructions were sent.');
       });
     } catch (e) {
-      _logger.e('Unexpected error during forgot password: $e', tag: 'AuthNotifier');
+      _logger.e('Unexpected error during forgot password: $e',
+          tag: 'AuthNotifier');
       state = state.copyWith(isLoading: false, errorMessage: e.toString());
     }
   }
@@ -163,5 +249,7 @@ final authNotifierProvider =
     registerUseCase: getIt<RegisterUseCase>(),
     logoutUseCase: getIt<LogoutUseCase>(),
     forgotPasswordUseCase: getIt<ForgotPasswordUseCase>(),
+    googleSignInUseCase: getIt<GoogleSignInUseCase>(),
+    appleSignInUseCase: getIt<AppleSignInUseCase>(),
   );
 });

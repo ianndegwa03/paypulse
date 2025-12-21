@@ -11,6 +11,8 @@ class AppTheme {
       secondary: AppColors.secondary,
       surface: AppColors.surfaceLight,
       error: AppColors.error,
+      onPrimary: AppColors.onPrimary,
+      onSurface: AppColors.textPrimary,
     ),
     scaffoldBackgroundColor: AppColors.backgroundLight,
     appBarTheme: const AppBarTheme(
@@ -24,7 +26,7 @@ class AppTheme {
       ),
     ),
     textTheme: TextStyles.textTheme,
-    fontFamily: 'Inter',
+    // fontFamily: 'Inter',
     buttonTheme: const ButtonThemeData(
       buttonColor: AppColors.primary,
       textTheme: ButtonTextTheme.primary,
@@ -67,6 +69,12 @@ class AppTheme {
         horizontal: 16,
         vertical: 12,
       ),
+      labelStyle: TextStyles.bodyMedium.copyWith(
+        color: AppColors.textSecondary,
+      ),
+      floatingLabelStyle: TextStyles.bodyMedium.copyWith(
+        color: AppColors.primary,
+      ),
       hintStyle: TextStyles.bodyMedium.copyWith(
         color: AppColors.textSecondary,
       ),
@@ -94,6 +102,8 @@ class AppTheme {
       secondary: AppColors.secondary,
       surface: AppColors.surfaceDark,
       error: AppColors.error,
+      onPrimary: AppColors.onPrimary,
+      onSurface: AppColors.textPrimaryDark,
     ),
     scaffoldBackgroundColor: AppColors.backgroundDark,
     appBarTheme: const AppBarTheme(
@@ -107,11 +117,14 @@ class AppTheme {
       ),
     ),
     textTheme: TextStyles.textTheme.copyWith(
-      bodyLarge: TextStyles.bodyLarge.copyWith(color: AppColors.textPrimaryDark),
-      bodyMedium: TextStyles.bodyMedium.copyWith(color: AppColors.textPrimaryDark),
-      bodySmall: TextStyles.bodySmall.copyWith(color: AppColors.textSecondaryDark),
+      bodyLarge:
+          TextStyles.bodyLarge.copyWith(color: AppColors.textPrimaryDark),
+      bodyMedium:
+          TextStyles.bodyMedium.copyWith(color: AppColors.textPrimaryDark),
+      bodySmall:
+          TextStyles.bodySmall.copyWith(color: AppColors.textSecondaryDark),
     ),
-    fontFamily: 'Inter',
+    // fontFamily: 'Inter',
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primary,
@@ -146,6 +159,12 @@ class AppTheme {
       contentPadding: const EdgeInsets.symmetric(
         horizontal: 16,
         vertical: 12,
+      ),
+      labelStyle: TextStyles.bodyMedium.copyWith(
+        color: AppColors.textSecondaryDark,
+      ),
+      floatingLabelStyle: TextStyles.bodyMedium.copyWith(
+        color: AppColors.primary,
       ),
       hintStyle: TextStyles.bodyMedium.copyWith(
         color: AppColors.textSecondaryDark,

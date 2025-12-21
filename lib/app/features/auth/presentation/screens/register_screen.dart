@@ -42,18 +42,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         _lastNameController.text.trim(),
       );
 
-      if (mounted) {
-        final state = ref.read(authNotifierProvider);
-        if (state.isAuthenticated) {
-          context.go('/dashboard');
-        } else if (state.errorMessage != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.errorMessage!),
-              backgroundColor: Colors.redAccent,
-            ),
-          );
-        }
+      if (!mounted) return;
+      final state = ref.read(authNotifierProvider);
+      if (state.isAuthenticated) {
+        context.go('/dashboard');
+      } else if (state.errorMessage != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(state.errorMessage!),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
       }
     }
   }
@@ -162,7 +161,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             ), // Column
           ), // Form
         ), // SingleChildScrollView
-        ), // GestureDetector
-      ); // Scaffold
+      ), // GestureDetector
+    ); // Scaffold
   }
 }

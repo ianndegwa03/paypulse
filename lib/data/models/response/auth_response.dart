@@ -6,6 +6,7 @@ class AuthResponse extends Equatable {
   final String? email;
   final String? firstName;
   final String? lastName;
+  final String? phoneNumber;
   final String? accessToken;
   final String? refreshToken;
   final int? expiresIn;
@@ -21,6 +22,7 @@ class AuthResponse extends Equatable {
     this.email,
     this.firstName,
     this.lastName,
+    this.phoneNumber,
     this.accessToken,
     this.refreshToken,
     this.expiresIn,
@@ -38,6 +40,8 @@ class AuthResponse extends Equatable {
       email: json['email'] as String?,
       firstName: json['first_name'] as String? ?? json['firstName'] as String?,
       lastName: json['last_name'] as String? ?? json['lastName'] as String?,
+      phoneNumber:
+          json['phone_number'] as String? ?? json['phoneNumber'] as String?,
       accessToken:
           json['access_token'] as String? ?? json['accessToken'] as String?,
       refreshToken:
@@ -63,6 +67,7 @@ class AuthResponse extends Equatable {
       'email': email,
       'first_name': firstName,
       'last_name': lastName,
+      'phone_number': phoneNumber,
       'access_token': accessToken,
       'refresh_token': refreshToken,
       'expires_in': expiresIn,
@@ -80,6 +85,7 @@ class AuthResponse extends Equatable {
     String? email,
     String? firstName,
     String? lastName,
+    String? phoneNumber,
     String? accessToken,
     String? refreshToken,
     int? expiresIn,
@@ -95,6 +101,7 @@ class AuthResponse extends Equatable {
       email: email ?? this.email,
       firstName: firstName ?? this.firstName,
       lastName: lastName ?? this.lastName,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
       accessToken: accessToken ?? this.accessToken,
       refreshToken: refreshToken ?? this.refreshToken,
       expiresIn: expiresIn ?? this.expiresIn,
@@ -122,6 +129,7 @@ class AuthResponse extends Equatable {
         email,
         firstName,
         lastName,
+        phoneNumber,
         accessToken,
         refreshToken,
         expiresIn,

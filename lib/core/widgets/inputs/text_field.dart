@@ -1,6 +1,4 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'dart:io' show Platform;
 
 class AppTextField extends StatelessWidget {
   final TextEditingController controller;
@@ -32,8 +30,11 @@ class AppTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Use native inline TextFormField. A Kotlin shim was added to
-    // satisfy EditorInfoCompat when required, so inline input is safe.
+    final theme = Theme.of(context);
+    // Ensure high contrast text color
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : Colors.black87;
+
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
@@ -42,6 +43,11 @@ class AppTextField extends StatelessWidget {
       obscureText: obscureText,
       validator: validator,
       autofillHints: autofillHints,
+      cursorColor: theme.colorScheme.primary,
+      style: TextStyle(
+        color: textColor,
+        fontSize: 16,
+      ),
       decoration: InputDecoration(
         labelText: label,
         hintText: hintText,

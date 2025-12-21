@@ -9,6 +9,11 @@ import 'package:paypulse/domain/use_cases/auth/logout_use_case.dart';
 import 'package:paypulse/domain/use_cases/auth/forgot_password_use_case.dart';
 import 'package:paypulse/domain/use_cases/auth/google_signin_use_case.dart';
 import 'package:paypulse/domain/use_cases/auth/apple_signin_use_case.dart';
+import 'package:paypulse/domain/use_cases/auth/update_profile_use_case.dart';
+import 'package:paypulse/domain/use_cases/auth/biometric_login_use_case.dart';
+import 'package:paypulse/domain/use_cases/auth/enable_biometric_use_case.dart';
+import 'package:paypulse/domain/use_cases/auth/check_auth_status_use_case.dart';
+import 'package:paypulse/domain/use_cases/auth/get_current_user_use_case.dart';
 import 'package:paypulse/data/repositories/auth_repository_impl.dart';
 import 'package:paypulse/data/remote/datasources/auth_datasource.dart';
 import 'package:paypulse/data/local/datasources/local_datasource.dart';
@@ -83,6 +88,31 @@ class AuthModule {
     if (!getIt.isRegistered<AppleSignInUseCase>()) {
       getIt.registerLazySingleton<AppleSignInUseCase>(
         () => AppleSignInUseCase(getIt<AuthRepository>()),
+      );
+    }
+    if (!getIt.isRegistered<UpdateProfileUseCase>()) {
+      getIt.registerLazySingleton<UpdateProfileUseCase>(
+        () => UpdateProfileUseCase(getIt<AuthRepository>()),
+      );
+    }
+    if (!getIt.isRegistered<BiometricLoginUseCase>()) {
+      getIt.registerLazySingleton<BiometricLoginUseCase>(
+        () => BiometricLoginUseCase(getIt<AuthRepository>()),
+      );
+    }
+    if (!getIt.isRegistered<EnableBiometricUseCase>()) {
+      getIt.registerLazySingleton<EnableBiometricUseCase>(
+        () => EnableBiometricUseCase(getIt<AuthRepository>()),
+      );
+    }
+    if (!getIt.isRegistered<CheckAuthStatusUseCase>()) {
+      getIt.registerLazySingleton<CheckAuthStatusUseCase>(
+        () => CheckAuthStatusUseCase(getIt<AuthRepository>()),
+      );
+    }
+    if (!getIt.isRegistered<GetCurrentUserUseCase>()) {
+      getIt.registerLazySingleton<GetCurrentUserUseCase>(
+        () => GetCurrentUserUseCase(getIt<AuthRepository>()),
       );
     }
 

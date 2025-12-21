@@ -131,10 +131,39 @@ class WalletDataSourceImpl implements WalletDataSource {
 
   @override
   Future<Map<String, dynamic>> getWalletAnalytics(String userId) async {
-    return {
-      'total_in': 0.0,
-      'total_out': 0.0,
-      'spending_by_category': {},
-    };
+    try {
+      final query = await _firestore
+          .collection('wallets')
+          .doc(userId)
+          .collection('transactions')
+          .get();
+
+      double totalIn = 0.0;
+      double totalOut = 0.0;
+
+      for (var doc in query.docs) {
+        final data = doc.data();
+        final amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
+
+        if (amount > 0) {
+          totalIn += amount;
+        } else {
+          totalOut += amount.abs();
+        }
+      }
+
+      return {
+        'total_in': totalIn,
+        'total_out': totalOut,
+        'spending_by_category': {'General': totalOut},
+      };
+    } catch (e) {
+      // Return zeroes on error
+      return {
+        'total_in': 0.0,
+        'total_out': 0.0,
+        'spending_by_category': {},
+      };
+    }
   }
 }

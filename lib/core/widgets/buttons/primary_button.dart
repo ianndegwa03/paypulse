@@ -5,11 +5,16 @@ class PrimaryButton extends StatelessWidget {
   final String label;
   final bool isLoading;
 
+  final Color? backgroundColor;
+  final Color? textColor;
+
   const PrimaryButton({
     super.key,
     required this.onPressed,
     required this.label,
     this.isLoading = false,
+    this.backgroundColor,
+    this.textColor,
   });
 
   @override
@@ -20,6 +25,8 @@ class PrimaryButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
+          backgroundColor: backgroundColor,
+          foregroundColor: textColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),

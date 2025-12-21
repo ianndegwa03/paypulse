@@ -1,4 +1,6 @@
 import 'package:get_it/get_it.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:paypulse/core/logging/logger_service.dart';
 import 'package:paypulse/core/network/connectivity/network_info.dart';
 import 'package:paypulse/core/network/api/dio_client.dart';
@@ -25,7 +27,10 @@ class CoreModule {
         // If storage initialization fails (file locks, permission issues),
         // fall back to an in-memory storage implementation so the app
         // can still start and DI registrations complete.
-        LoggerService.instance.e('Storage init failed, using in-memory fallback', error: e, stackTrace: st);
+        LoggerService.instance.e(
+            'Storage init failed, using in-memory fallback',
+            error: e,
+            stackTrace: st);
         getIt.registerSingleton<StorageService>(InMemoryStorageService());
       }
     }
@@ -89,6 +94,14 @@ class CoreModule {
     if (!getIt.isRegistered<DIConfig>()) {
       final config = GetIt.instance.get<DIConfig>();
       getIt.registerSingleton<DIConfig>(config);
+    }
+
+    // Firebase Dependencies
+    if (!getIt.isRegistered<FirebaseFirestore>()) {
+      getIt.registerSingleton<FirebaseFirestore>(FirebaseFirestore.instance);
+    }
+    if (!getIt.isRegistered<FirebaseAuth>()) {
+      getIt.registerSingleton<FirebaseAuth>(FirebaseAuth.instance);
     }
 
     LoggerService.instance.d('CoreModule initialized', tag: 'DI');

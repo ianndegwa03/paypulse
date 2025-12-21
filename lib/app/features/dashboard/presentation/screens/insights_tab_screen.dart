@@ -1,35 +1,72 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:paypulse/app/features/wallet/presentation/state/wallet_providers.dart';
+import 'package:paypulse/domain/entities/enums.dart';
 import 'package:paypulse/core/theme/app_colors.dart';
 
-class InsightsTabScreen extends StatelessWidget {
+class InsightsTabScreen extends ConsumerWidget {
   const InsightsTabScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final walletState = ref.watch(walletStateProvider);
+    final transactions = walletState.transactions;
+    final theme = Theme.of(context);
+
+    double totalIncome = 0;
+    double totalExpense = 0;
+    double maxTx = 0;
+
+    for (var tx in transactions) {
+      if (tx.type == TransactionType.credit) {
+        totalIncome += tx.amount;
+      } else {
+        totalExpense +=
+            tx.amount.abs(); // stored as negative? Check DataSource.
+        // Step 622: transferMoney sets amount: -amountVal. So yes, negative.
+        // But getWalletAnalytics step 625 used just amount check.
+        // Entity might store raw amount.
+        // Let's assume Entity field amount is Signed.
+        // So .abs() is safe.
+      }
+      if (tx.amount.abs() > maxTx) maxTx = tx.amount.abs();
+    }
+
+    // Fix for totalExpense if logic above was flawed (e.g. if debit is positive in entity but type is debit):
+    // TransactionEntity usually reflects DB.
+    // If DB has -50, Entity has -50.
+
+    // Chart Y Axis Max
+    final maxY =
+        (totalIncome > totalExpense ? totalIncome : totalExpense) * 1.2;
+    final effectiveMaxY = maxY == 0 ? 100.0 : maxY;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Financial Insights'),
-        backgroundColor: AppColors.primary,
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Spending Overview',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            Text(
+              'Cash Flow',
+              style: theme.textTheme.headlineSmall
+                  ?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             Container(
               height: 300,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: theme.cardColor,
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.grey.withValues(alpha: 0.1),
+                    color: Colors.grey.withOpacity(0.1),
                     spreadRadius: 2,
                     blurRadius: 5,
                   ),
@@ -40,93 +77,139 @@ class InsightsTabScreen extends StatelessWidget {
                 child: BarChart(
                   BarChartData(
                     alignment: BarChartAlignment.spaceAround,
-                    maxY: 1000,
-                    barTouchData: BarTouchData(enabled: true),
+                    maxY: effectiveMaxY,
+                    barTouchData: BarTouchData(
+                      enabled: true,
+                      touchTooltipData: BarTouchTooltipData(
+                        // tooltipBgColor: Colors.blueGrey, // Removed due to deprecation potential or theme usage
+                        getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                          return BarTooltipItem(
+                            rod.toY.toStringAsFixed(1),
+                            const TextStyle(color: Colors.white),
+                          );
+                        },
+                      ),
+                    ),
                     titlesData: FlTitlesData(
                       show: true,
                       bottomTitles: AxisTitles(
                         sideTitles: SideTitles(
                           showTitles: true,
                           getTitlesWidget: (value, meta) {
-                            const categories = ['Food', 'Transport', 'Shopping', 'Bills', 'Entertainment'];
-                            if (value.toInt() < categories.length) {
-                              return Text(categories[value.toInt()], style: const TextStyle(fontSize: 12));
+                            switch (value.toInt()) {
+                              case 0:
+                                return const Text('Income',
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.bold));
+                              case 1:
+                                return const Text('Expense',
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.bold));
+                              default:
+                                return const Text('');
                             }
-                            return const Text('');
                           },
                         ),
                       ),
-                      leftTitles: AxisTitles(
-                        sideTitles: SideTitles(
-                          showTitles: true,
-                          reservedSize: 40,
-                          getTitlesWidget: (value, meta) {
-                            return Text('\$${value.toInt()}');
-                          },
-                        ),
-                      ),
-                      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      leftTitles: const AxisTitles(
+                          sideTitles: SideTitles(
+                              showTitles:
+                                  false)), // Hide Y numbers for clean look
+                      topTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false)),
+                      rightTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false)),
                     ),
                     gridData: const FlGridData(show: false),
                     borderData: FlBorderData(show: false),
                     barGroups: [
-                      BarChartGroupData(x: 0, barRods: [BarChartRodData(toY: 450, color: AppColors.primary)]),
-                      BarChartGroupData(x: 1, barRods: [BarChartRodData(toY: 320, color: AppColors.secondary)]),
-                      BarChartGroupData(x: 2, barRods: [BarChartRodData(toY: 680, color: AppColors.accent)]),
-                      BarChartGroupData(x: 3, barRods: [BarChartRodData(toY: 520, color: Colors.orange)]),
-                      BarChartGroupData(x: 4, barRods: [BarChartRodData(toY: 280, color: Colors.purple)]),
+                      BarChartGroupData(x: 0, barRods: [
+                        BarChartRodData(
+                            toY: totalIncome,
+                            color: Colors.green,
+                            width: 40,
+                            borderRadius: BorderRadius.circular(4))
+                      ]),
+                      BarChartGroupData(x: 1, barRods: [
+                        BarChartRodData(
+                            toY: totalExpense,
+                            color: Colors.red,
+                            width: 40,
+                            borderRadius: BorderRadius.circular(4))
+                      ]),
                     ],
                   ),
                 ),
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
-              'Key Insights',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            Text(
+              'Highlights',
+              style: theme.textTheme.headlineSmall
+                  ?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             _buildInsightCard(
-              'Highest Spending',
-              'Shopping - \$680',
-              Icons.shopping_cart,
-              AppColors.accent,
-            ),
-            _buildInsightCard(
-              'Monthly Savings',
-              '\$1,250 saved this month',
-              Icons.savings,
+              context,
+              'Total Income',
+              '+ ${totalIncome.toStringAsFixed(2)}',
+              Icons.arrow_upward,
               Colors.green,
             ),
             _buildInsightCard(
-              'Budget Alert',
-              'Entertainment budget exceeded by 15%',
-              Icons.warning,
+              context,
+              'Total Expense',
+              '- ${totalExpense.toStringAsFixed(2)}',
+              Icons.arrow_downward,
               Colors.red,
             ),
             _buildInsightCard(
-              'Trend',
-              'Spending decreased by 8% from last month',
-              Icons.trending_down,
-              Colors.blue,
+              context,
+              'Net Flow',
+              (totalIncome - totalExpense).toStringAsFixed(2),
+              Icons.account_balance,
+              (totalIncome - totalExpense) >= 0 ? Colors.blue : Colors.orange,
             ),
+            if (transactions.isNotEmpty)
+              _buildInsightCard(
+                context,
+                'Largest Transaction',
+                maxTx.toStringAsFixed(2),
+                Icons.star,
+                Colors.purple,
+              ),
+            if (transactions.isEmpty)
+              const Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text("No transactions yet."),
+              ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildInsightCard(String title, String value, IconData icon, Color color) {
+  Widget _buildInsightCard(BuildContext context, String title, String value,
+      IconData icon, Color color) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        side:
+            BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.2)),
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: color.withValues(alpha: 0.1),
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
           child: Icon(icon, color: color),
         ),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text(value),
+        subtitle: Text(value, style: Theme.of(context).textTheme.bodyLarge),
       ),
     );
   }

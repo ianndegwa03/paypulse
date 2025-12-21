@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:paypulse/app/features/wallet/presentation/state/wallet_providers.dart';
 import 'package:paypulse/domain/entities/transaction_entity.dart';
+import 'package:paypulse/core/widgets/inputs/text_field.dart';
 
 class AddTransactionScreen extends ConsumerStatefulWidget {
   const AddTransactionScreen({super.key});
@@ -28,9 +29,10 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
           key: _formKey,
           child: Column(
             children: [
-              TextFormField(
+              AppTextField(
                 controller: _descriptionController,
-                decoration: const InputDecoration(labelText: 'Description'),
+                label: 'Description',
+                hintText: 'Transaction details',
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter a description.';
@@ -38,9 +40,10 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                   return null;
                 },
               ),
-              TextFormField(
+              AppTextField(
                 controller: _amountController,
-                decoration: const InputDecoration(labelText: 'Amount'),
+                label: 'Amount',
+                hintText: '0.00',
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) {

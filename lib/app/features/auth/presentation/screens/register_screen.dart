@@ -67,7 +67,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         title: const Text('Create Account'),
         centerTitle: true,
       ),
-      body: Center(
+      // Ensure the scaffold resizes when the keyboard appears
+      resizeToAvoidBottomInset: true,
+      body: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => FocusScope.of(context).unfocus(),
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Form(
@@ -155,10 +159,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   child: const Text('Already have an account? Login here'),
                 ),
               ],
-            ),
-          ),
-        ),
-      ),
-    );
+            ), // Column
+          ), // Form
+        ), // SingleChildScrollView
+        ), // GestureDetector
+      ); // Scaffold
   }
 }

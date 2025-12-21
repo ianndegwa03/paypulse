@@ -3,12 +3,14 @@ import 'package:paypulse/app/di/injector.dart';
 import 'package:paypulse/core/logging/logger_service.dart';
 import 'package:paypulse/domain/use_cases/auth/login_use_case.dart';
 import 'package:paypulse/domain/use_cases/auth/register_use_case.dart';
+import 'package:paypulse/domain/use_cases/auth/forgot_password_use_case.dart';
 import 'package:paypulse/domain/use_cases/auth/logout_use_case.dart';
 import 'package:paypulse/app/features/auth/presentation/state/auth_state.dart';
 
 class AuthNotifier extends StateNotifier<AuthState> {
   final LoginUseCase loginUseCase;
   final RegisterUseCase registerUseCase;
+  final ForgotPasswordUseCase forgotPasswordUseCase;
   final LogoutUseCase logoutUseCase;
   final _logger = LoggerService.instance;
 
@@ -16,6 +18,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required this.loginUseCase,
     required this.registerUseCase,
     required this.logoutUseCase,
+    required this.forgotPasswordUseCase,
   }) : super(const AuthState());
 
   Future<void> login(String email, String password) async {
@@ -131,6 +134,25 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
     }
   }
+
+  Future<void> forgotPassword(String email) async {
+    state = state.copyWith(isLoading: true);
+
+    try {
+      final result = await forgotPasswordUseCase.execute(email);
+
+      result.fold((failure) {
+        _logger.e('Forgot password failed: ${failure.message}', tag: 'AuthNotifier');
+        state = state.copyWith(isLoading: false, errorMessage: failure.message);
+      }, (_) {
+        _logger.i('Forgot password request succeeded', tag: 'AuthNotifier');
+        state = state.copyWith(isLoading: false, successMessage: 'If the email exists, reset instructions were sent.');
+      });
+    } catch (e) {
+      _logger.e('Unexpected error during forgot password: $e', tag: 'AuthNotifier');
+      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+    }
+  }
 }
 
 // Riverpod Provider
@@ -140,5 +162,6 @@ final authNotifierProvider =
     loginUseCase: getIt<LoginUseCase>(),
     registerUseCase: getIt<RegisterUseCase>(),
     logoutUseCase: getIt<LogoutUseCase>(),
+    forgotPasswordUseCase: getIt<ForgotPasswordUseCase>(),
   );
 });

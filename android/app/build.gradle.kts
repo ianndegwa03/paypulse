@@ -47,9 +47,9 @@ android {
 
     configurations.all {
         resolutionStrategy {
-            // Force versions compatible with AGP 8.7.3
-            force("androidx.core:core:1.10.0")
-            force("androidx.core:core-ktx:1.10.0")
+            // Use a known-published core version that includes the needed APIs
+            force("androidx.core:core:1.10.1")
+            force("androidx.core:core-ktx:1.10.1")
         }
     }
 }
@@ -61,4 +61,7 @@ flutter {
 dependencies {
     // ADD DESUGARING DEPENDENCY HERE
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    // Ensure core libraries are present at runtime to avoid missing-method errors
+    implementation("androidx.core:core:1.10.1")
+    implementation("androidx.core:core-ktx:1.10.1")
 }

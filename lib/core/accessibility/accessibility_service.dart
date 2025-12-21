@@ -15,10 +15,19 @@ class AccessibilityService {
 
   /// Get a text scaler that respects accessibility settings
   TextScaler getTextScaler(TextScaler systemScaler) {
-    // Apply any custom scaling on top of system settings
-    if (_textScaleFactor != 1.0) {
-      return TextScaler.linear(systemScaler.scale(_textScaleFactor));
+    try {
+      // Apply any custom scaling on top of system settings if supported.
+      if (_textScaleFactor != 1.0) {
+        // Some Flutter versions expose TextScaler APIs; guard against
+        // potential incompatibilities by returning the system scaler if
+        // an operation fails.
+        return TextScaler.linear(systemScaler.scale(_textScaleFactor));
+      }
+    } catch (_) {
+      // Fall back to system scaler on any unexpected error.
+      return systemScaler;
     }
+
     return systemScaler;
   }
 

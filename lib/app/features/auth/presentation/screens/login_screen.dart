@@ -63,11 +63,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     return Scaffold(
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _formKey,
-            child: Column(
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Form(
+              key: _formKey,
+              child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 48),
@@ -80,6 +83,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         'assets/images/logo.png',
                         height: 80,
                         width: 80,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const SizedBox(height: 80, width: 80),
                       ),
                       const SizedBox(height: 16),
                       Text(
@@ -231,12 +236,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   children: [
                     IconButton(
                       onPressed: () {
-                        // Handle Google login
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Google sign-in not implemented')),
+                        );
                       },
                       icon: Image.asset(
                         'assets/icons/google.png',
                         height: 24,
                         width: 24,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const SizedBox(height: 24, width: 24),
                       ),
                       style: IconButton.styleFrom(
                         backgroundColor: theme.colorScheme.surface,
@@ -249,12 +258,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     const SizedBox(width: 16),
                     IconButton(
                       onPressed: () {
-                        // Handle Apple login
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Apple sign-in not implemented')),
+                        );
                       },
                       icon: Image.asset(
                         'assets/icons/apple.png',
                         height: 24,
                         width: 24,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const SizedBox(height: 24, width: 24),
                       ),
                       style: IconButton.styleFrom(
                         backgroundColor: theme.colorScheme.surface,
@@ -267,12 +280,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     const SizedBox(width: 16),
                     IconButton(
                       onPressed: () {
-                        // Handle Facebook login
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Facebook sign-in not implemented')),
+                        );
                       },
                       icon: Image.asset(
                         'assets/icons/facebook.png',
                         height: 24,
                         width: 24,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const SizedBox(height: 24, width: 24),
                       ),
                       style: IconButton.styleFrom(
                         backgroundColor: theme.colorScheme.surface,
@@ -312,10 +329,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                 ),
               ],
-            ),
-          ),
-        ),
-      ),
-    );
+            ), // Column
+          ), // Form
+        ), // SingleChildScrollView
+      ), // GestureDetector
+    ), // SafeArea
+  ); // Scaffold
   }
 }

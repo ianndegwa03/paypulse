@@ -35,6 +35,8 @@ class _PayPulseAppState extends ConsumerState<PayPulseApp> {
     final themeMode = ref.watch(themeProvider);
     final locale = ref.watch(localeManagerProvider);
 
+    // Use a minimal, unmodified MediaQuery to avoid platform-specific
+    // input/keyboard crashes related to advanced TextScaler APIs.
     return MaterialApp.router(
       title: 'PayPulse',
       debugShowCheckedModeBanner: false,
@@ -44,21 +46,8 @@ class _PayPulseAppState extends ConsumerState<PayPulseApp> {
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      routerConfig: widget.routerConfig, // Use injected config
-      builder: (context, child) {
-        // Apply text scaling for accessibility
-        final mediaQueryData = MediaQuery.of(context);
-        final scaledMediaQuery = mediaQueryData.copyWith(
-          textScaler: AccessibilityService.instance.getTextScaler(
-            mediaQueryData.textScaler,
-          ),
-        );
-
-        return MediaQuery(
-          data: scaledMediaQuery,
-          child: child!,
-        );
-      },
+      routerConfig: widget.routerConfig,
+      builder: (context, child) => child ?? const SizedBox.shrink(),
     );
   }
 }

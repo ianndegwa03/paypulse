@@ -975,7 +975,7 @@ class BehavioralCoachingModule {
     // Register HabitTracker
     if (!getIt.isRegistered<HabitTracker>()) {
       getIt.registerLazySingleton<HabitTracker>(
-        () => HabitTracker(),
+        () => HabitTracker(storageService: getIt<StorageService>()),
       );
     }
 
@@ -1060,23 +1060,40 @@ class _MockBehavioralCoachingService implements BehavioralCoachingService {
 }
 
 class HabitTracker {
-  HabitTracker();
+  final StorageService _storageService;
+
+  HabitTracker({required StorageService storageService})
+      : _storageService = storageService;
 
   Future<Map<String, dynamic>> trackDailyHabits(String userId) async {
     try {
       final today = DateTime.now().toIso8601String().split('T')[0];
 
-      const dailyHabits = [
-        'tracked_spending',
-        'reviewed_budget',
-        'saved_money',
-        'avoided_impulse_purchase',
-      ];
-
       final habitLog = <String, bool>{};
-      for (final habit in dailyHabits) {
-        habitLog[habit] = Random().nextBool(); // Mock data
+
+      // Determine tracked_spending: true if there are any transactions for today
+      final transactions = await _storageService.getList('transactions_${userId}_$today') ?? <dynamic>[];
+      habitLog['tracked_spending'] = transactions.isNotEmpty;
+
+      // reviewed_budget: check a stored last_review_date key
+      final lastReview = await _storageService.getString('budget_last_review_$userId');
+      habitLog['reviewed_budget'] = lastReview == today;
+
+      // saved_money: check if any savings contributions saved for today
+      final savings = await _storageService.getList('savings_contributions_${userId}_$today') ?? <dynamic>[];
+      habitLog['saved_money'] = savings.isNotEmpty;
+
+      // avoided_impulse_purchase: true if no transactions tagged 'impulse'
+      var avoidedImpulse = true;
+      for (final t in transactions) {
+        try {
+          if (t is Map && (t['tags'] as List<dynamic>?)?.contains('impulse') == true) {
+            avoidedImpulse = false;
+            break;
+          }
+        } catch (_) {}
       }
+      habitLog['avoided_impulse_purchase'] = avoidedImpulse;
 
       final streak = await _calculateStreak(userId, habitLog);
 

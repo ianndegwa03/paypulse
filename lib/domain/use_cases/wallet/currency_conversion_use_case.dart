@@ -1,31 +1,38 @@
+import 'dart:convert';
 import 'package:dartz/dartz.dart';
+import 'package:http/http.dart' as http;
 import 'package:paypulse/core/errors/failures.dart';
 
 class CurrencyConversionUseCase {
-  // Real implementation would inject a CurrencyService
   CurrencyConversionUseCase();
 
+  /// Uses exchangerate.host for reliable, no-key currency conversion.
   Future<Either<Failure, double>> execute({
     required double amount,
     required String fromCurrency,
     required String toCurrency,
   }) async {
-    // Mock conversion for now as we don't have Rates API setup
-    // Basic conversion logic implemented
     if (fromCurrency == toCurrency) return Right(amount);
 
-    // Simple mock rates
-    final rates = {
-      'USD': 1.0,
-      'EUR': 0.92,
-      'GBP': 0.79,
-      'KES': 130.0,
-    };
+    try {
+      final uri = Uri.parse(
+          'https://api.exchangerate.host/convert?from=${Uri.encodeComponent(fromCurrency)}&to=${Uri.encodeComponent(toCurrency)}&amount=${amount.toString()}');
 
-    final fromRate = rates[fromCurrency] ?? 1.0;
-    final toRate = rates[toCurrency] ?? 1.0;
+      final response = await http.get(uri).timeout(const Duration(seconds: 10));
+      if (response.statusCode != 200) {
+        return Left(NetworkFailure(
+            message: 'Failed to fetch exchange rate: ${response.statusCode}'));
+      }
 
-    final result = (amount / fromRate) * toRate;
-    return Right(result);
+      final body = json.decode(response.body) as Map<String, dynamic>;
+      if (body['result'] == null) {
+        return const Left(NetworkFailure(message: 'Unexpected rates response'));
+      }
+
+      final converted = (body['result'] as num).toDouble();
+      return Right(converted);
+    } catch (e) {
+      return Left(NetworkFailure(message: 'Conversion failed: $e'));
+    }
   }
 }

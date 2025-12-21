@@ -5,6 +5,7 @@ enum CurrencyType {
   JPY,
   ETH,
   BTC,
+// ignore_for_file: constant_identifier_names
 }
 
 enum TransactionType {

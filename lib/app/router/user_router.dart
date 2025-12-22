@@ -5,11 +5,20 @@ import 'package:paypulse/app/features/auth/presentation/screens/forgot_password_
 import 'package:paypulse/app/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:paypulse/app/features/dashboard/presentation/screens/settings/edit_profile_screen.dart';
 import 'package:paypulse/app/features/dashboard/presentation/screens/settings/security_settings_screen.dart';
+import 'package:paypulse/app/features/settings/presentation/screens/theme_settings_screen.dart';
+import 'package:paypulse/app/features/social/presentation/screens/chat_list_screen.dart';
+import 'package:paypulse/app/features/splash/presentation/screens/splash_screen.dart';
+import 'package:paypulse/app/features/wallet/presentation/screens/send_money_screen.dart';
+import 'package:paypulse/app/features/privacy/presentation/screens/privacy_settings_screen.dart';
 
 class UserRouter {
   static final GoRouter router = GoRouter(
-    initialLocation: '/login',
+    initialLocation: '/',
     routes: [
+      GoRoute(
+        path: '/',
+        builder: (context, state) => const SplashScreen(),
+      ),
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),
@@ -33,6 +42,22 @@ class UserRouter {
       GoRoute(
         path: '/security-settings',
         builder: (context, state) => const SecuritySettingsScreen(),
+      ),
+      GoRoute(
+        path: '/theme-settings',
+        builder: (context, state) => const ThemeSettingsScreen(),
+      ),
+      GoRoute(
+        path: '/chats',
+        builder: (context, state) => const ChatListScreen(),
+      ),
+      GoRoute(
+        path: '/send-money',
+        builder: (context, state) => const SendMoneyScreen(),
+      ),
+      GoRoute(
+        path: '/privacy-settings',
+        builder: (context, state) => const PrivacySettingsScreen(),
       ),
     ],
   );

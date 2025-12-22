@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:paypulse/app/features/auth/presentation/state/auth_notifier.dart';
-import 'package:paypulse/core/theme/theme_provider.dart';
+import 'package:paypulse/app/features/wallet/presentation/state/wallet_providers.dart';
 import 'package:paypulse/core/widgets/buttons/primary_button.dart';
 
 class ProfileTabScreen extends ConsumerWidget {
@@ -11,9 +12,9 @@ class ProfileTabScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authNotifierProvider);
+    final walletState = ref.watch(walletStateProvider);
     final user = authState.currentUser;
     final theme = Theme.of(context);
-    final isDark = ref.watch(themeProvider) == ThemeMode.dark;
 
     if (user == null) {
       return const Center(child: CircularProgressIndicator());
@@ -21,169 +22,176 @@ class ProfileTabScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      // No AppBar, we'll use a custom header or Sliver later. For now standard list.
       body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
         slivers: [
           SliverAppBar(
+            expandedHeight: 280,
             pinned: true,
-            expandedHeight: 200,
+            stretch: true,
+            backgroundColor: theme.scaffoldBackgroundColor,
+            elevation: 0,
             flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      theme.colorScheme.primary,
-                      theme.colorScheme.secondary,
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+              stretchModes: const [StretchMode.zoomBackground],
+              background: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Subtle Background Glow
+                  Positioned(
+                    top: -100,
+                    child: Container(
+                      width: 300,
+                      height: 300,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            theme.colorScheme.primary.withOpacity(0.15),
+                            theme.colorScheme.primary.withOpacity(0),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-                child: Center(
-                  child: Column(
+                  Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const SizedBox(height: 48), // Space for status bar
-                      CircleAvatar(
-                        radius: 40,
-                        backgroundColor: theme.colorScheme.surface,
-                        backgroundImage: user.profileImageUrl != null
-                            ? NetworkImage(user.profileImageUrl!)
-                            : null,
-                        child: user.profileImageUrl == null
-                            ? Text(
-                                user.firstName.isNotEmpty
-                                    ? user.firstName[0].toUpperCase()
-                                    : '?',
-                                style: theme.textTheme.headlineMedium?.copyWith(
-                                  color: theme.colorScheme.primary,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              )
-                            : null,
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        user.fullName,
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          color: Colors.white, // Always white on gradient
-                          fontWeight: FontWeight.bold,
+                      const SizedBox(height: 60),
+                      Hero(
+                        tag: 'profile_pic',
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                                color:
+                                    theme.colorScheme.primary.withOpacity(0.5),
+                                width: 2),
+                          ),
+                          child: CircleAvatar(
+                            radius: 50,
+                            backgroundColor: theme.colorScheme.surface,
+                            backgroundImage: user.profileImageUrl != null
+                                ? NetworkImage(user.profileImageUrl!)
+                                : null,
+                            child: user.profileImageUrl == null
+                                ? Text(
+                                    user.firstName.isNotEmpty
+                                        ? user.firstName[0].toUpperCase()
+                                        : '?',
+                                    style:
+                                        theme.textTheme.displaySmall?.copyWith(
+                                      color: theme.colorScheme.primary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  )
+                                : null,
+                          ),
                         ),
                       ),
+                      const SizedBox(height: 16),
                       Text(
-                        '@${user.firstName.toLowerCase()}',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: Colors.white70,
+                        user.fullName,
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          user.isPremiumUser ? "PREMIUM MEMBER" : "FREE PLAN",
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.primary,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                ),
+                ],
               ),
             ),
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
                 children: [
-                  // --- ACCOUNT SETTINGS ---
-                  _buildSectionHeader(context, 'Account'),
-                  _buildListTile(
-                    context,
-                    icon: Icons.person_outline,
-                    title: 'Edit Profile',
-                    subtitle: 'Update details & photo',
-                    onTap: () => context.push('/edit-profile'),
-                  ),
-                  _buildListTile(
-                    context,
-                    icon: Icons.badge_outlined,
-                    title: 'Verification',
-                    subtitle: user.isEmailVerified ? 'Verified' : 'Unverified',
-                    trailing: user.isEmailVerified
-                        ? Icon(Icons.check_circle, color: Colors.green)
-                        : Icon(Icons.warning_amber_rounded,
-                            color: Colors.orange),
-                    onTap: () {},
-                  ),
+                  // Quick Wallet Stats
+                  _buildWalletSummary(context, walletState),
+                  const SizedBox(height: 32),
+
+                  _buildSection(context, 'Account Management', [
+                    _buildTile(
+                        context,
+                        Icons.person_outline_rounded,
+                        'Personal Information',
+                        'Name, Email, Phone',
+                        () => context.push('/edit-profile')),
+                    _buildTile(context, Icons.account_balance_wallet_outlined,
+                        'Payment Methods', 'Cards, Bank Accounts', () {}),
+                    _buildTile(
+                        context,
+                        Icons.history_rounded,
+                        'Transaction History',
+                        'All your spending in one place',
+                        () {}),
+                  ]),
 
                   const SizedBox(height: 24),
 
-                  // --- APPEARANCE & APP SETTINGS ---
-                  _buildSectionHeader(context, 'Preferences'),
-                  SwitchListTile(
-                    title: const Text('Dark Mode'),
-                    secondary: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? Colors.purple.withOpacity(0.1)
-                            : Colors.amber.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        isDark ? Icons.dark_mode : Icons.light_mode,
-                        color: isDark ? Colors.purple : Colors.amber,
-                      ),
-                    ),
-                    value: isDark,
-                    onChanged: (value) {
-                      ref.read(themeProvider.notifier).toggleTheme();
-                    },
-                  ),
-                  _buildListTile(
-                    context,
-                    icon: Icons.notifications_none_rounded,
-                    title: 'Notifications',
-                    onTap: () {},
-                  ),
-                  _buildListTile(
-                    context,
-                    icon: Icons.security,
-                    title: 'Security',
-                    subtitle: 'Biometrics, PIN, Password',
-                    onTap: () => context.push('/security-settings'),
-                  ),
+                  _buildSection(context, 'Security & Privacy', [
+                    _buildTile(
+                        context,
+                        Icons.shield_outlined,
+                        'Security Settings',
+                        'Biometrics, PIN, Password',
+                        () => context.push('/security-settings')),
+                    _buildTile(
+                        context,
+                        Icons.privacy_tip_outlined,
+                        'Privacy & Visibility',
+                        'Balance masking, App blur',
+                        () => context.push('/privacy-settings')),
+                  ]),
 
                   const SizedBox(height: 24),
 
-                  // --- SUPPORT ---
-                  _buildSectionHeader(context, 'Support'),
-                  _buildListTile(
-                    context,
-                    icon: Icons.help_outline,
-                    title: 'Help Center',
-                    onTap: () {},
-                  ),
-                  _buildListTile(
-                    context,
-                    icon: Icons.info_outline,
-                    title: 'About PayPulse',
-                    onTap: () {},
-                  ),
+                  _buildSection(context, 'App Experience', [
+                    _buildTile(
+                        context,
+                        Icons.palette_outlined,
+                        'Appearance',
+                        'Dark Mode, Accents',
+                        () => context.push('/theme-settings')),
+                    _buildTile(context, Icons.notifications_none_rounded,
+                        'Notifications', 'Alerts, Receipts', () {}),
+                  ]),
 
                   const SizedBox(height: 32),
 
-                  // --- ACTIONS ---
+                  // Sign Out
                   PrimaryButton(
-                    onPressed: () {
-                      _showLogoutDialog(context, ref);
-                    },
-                    label: 'Sign Out',
+                    onPressed: () => _showLogoutDialog(context, ref),
+                    label: 'Logout',
                     backgroundColor: theme.colorScheme.error.withOpacity(0.1),
                     textColor: theme.colorScheme.error,
                   ),
                   const SizedBox(height: 16),
-                  Center(
-                    child: Text(
-                      'v1.0.0 (Build 100)',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withOpacity(0.5),
-                      ),
-                    ),
+                  Text(
+                    'Version 1.2.4 (Build 4022)',
+                    style:
+                        theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 100),
                 ],
               ),
             ),
@@ -193,55 +201,108 @@ class ProfileTabScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSectionHeader(BuildContext context, String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Text(
-          title.toUpperCase(),
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.2,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-        ),
+  Widget _buildWalletSummary(BuildContext context, walletState) {
+    final theme = Theme.of(context);
+    final balance = walletState.wallet?.balance ?? 0.0;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.05)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("Total Balance",
+                  style: theme.textTheme.labelMedium
+                      ?.copyWith(color: Colors.grey)),
+              const SizedBox(height: 4),
+              Text("\$${balance.toStringAsFixed(2)}",
+                  style: theme.textTheme.headlineSmall
+                      ?.copyWith(fontWeight: FontWeight.bold)),
+            ],
+          ),
+          const Spacer(),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.add_rounded, color: Colors.white),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildListTile(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    String? subtitle,
-    Widget? trailing,
-    required VoidCallback onTap,
-  }) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: ListTile(
-        onTap: onTap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        tileColor: theme.cardColor,
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withAlpha(
-                20), // using withAlpha for safety or just withOpacity
-            // withValues(alpha: 0.1) is newer flutter. using withOpacity for now.
-            borderRadius: BorderRadius.circular(8),
+  Widget _buildSection(
+      BuildContext context, String title, List<Widget> children) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 12),
+          child: Text(
+            title.toUpperCase(),
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: Colors.grey,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.2,
+                ),
           ),
-          child: Icon(icon, color: theme.colorScheme.primary),
         ),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
-        subtitle: subtitle != null
-            ? Text(subtitle, style: theme.textTheme.bodySmall)
-            : null,
-        trailing: trailing ??
-            const Icon(Icons.chevron_right, size: 20, color: Colors.grey),
+        Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.02),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(children: children),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTile(BuildContext context, IconData icon, String title,
+      String subtitle, VoidCallback onTap) {
+    final theme = Theme.of(context);
+    return ListTile(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      leading: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.primary.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(icon, color: theme.colorScheme.primary, size: 22),
       ),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+      subtitle: Text(subtitle,
+          style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey)),
+      trailing:
+          const Icon(Icons.chevron_right_rounded, color: Colors.grey, size: 20),
     );
   }
 
@@ -249,20 +310,18 @@ class ProfileTabScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Sign Out'),
-        content: const Text('Are you sure you want to sign out?'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to exit?'),
         actions: [
-          TextButton(
-            onPressed: () => context.pop(),
-            child: const Text('Cancel'),
-          ),
+          TextButton(onPressed: () => context.pop(), child: const Text('Stay')),
           TextButton(
             onPressed: () {
               context.pop();
               ref.read(authNotifierProvider.notifier).logout();
               context.go('/login');
             },
-            child: const Text('Sign Out', style: TextStyle(color: Colors.red)),
+            child: const Text('Logout', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),

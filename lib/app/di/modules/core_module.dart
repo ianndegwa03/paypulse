@@ -13,6 +13,7 @@ import 'package:paypulse/core/security/encryption/key_manager.dart';
 import 'package:paypulse/core/security/encryption/crypto_utils.dart';
 import 'package:paypulse/app/di/injector.dart';
 import 'package:paypulse/app/di/config/di_config.dart';
+import 'package:paypulse/core/services/contacts/contacts_service.dart';
 
 /// Core module for registering core services
 class CoreModule {
@@ -102,6 +103,11 @@ class CoreModule {
     }
     if (!getIt.isRegistered<FirebaseAuth>()) {
       getIt.registerSingleton<FirebaseAuth>(FirebaseAuth.instance);
+    }
+
+    // Contacts Service
+    if (!getIt.isRegistered<ContactsService>()) {
+      getIt.registerLazySingleton<ContactsService>(() => ContactsServiceImpl());
     }
 
     LoggerService.instance.d('CoreModule initialized', tag: 'DI');

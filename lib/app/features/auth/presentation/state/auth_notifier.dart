@@ -372,6 +372,24 @@ class AuthNotifier extends StateNotifier<AuthState> {
       state = state.copyWith(errorMessage: e.toString());
     }
   }
+
+  Future<void> unlockFeature(String featureKey) async {
+    // This is a simplified local implementation. In a real app, this would verify a purchase on the backend.
+    final currentUser = state.currentUser;
+    if (currentUser == null) return;
+
+    final currentFeatures = currentUser.unlockedFeatures;
+    if (currentFeatures.contains(featureKey)) return;
+
+    final updatedFeatures = List<String>.from(currentFeatures)..add(featureKey);
+    final updatedUser = currentUser.copyWith(unlockedFeatures: updatedFeatures);
+
+    state = state.copyWith(currentUser: updatedUser);
+
+    // Ideally, we should also call updateProfileUseCase to persist this to the backend/storage
+    // For now, it will persist in memory for the session or if updateProfileUseCase supports it
+    // await updateProfileUseCase.execute(updatedUser);
+  }
 }
 
 // Riverpod Provider

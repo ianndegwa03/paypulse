@@ -10,8 +10,16 @@ class Wallet extends Equatable {
     required this.id,
     required this.balance,
     required this.currency,
+    this.cardNumber = '4242',
+    this.expiryDate = '12/28',
+    this.isFrozen = false,
   });
 
+  final String cardNumber;
+  final String expiryDate;
+  final bool isFrozen;
+
   @override
-  List<Object?> get props => [id, balance, currency];
+  List<Object?> get props =>
+      [id, balance, currency, cardNumber, expiryDate, isFrozen];
 }

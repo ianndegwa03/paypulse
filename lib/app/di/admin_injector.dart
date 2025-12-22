@@ -4,9 +4,8 @@ import 'package:paypulse/app/di/modules/core_module.dart';
 import 'package:paypulse/app/di/modules/auth_module.dart';
 import 'package:paypulse/app/di/modules/wallet_module.dart';
 import 'package:paypulse/app/di/modules/transaction_module.dart';
-import 'package:paypulse/app/di/modules/behavioral_coaching_module.dart';
 import 'package:paypulse/app/di/modules/healthcare_finance_module.dart';
-import 'package:paypulse/app/di/modules/predictive_analytics_module.dart';
+
 import 'package:paypulse/app/di/modules/quantum_security_module.dart';
 import 'package:paypulse/app/di/modules/investment_module.dart';
 import 'package:paypulse/app/di/modules/savings_module.dart';
@@ -31,9 +30,9 @@ class AdminInjector {
     await AuthModule().init();
     await WalletModule().init();
     await TransactionModule().init();
-    await BehavioralCoachingModule().init();
+    // await BehavioralCoachingModule().init(); // Removed AI Feature
     await HealthcareFinanceModule().init();
-    await PredictiveAnalyticsModule().init();
+    // await PredictiveAnalyticsModule().init(); // Removed AI Feature
     await QuantumSecurityModule().init();
     await InvestmentModule().init();
     await SavingsModule().init();

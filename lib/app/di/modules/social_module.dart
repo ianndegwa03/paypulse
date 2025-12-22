@@ -3,6 +3,7 @@ import 'package:paypulse/data/remote/datasources/social_datasource.dart';
 import 'package:paypulse/data/repositories/social_repository_impl.dart';
 import 'package:paypulse/domain/repositories/social_repository.dart';
 import 'package:paypulse/domain/use_cases/social/get_social_feed_use_case.dart';
+import 'package:paypulse/core/services/local_storage/storage_service.dart';
 
 class SocialModule {
   Future<void> init() async {
@@ -11,7 +12,7 @@ class SocialModule {
     // DataSource
     if (!getIt.isRegistered<SocialDataSource>()) {
       getIt.registerLazySingleton<SocialDataSource>(
-        () => SocialDataSourceImpl(),
+        () => SocialDataSourceImpl(getIt<StorageService>()),
       );
     }
 

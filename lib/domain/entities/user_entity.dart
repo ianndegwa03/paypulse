@@ -19,6 +19,8 @@ class UserEntity extends Equatable {
 
   final UserRole role;
 
+  final List<String> unlockedFeatures;
+
   const UserEntity({
     required this.id,
     required this.email,
@@ -33,11 +35,17 @@ class UserEntity extends Equatable {
     required this.updatedAt,
     this.preferences = const {},
     this.securitySettings = const {},
+    this.unlockedFeatures = const [],
   });
 
   String get fullName => '$firstName $lastName';
 
   bool get isPremiumUser => role == UserRole.premium || role == UserRole.admin;
+
+  bool hasFeatureUnlocked(String featureKey) {
+    if (isPremiumUser) return true; // Full premium unlocks everything
+    return unlockedFeatures.contains(featureKey);
+  }
 
   bool get isAdmin => role == UserRole.admin;
 
@@ -75,6 +83,7 @@ class UserEntity extends Equatable {
     DateTime? updatedAt,
     Map<String, dynamic>? preferences,
     Map<String, dynamic>? securitySettings,
+    List<String>? unlockedFeatures,
   }) {
     return UserEntity(
       id: id ?? this.id,
@@ -90,6 +99,7 @@ class UserEntity extends Equatable {
       updatedAt: updatedAt ?? this.updatedAt,
       preferences: preferences ?? this.preferences,
       securitySettings: securitySettings ?? this.securitySettings,
+      unlockedFeatures: unlockedFeatures ?? this.unlockedFeatures,
     );
   }
 }

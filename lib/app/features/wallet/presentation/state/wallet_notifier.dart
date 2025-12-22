@@ -23,11 +23,12 @@ class WalletNotifier extends StateNotifier<WalletState> {
         _getTransactionsUseCase = getTransactionsUseCase,
         _createTransactionUseCase = createTransactionUseCase,
         super(const WalletState()) {
-    _loadWalletData();
+    loadWallet('');
   }
 
-  void _loadWalletData() {
-    _logger.d('Starting wallet data load', tag: 'WalletNotifier');
+  void loadWallet(String userId) {
+    _logger.d('Loading wallet data for user: $userId', tag: 'WalletNotifier');
+    _walletSubscription?.cancel();
     _walletSubscription = _getWalletUseCase.executeStream().listen(
       (wallet) {
         _logger.d('Wallet stream update received', tag: 'WalletNotifier');

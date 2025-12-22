@@ -1,21 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:paypulse/app/features/dashboard/presentation/screens/home_tab_screen.dart';
 import 'package:paypulse/app/features/dashboard/presentation/screens/insights_tab_screen.dart';
-import 'package:go_router/go_router.dart';
-import 'package:paypulse/app/features/dashboard/presentation/screens/transactions_tab_screen.dart';
+import 'package:paypulse/app/features/social/presentation/screens/social_tab_screen.dart';
 import 'package:paypulse/app/features/wallet/presentation/screens/wallet_overview_screen.dart';
 import 'package:paypulse/app/features/dashboard/presentation/screens/profile_tab_screen.dart';
-import 'package:paypulse/app/features/auth/presentation/state/auth_notifier.dart';
-import 'package:paypulse/domain/entities/enums.dart';
-
-final _dashboardTabs = [
-  const HomeTabScreen(),
-  const TransactionsTabScreen(),
-  const WalletOverviewScreen(),
-  const InsightsTabScreen(),
-  const ProfileTabScreen(),
-];
 
 final _dashboardTabIndexProvider = StateProvider<int>((ref) => 0);
 
@@ -26,65 +16,79 @@ class DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedIndex = ref.watch(_dashboardTabIndexProvider);
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
-    final authState = ref.watch(authNotifierProvider);
-    final user = authState.currentUser;
-    final isAdmin = user?.role == UserRole.admin;
+    final tabs = [
+      const HomeTabScreen(),
+      const SocialTabScreen(),
+      const WalletOverviewScreen(),
+      const InsightsTabScreen(),
+      const ProfileTabScreen(),
+    ];
 
     return Scaffold(
-      appBar: selectedIndex !=
-              4 // Hide AppBar on Profile tab (it has its own SliverAppBar)
-          ? AppBar(
-              title: const Text('PayPulse'),
-              actions: [
-                if (isAdmin)
-                  IconButton(
-                    icon: const Icon(Icons.admin_panel_settings),
-                    tooltip: 'Admin Panel',
-                    onPressed: () => context.push('/admin'),
-                  ),
-                IconButton(
-                  icon: const Icon(Icons.notifications_outlined),
-                  onPressed: () {},
-                ),
-              ],
-            )
-          : null,
-      body: _dashboardTabs[selectedIndex],
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: selectedIndex,
-        onDestinationSelected: (index) =>
-            ref.read(_dashboardTabIndexProvider.notifier).state = index,
-        backgroundColor: theme.scaffoldBackgroundColor,
-        elevation: 0,
-        indicatorColor: theme.colorScheme.primaryContainer,
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'Home',
+      extendBody: true, // This allows the body to go behind the bottom bar
+      body: tabs[selectedIndex],
+      bottomNavigationBar: Container(
+        margin: const EdgeInsets.only(left: 20, right: 20, bottom: 24),
+        height: 72,
+        decoration: BoxDecoration(
+          color: isDark
+              ? const Color(0xFF1C1C1E).withOpacity(0.9)
+              : Colors.white.withOpacity(0.9),
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 30,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(30),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNavItem(ref, 0, Icons.home_rounded, selectedIndex),
+              _buildNavItem(ref, 1, Icons.explore_rounded, selectedIndex),
+              _buildNavItem(
+                  ref, 2, Icons.account_balance_wallet_rounded, selectedIndex),
+              _buildNavItem(ref, 3, Icons.bar_chart_rounded, selectedIndex),
+              _buildNavItem(ref, 4, Icons.person_rounded, selectedIndex),
+            ],
           ),
-          NavigationDestination(
-            icon: Icon(Icons.swap_horiz_outlined),
-            selectedIcon: Icon(Icons.swap_horiz),
-            label: 'Activity',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.account_balance_wallet_outlined),
-            selectedIcon: Icon(Icons.account_balance_wallet),
-            label: 'Wallet',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.insights_outlined),
-            selectedIcon: Icon(Icons.insights),
-            label: 'Insights',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(
+      WidgetRef ref, int index, IconData icon, int selectedIndex) {
+    final isSelected = selectedIndex == index;
+    final theme = Theme.of(ref.context);
+
+    return InkWell(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        ref.read(_dashboardTabIndexProvider.notifier).state = index;
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? theme.colorScheme.primary.withOpacity(0.1)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Icon(
+          icon,
+          color: isSelected
+              ? theme.colorScheme.primary
+              : Colors.grey.withOpacity(0.6),
+          size: 28,
+        ),
       ),
     );
   }

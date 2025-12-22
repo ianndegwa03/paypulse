@@ -1,26 +1,27 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  // Brand Colors
-  static const Color primary = Color(0xFF6200EE);
-  static const Color secondary = Color(0xFF03DAC6);
-  static const Color accent = Color(0xFFFF5722);
-  static const Color error = Color(0xFFB00020);
+  // Brand Colors - Sleek Premium Palette
+  static const Color primary = Color(0xFF007AFF); // iOS Blue
+  static const Color secondary =
+      Color(0xFF5856D6); // Keep for some depth but darker
+  static const Color accent = Color(0xFF34C759); // Premium Green
+  static const Color error = Color(0xFFFF453A); // System Red
   static const Color onPrimary = Colors.white;
 
-  // Backgrounds
-  static const Color backgroundLight = Color(0xFFF5F5F5);
+  // Backgrounds - Pure Obsidian for Dark Mode
+  static const Color backgroundLight = Color(0xFFF2F2F7);
   static const Color surfaceLight = Colors.white;
-  static const Color backgroundDark = Color(0xFF121212);
-  static const Color surfaceDark = Color(0xFF1E1E1E);
+  static const Color backgroundDark = Color(0xFF000000); // True Black
+  static const Color surfaceDark = Color(0xFF1C1C1E); // Elevated Dark Gray
 
   // Text
   static const Color textPrimary = Color(0xFF000000);
-  static const Color textSecondary = Color(0xFF757575);
+  static const Color textSecondary = Color(0xFF8E8E93);
   static const Color textPrimaryDark = Color(0xFFFFFFFF);
-  static const Color textSecondaryDark = Color(0xFFB3B3B3);
+  static const Color textSecondaryDark = Color(0xFFABABAB);
 
   // Borders
-  static const Color borderLight = Color(0xFFE0E0E0);
-  static const Color borderDark = Color(0xFF2C2C2C);
+  static const Color borderLight = Color(0xFFC6C6C8);
+  static const Color borderDark = Color(0xFF38383A);
 }

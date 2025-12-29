@@ -69,6 +69,7 @@ class UserMapper {
       stealthModeEnabled: model.stealthModeEnabled,
       isProfessionalProfileVisible: model.isProfessionalProfileVisible,
       professionalBio: model.professionalBio,
+      isBanned: model.isBanned,
     );
   }
 
@@ -99,6 +100,7 @@ class UserMapper {
       stealthModeEnabled: entity.stealthModeEnabled,
       isProfessionalProfileVisible: entity.isProfessionalProfileVisible,
       professionalBio: entity.professionalBio,
+      isBanned: entity.isBanned,
     );
   }
 

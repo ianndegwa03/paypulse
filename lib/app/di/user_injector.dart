@@ -12,6 +12,7 @@ import 'package:paypulse/app/di/modules/savings_module.dart';
 import 'package:paypulse/app/di/modules/bills_module.dart';
 import 'package:paypulse/app/di/modules/gamification_module.dart';
 import 'package:paypulse/app/di/modules/social_module.dart';
+import 'package:paypulse/app/di/modules/user_module.dart';
 
 final GetIt getIt = GetIt.instance;
 
@@ -40,6 +41,7 @@ class UserInjector {
     await BillsModule().init();
     await GamificationModule().init();
     await SocialModule().init();
+    await UserModule().init();
 
     // NO AdminModule here
   }

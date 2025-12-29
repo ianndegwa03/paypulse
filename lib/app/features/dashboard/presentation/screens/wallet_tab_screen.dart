@@ -7,6 +7,8 @@ import 'package:paypulse/app/features/wallet/presentation/state/wallet_providers
 import 'package:paypulse/app/features/wallet/presentation/state/currency_provider.dart';
 import 'package:paypulse/app/features/wallet/presentation/widgets/vault_card.dart';
 import 'package:paypulse/app/features/wallet/presentation/widgets/virtual_card_widget.dart';
+import 'package:paypulse/app/features/wallet/presentation/widgets/holographic_card.dart';
+import 'package:paypulse/core/theme/design_system_v2.dart';
 import 'package:paypulse/domain/entities/transaction_entity.dart';
 import 'package:paypulse/domain/entities/enums.dart';
 import 'package:intl/intl.dart';
@@ -39,7 +41,8 @@ class WalletTabScreen extends ConsumerWidget {
                 _buildThemedHeader(context, currencyState, currencyNotifier),
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: PulseDesign.l),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -47,22 +50,22 @@ class WalletTabScreen extends ConsumerWidget {
                                 currencyNotifier)
                             .animate()
                             .scale(duration: 600.ms, curve: Curves.easeOutBack),
-                        const SizedBox(height: 32),
+                        const SizedBox(height: PulseDesign.xl),
                         _buildThemedQuickActions(context),
-                        const SizedBox(height: 40),
+                        const SizedBox(height: PulseDesign.xxl),
                         _buildSectionTitle(context, "Identity Cards",
                             Icons.credit_card_rounded),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: PulseDesign.m),
                         _buildCardsRail(context, wallet?.virtualCards ?? []),
-                        const SizedBox(height: 32),
+                        const SizedBox(height: PulseDesign.xl),
                         _buildSectionTitle(
                             context, "Sovereign Vaults", Icons.savings_rounded),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: PulseDesign.m),
                         _buildVaultsRail(context, wallet?.vaults ?? []),
-                        const SizedBox(height: 32),
+                        const SizedBox(height: PulseDesign.xl),
                         _buildSectionTitle(
                             context, "Network Ledger", Icons.history_rounded),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: PulseDesign.m),
                         _buildThemedTransactionList(
                             context, transactions, currencyNotifier),
                         const SizedBox(height: 120),
@@ -91,8 +94,7 @@ class WalletTabScreen extends ConsumerWidget {
               height: 250,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color:
-                    theme.colorScheme.primary.withOpacity(isDark ? 0.1 : 0.05),
+                color: PulseDesign.primary.withOpacity(isDark ? 0.1 : 0.05),
               ),
             ),
           ),
@@ -112,7 +114,7 @@ class WalletTabScreen extends ConsumerWidget {
 
     return SliverToBoxAdapter(
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(PulseDesign.l),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -121,12 +123,12 @@ class WalletTabScreen extends ConsumerWidget {
               children: [
                 Text("LIQUID ASSETS",
                     style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.primary,
+                      color: PulseDesign.primary,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 2,
                     )),
                 Text("Universal Wallet",
-                    style: theme.textTheme.headlineLarge?.copyWith(
+                    style: theme.textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.w900,
                       letterSpacing: -1.5,
                       fontSize: 28,
@@ -142,8 +144,7 @@ class WalletTabScreen extends ConsumerWidget {
                 decoration: BoxDecoration(
                     color: theme.colorScheme.surface,
                     borderRadius: BorderRadius.circular(100),
-                    border:
-                        Border.all(color: theme.dividerColor.withOpacity(0.05)),
+                    border: Border.all(color: theme.dividerColor),
                     boxShadow: [
                       BoxShadow(
                           color: theme.shadowColor.withOpacity(0.02),
@@ -152,10 +153,10 @@ class WalletTabScreen extends ConsumerWidget {
                 child: Row(
                   children: [
                     Text(metadata.symbol,
-                        style: TextStyle(
-                            color: theme.colorScheme.primary,
+                        style: const TextStyle(
+                            color: PulseDesign.primary,
                             fontWeight: FontWeight.w900)),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: PulseDesign.s),
                     Text(currencyState.selectedCurrency.name,
                         style: theme.textTheme.labelLarge?.copyWith(
                             fontWeight: FontWeight.w900, fontSize: 11)),
@@ -179,10 +180,11 @@ class WalletTabScreen extends ConsumerWidget {
       builder: (context) => Container(
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(40)),
-          border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
+          borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(PulseDesign.radiusXl)),
+          border: Border.all(color: theme.dividerColor),
         ),
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(PulseDesign.xl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -190,15 +192,15 @@ class WalletTabScreen extends ConsumerWidget {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                    color: theme.dividerColor.withOpacity(0.1),
+                    color: theme.dividerColor,
                     borderRadius: BorderRadius.circular(2))),
-            const SizedBox(height: 32),
+            const SizedBox(height: PulseDesign.xl),
             Text("SET BASE CURRENCY",
                 style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.primary,
+                    color: PulseDesign.primary,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 2)),
-            const SizedBox(height: 24),
+            const SizedBox(height: PulseDesign.l),
             ...CurrencyType.values
                 .map((c) => ListTile(
                       onTap: () {
@@ -209,11 +211,12 @@ class WalletTabScreen extends ConsumerWidget {
                           style: theme.textTheme.titleMedium
                               ?.copyWith(fontWeight: FontWeight.w900)),
                       trailing: state.selectedCurrency == c
-                          ? Icon(Icons.check_circle_rounded,
-                              color: theme.colorScheme.primary)
+                          ? const Icon(Icons.check_circle_rounded,
+                              color: PulseDesign.primary)
                           : null,
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16)),
+                          borderRadius:
+                              BorderRadius.circular(PulseDesign.radiusM)),
                     ))
                 .toList(),
           ],
@@ -231,20 +234,17 @@ class WalletTabScreen extends ConsumerWidget {
       width: double.infinity,
       height: 220,
       decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(36),
+          borderRadius: BorderRadius.circular(PulseDesign.radiusXl),
           gradient: LinearGradient(
             colors: isDark
-                ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
-                : [
-                    theme.colorScheme.primary,
-                    theme.colorScheme.primary.withBlue(220)
-                  ],
+                ? [PulseDesign.bgDarkCard, PulseDesign.bgDark]
+                : [PulseDesign.primary, PulseDesign.primary.withBlue(220)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           boxShadow: [
             BoxShadow(
-                color: theme.colorScheme.primary.withOpacity(0.25),
+                color: PulseDesign.primary.withOpacity(0.25),
                 blurRadius: 35,
                 offset: const Offset(0, 15))
           ]),
@@ -257,7 +257,7 @@ class WalletTabScreen extends ConsumerWidget {
                 size: 240, color: Colors.white.withOpacity(0.04)),
           ),
           Padding(
-            padding: const EdgeInsets.all(32),
+            padding: const EdgeInsets.all(PulseDesign.l),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -291,7 +291,7 @@ class WalletTabScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: PulseDesign.s),
                 Text(currencyNotifier.formatAmount(balanceUSD),
                     style: const TextStyle(
                         color: Colors.white,
@@ -301,7 +301,7 @@ class WalletTabScreen extends ConsumerWidget {
                 const Spacer(),
                 Row(
                   children: [
-                    _heroStat("Portfolio Delta", "+4.2%", Colors.greenAccent),
+                    _heroStat("Portfolio Delta", "+4.2%", PulseDesign.success),
                     const SizedBox(width: 40),
                     _heroStat(
                         "Daily Outflow",
@@ -340,13 +340,14 @@ class WalletTabScreen extends ConsumerWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _themedActionBtn(context, "Send", Icons.send_rounded, Colors.blue,
-            onTap: () => context.push('/send-money')),
         _themedActionBtn(
-            context, "Receive", Icons.qr_code_scanner_rounded, Colors.purple,
+            context, "Send", Icons.send_rounded, PulseDesign.primary,
+            onTap: () => context.push('/send-money')),
+        _themedActionBtn(context, "Receive", Icons.qr_code_scanner_rounded,
+            PulseDesign.accent,
             onTap: () => context.push('/my-qr')),
         _themedActionBtn(
-            context, "Split", Icons.group_add_rounded, Colors.orange,
+            context, "Split", Icons.group_add_rounded, PulseDesign.warning,
             onTap: () => context.push('/split-bill')),
         _themedActionBtn(context, "Connect", Icons.hub_rounded, Colors.teal,
             onTap: () => context.push('/connect-wallet')),
@@ -369,7 +370,7 @@ class WalletTabScreen extends ConsumerWidget {
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
                 color: theme.colorScheme.surface,
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(PulseDesign.radiusL),
                 border: Border.all(color: accentColor.withOpacity(0.1)),
                 boxShadow: [
                   BoxShadow(
@@ -379,7 +380,7 @@ class WalletTabScreen extends ConsumerWidget {
                 ]),
             child: Icon(icon, color: accentColor, size: 28),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: PulseDesign.s),
           Text(label,
               style: theme.textTheme.labelLarge?.copyWith(
                   fontWeight: FontWeight.w900,
@@ -394,8 +395,8 @@ class WalletTabScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     return Row(
       children: [
-        Icon(icon, size: 18, color: theme.colorScheme.primary),
-        const SizedBox(width: 12),
+        Icon(icon, size: 18, color: PulseDesign.primary),
+        const SizedBox(width: PulseDesign.s),
         Text(title.toUpperCase(),
             style: theme.textTheme.labelSmall?.copyWith(
                 fontWeight: FontWeight.w900,
@@ -429,7 +430,9 @@ class WalletTabScreen extends ConsumerWidget {
           return Container(
             width: 280,
             margin: const EdgeInsets.only(right: 16),
-            child: VirtualCardWidget(card: cards[index], onTap: () {}),
+            child: HolographicCard(
+              child: VirtualCardWidget(card: cards[index], onTap: () {}),
+            ),
           );
         },
       ),
@@ -472,15 +475,14 @@ class WalletTabScreen extends ConsumerWidget {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: theme.dividerColor.withOpacity(0.05)),
+        borderRadius: BorderRadius.circular(PulseDesign.radiusL),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon,
-              color: theme.colorScheme.primary.withOpacity(0.4), size: 20),
-          const SizedBox(width: 12),
+          Icon(icon, color: PulseDesign.primary.withOpacity(0.4), size: 20),
+          const SizedBox(width: PulseDesign.s),
           Text(label,
               style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurface.withOpacity(0.4),
@@ -509,8 +511,8 @@ class WalletTabScreen extends ConsumerWidget {
                 icon: const Icon(Icons.add_rounded),
                 label: const Text('Add Funds'),
                 style: TextButton.styleFrom(
-                  backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
-                  foregroundColor: theme.colorScheme.primary,
+                  backgroundColor: PulseDesign.primary.withOpacity(0.1),
+                  foregroundColor: PulseDesign.primary,
                 ),
               ),
             ],
@@ -532,29 +534,29 @@ class WalletTabScreen extends ConsumerWidget {
     final isDebit = tx.type == TransactionType.debit;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: PulseDesign.s),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: theme.dividerColor.withOpacity(0.03)),
+        borderRadius: BorderRadius.circular(PulseDesign.radiusL),
+        border: Border.all(color: theme.dividerColor.withOpacity(0.5)),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: (isDebit ? Colors.orange : theme.colorScheme.primary)
+              color: (isDebit ? PulseDesign.warning : PulseDesign.primary)
                   .withOpacity(0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
               isDebit ? Icons.arrow_outward_rounded : Icons.south_west_rounded,
-              color: isDebit ? Colors.orange : theme.colorScheme.primary,
+              color: isDebit ? PulseDesign.warning : PulseDesign.primary,
               size: 20,
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: PulseDesign.m),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -579,7 +581,7 @@ class WalletTabScreen extends ConsumerWidget {
                 fontWeight: FontWeight.w900,
                 color: isDebit
                     ? theme.colorScheme.onSurface
-                    : theme.colorScheme.primary),
+                    : PulseDesign.primary),
           ),
         ],
       ),

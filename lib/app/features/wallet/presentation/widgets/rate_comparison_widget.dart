@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:paypulse/core/services/exchange_rate_service.dart';
-import 'package:paypulse/core/theme/app_colors.dart';
-import 'package:paypulse/core/theme/app_theme.dart';
+import 'package:paypulse/core/theme/design_system_v2.dart';
 import 'package:paypulse/core/widgets/premium_cards.dart';
 import 'package:paypulse/domain/entities/enums.dart';
 
@@ -49,7 +48,7 @@ class RateComparisonWidget extends ConsumerWidget {
     }
 
     return SurfaceCard(
-      padding: EdgeInsets.all(compact ? 12 : 20),
+      padding: EdgeInsets.all(compact ? PulseDesign.s : PulseDesign.m),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -59,12 +58,12 @@ class RateComparisonWidget extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(AppTheme.radiusSM),
+                  color: PulseDesign.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(PulseDesign.radiusS),
                 ),
-                child: Icon(
+                child: const Icon(
                   Icons.compare_arrows_rounded,
-                  color: theme.colorScheme.primary,
+                  color: PulseDesign.primary,
                   size: 16,
                 ),
               ),
@@ -77,7 +76,7 @@ class RateComparisonWidget extends ConsumerWidget {
                       'Live Rate Comparison',
                       style: theme.textTheme.labelMedium?.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: theme.colorScheme.primary,
+                        color: PulseDesign.primary,
                       ),
                     ),
                     Text(
@@ -94,7 +93,7 @@ class RateComparisonWidget extends ConsumerWidget {
               Text(
                 'LIVE',
                 style: theme.textTheme.labelSmall?.copyWith(
-                  color: AppColors.accent,
+                  color: PulseDesign.accent,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1,
                 ),
@@ -119,22 +118,22 @@ class RateComparisonWidget extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: AppColors.income.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(AppTheme.radiusSM),
+                color: PulseDesign.success.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(PulseDesign.radiusS),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.savings_rounded,
-                    color: AppColors.income,
+                    color: PulseDesign.success,
                     size: 14,
                   ),
                   const SizedBox(width: 6),
                   Text(
                     'Save ${comparison.savings!.toStringAsFixed(1)}% with best rate',
                     style: theme.textTheme.labelSmall?.copyWith(
-                      color: AppColors.income,
+                      color: PulseDesign.success,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -149,8 +148,11 @@ class RateComparisonWidget extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                gradient: AppColors.premiumGradient,
-                borderRadius: BorderRadius.circular(AppTheme.radiusMD),
+                gradient: LinearGradient(colors: [
+                  PulseDesign.primary,
+                  PulseDesign.primary.withBlue(200),
+                ]),
+                borderRadius: BorderRadius.circular(PulseDesign.radiusM),
               ),
               child: Row(
                 children: [
@@ -181,7 +183,8 @@ class RateComparisonWidget extends ConsumerWidget {
                     ),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(AppTheme.radiusFull),
+                      borderRadius:
+                          BorderRadius.circular(PulseDesign.radiusFull),
                     ),
                     child: Text(
                       'BEST',
@@ -217,11 +220,11 @@ class RateComparisonWidget extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: isBest
-            ? AppColors.income.withOpacity(0.08)
+            ? PulseDesign.success.withOpacity(0.08)
             : theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(AppTheme.radiusSM),
+        borderRadius: BorderRadius.circular(PulseDesign.radiusS),
         border: isBest
-            ? Border.all(color: AppColors.income.withOpacity(0.3))
+            ? Border.all(color: PulseDesign.success.withOpacity(0.3))
             : null,
       ),
       child: Row(
@@ -232,8 +235,8 @@ class RateComparisonWidget extends ConsumerWidget {
             height: 28,
             decoration: BoxDecoration(
               color: isBest
-                  ? AppColors.income.withOpacity(0.15)
-                  : theme.colorScheme.primary.withOpacity(0.1),
+                  ? PulseDesign.success.withOpacity(0.15)
+                  : PulseDesign.primary.withOpacity(0.1),
               borderRadius: BorderRadius.circular(6),
             ),
             child: Center(
@@ -241,7 +244,7 @@ class RateComparisonWidget extends ConsumerWidget {
                 rate.providerName[0],
                 style: theme.textTheme.labelMedium?.copyWith(
                   fontWeight: FontWeight.w900,
-                  color: isBest ? AppColors.income : theme.colorScheme.primary,
+                  color: isBest ? PulseDesign.success : PulseDesign.primary,
                 ),
               ),
             ),
@@ -261,14 +264,14 @@ class RateComparisonWidget extends ConsumerWidget {
             rate.rate.toStringAsFixed(4),
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w800,
-              color: isBest ? AppColors.income : null,
+              color: isBest ? PulseDesign.success : null,
             ),
           ),
           if (isBest) ...[
             const SizedBox(width: 8),
-            Icon(
+            const Icon(
               Icons.verified_rounded,
-              color: AppColors.income,
+              color: PulseDesign.success,
               size: 16,
             ),
           ],
@@ -294,9 +297,9 @@ class RateComparisonWidget extends ConsumerWidget {
                 height: 40,
                 decoration: BoxDecoration(
                   color: theme.colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(AppTheme.radiusSM),
+                  borderRadius: BorderRadius.circular(PulseDesign.radiusS),
                 ),
-              ),
+              ).animate(onPlay: (c) => c.repeat()).shimmer(duration: 1200.ms),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -309,7 +312,9 @@ class RateComparisonWidget extends ConsumerWidget {
                         color: theme.colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(4),
                       ),
-                    ),
+                    )
+                        .animate(onPlay: (c) => c.repeat())
+                        .shimmer(duration: 1200.ms),
                     const SizedBox(height: 6),
                     Container(
                       width: 80,
@@ -318,7 +323,9 @@ class RateComparisonWidget extends ConsumerWidget {
                         color: theme.colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(4),
                       ),
-                    ),
+                    )
+                        .animate(onPlay: (c) => c.repeat())
+                        .shimmer(duration: 1200.ms),
                   ],
                 ),
               ),
@@ -332,9 +339,11 @@ class RateComparisonWidget extends ConsumerWidget {
               height: 48,
               decoration: BoxDecoration(
                 color: theme.colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(AppTheme.radiusSM),
+                borderRadius: BorderRadius.circular(PulseDesign.radiusS),
               ),
-            ),
+            )
+                .animate(onPlay: (c) => c.repeat())
+                .shimmer(delay: (200 * index).ms, duration: 1200.ms),
           ),
         ],
       ),
@@ -387,7 +396,7 @@ class RateTicker extends ConsumerWidget {
           height: 36,
           decoration: BoxDecoration(
             color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
-            borderRadius: BorderRadius.circular(AppTheme.radiusFull),
+            borderRadius: BorderRadius.circular(PulseDesign.radiusFull),
           ),
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
@@ -406,7 +415,7 @@ class RateTicker extends ConsumerWidget {
                       currency.name,
                       style: theme.textTheme.labelSmall?.copyWith(
                         fontWeight: FontWeight.w800,
-                        color: theme.colorScheme.primary,
+                        color: PulseDesign.primary,
                       ),
                     ),
                     const SizedBox(width: 4),

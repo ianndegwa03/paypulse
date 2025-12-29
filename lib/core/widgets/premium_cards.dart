@@ -1,7 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:paypulse/core/theme/app_colors.dart';
-import 'package:paypulse/core/theme/app_theme.dart';
+import 'package:paypulse/core/theme/design_system_v2.dart';
 
 /// Premium glassmorphism card widget
 /// Use for elevated UI elements that need a modern, frosted glass effect
@@ -20,7 +19,7 @@ class GlassCard extends StatelessWidget {
     required this.child,
     this.padding,
     this.margin,
-    this.borderRadius = AppTheme.radiusXL,
+    this.borderRadius = PulseDesign.radiusXl,
     this.blur = 20,
     this.borderColor,
     this.gradient,
@@ -36,18 +35,17 @@ class GlassCard extends StatelessWidget {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
         child: Container(
-          padding: padding ?? const EdgeInsets.all(AppTheme.spacingMD),
+          padding: padding ?? const EdgeInsets.all(PulseDesign.m),
           decoration: BoxDecoration(
             gradient: gradient,
             color: gradient == null
-                ? (isDark ? AppColors.glassDark : AppColors.glassLight)
+                ? (isDark
+                    ? PulseDesign.bgDarkCard.withOpacity(0.7)
+                    : PulseDesign.bgLightCard.withOpacity(0.7))
                 : null,
             borderRadius: BorderRadius.circular(borderRadius),
             border: Border.all(
-              color: borderColor ??
-                  (isDark
-                      ? AppColors.glassBorderDark
-                      : AppColors.glassBorderLight),
+              color: borderColor ?? Colors.white.withOpacity(0.1),
               width: 1,
             ),
           ),
@@ -81,10 +79,11 @@ class GradientCard extends StatelessWidget {
   const GradientCard({
     super.key,
     required this.child,
-    this.gradient = AppColors.premiumGradient,
+    this.gradient =
+        const LinearGradient(colors: [PulseDesign.primary, Color(0xFF3B82F6)]),
     this.padding,
     this.margin,
-    this.borderRadius = AppTheme.radiusXL,
+    this.borderRadius = PulseDesign.radiusXl,
     this.boxShadow,
     this.onTap,
   });
@@ -92,12 +91,19 @@ class GradientCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget content = Container(
-      padding: padding ?? const EdgeInsets.all(AppTheme.spacingLG),
+      padding: padding ?? const EdgeInsets.all(PulseDesign.l),
       margin: margin,
       decoration: BoxDecoration(
         gradient: gradient,
         borderRadius: BorderRadius.circular(borderRadius),
-        boxShadow: boxShadow ?? AppColors.cardShadow,
+        boxShadow: boxShadow ??
+            [
+              BoxShadow(
+                color: PulseDesign.primary.withOpacity(0.3),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
       ),
       child: child,
     );
@@ -126,7 +132,7 @@ class SurfaceCard extends StatelessWidget {
     required this.child,
     this.padding,
     this.margin,
-    this.borderRadius = AppTheme.radiusXL,
+    this.borderRadius = PulseDesign.radiusXl,
     this.backgroundColor,
     this.showBorder = true,
     this.showShadow = true,
@@ -139,20 +145,27 @@ class SurfaceCard extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     Widget content = Container(
-      padding: padding ?? const EdgeInsets.all(AppTheme.spacingMD),
+      padding: padding ?? const EdgeInsets.all(PulseDesign.m),
       margin: margin,
       decoration: BoxDecoration(
-        color: backgroundColor ?? theme.colorScheme.surface,
+        color: backgroundColor ??
+            (isDark ? PulseDesign.bgDarkCard : PulseDesign.bgLightCard),
         borderRadius: BorderRadius.circular(borderRadius),
         border: showBorder
             ? Border.all(
-                color: isDark
-                    ? AppColors.borderDark.withOpacity(0.5)
-                    : AppColors.borderLight.withOpacity(0.5),
+                color: Colors.white.withOpacity(0.05),
                 width: 1,
               )
             : null,
-        boxShadow: showShadow ? AppColors.softShadow : null,
+        boxShadow: showShadow
+            ? [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                )
+              ]
+            : null,
       ),
       child: child,
     );
@@ -191,7 +204,7 @@ class StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final cardColor = color ?? theme.colorScheme.primary;
+    final cardColor = color ?? PulseDesign.primary;
 
     return SurfaceCard(
       onTap: onTap,
@@ -206,7 +219,7 @@ class StatCard extends StatelessWidget {
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: cardColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(AppTheme.radiusSM),
+                    borderRadius: BorderRadius.circular(PulseDesign.radiusS),
                   ),
                   child: Icon(icon, color: cardColor, size: 16),
                 ),
@@ -227,7 +240,7 @@ class StatCard extends StatelessWidget {
                   isPositive
                       ? Icons.trending_up_rounded
                       : Icons.trending_down_rounded,
-                  color: isPositive ? AppColors.income : AppColors.expense,
+                  color: isPositive ? PulseDesign.success : PulseDesign.error,
                   size: 16,
                 ),
             ],
@@ -369,7 +382,7 @@ class _PulsingDotState extends State<PulsingDot>
 
   @override
   Widget build(BuildContext context) {
-    final dotColor = widget.color ?? AppColors.accent;
+    final dotColor = widget.color ?? PulseDesign.accent;
 
     return AnimatedBuilder(
       animation: _animation,

@@ -16,6 +16,7 @@ class UserEntity extends Equatable {
   final DateTime updatedAt;
   final Map<String, dynamic> preferences;
   final Map<String, dynamic> securitySettings;
+  final bool isBanned;
 
   final UserRole role;
 
@@ -37,6 +38,7 @@ class UserEntity extends Equatable {
     required this.username,
     this.preferences = const {},
     this.securitySettings = const {},
+    this.isBanned = false,
     this.unlockedFeatures = const [],
     this.bio,
     this.dateOfBirth,
@@ -91,6 +93,7 @@ class UserEntity extends Equatable {
         updatedAt,
         preferences,
         securitySettings,
+        isBanned,
         bio,
         dateOfBirth,
         gender,
@@ -129,6 +132,7 @@ class UserEntity extends Equatable {
     bool? stealthModeEnabled,
     bool? isProfessionalProfileVisible,
     String? professionalBio,
+    bool? isBanned,
   }) {
     return UserEntity(
       id: id ?? this.id,
@@ -145,6 +149,7 @@ class UserEntity extends Equatable {
       updatedAt: updatedAt ?? this.updatedAt,
       preferences: preferences ?? this.preferences,
       securitySettings: securitySettings ?? this.securitySettings,
+      isBanned: isBanned ?? this.isBanned,
       unlockedFeatures: unlockedFeatures ?? this.unlockedFeatures,
       bio: bio ?? this.bio,
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,

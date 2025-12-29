@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:paypulse/core/theme/design_system_v2.dart';
 
 class FloatingNavBar extends StatelessWidget {
   final int selectedIndex;
@@ -37,9 +38,7 @@ class FloatingNavBar extends StatelessWidget {
               height: 75,
               padding: const EdgeInsets.symmetric(horizontal: 8),
               decoration: BoxDecoration(
-                color: isDark
-                    ? const Color(0xFF1E1E24).withOpacity(0.85)
-                    : Colors.white.withOpacity(0.85),
+                color: isDark ? PulseDesign.glassDark : PulseDesign.glassLight,
                 borderRadius: BorderRadius.circular(35),
                 border: Border.all(
                   color: Colors.white.withOpacity(0.1),

@@ -6,6 +6,8 @@ import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:paypulse/app/features/social/presentation/state/chat_notifier.dart';
 import 'package:paypulse/core/services/contacts/contacts_service.dart';
+import 'package:paypulse/domain/entities/user_entity.dart';
+import 'package:paypulse/domain/repositories/user_repository.dart';
 
 class ChatListScreen extends ConsumerStatefulWidget {
   const ChatListScreen({super.key});
@@ -16,6 +18,7 @@ class ChatListScreen extends ConsumerStatefulWidget {
 
 class _ChatListScreenState extends ConsumerState<ChatListScreen> {
   List<Contact> _contacts = [];
+  List<UserEntity> _appUsers = [];
   bool _isLoading = true;
   bool _showGroupCreation = false;
   final Set<Contact> _selectedContacts = {};
@@ -51,12 +54,29 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
 
   Future<void> _syncContactsInBackground() async {
     final service = GetIt.I<ContactsService>();
+    final userRepo = GetIt.I<UserRepository>();
     try {
       final granted = await service.requestPermission();
       if (granted) {
         final contacts = await service.getContacts();
-        if (mounted && contacts.isNotEmpty) {
-          setState(() => _contacts = contacts);
+        if (contacts.isNotEmpty) {
+          // Sync with PayPulse users
+          final phones = contacts
+              .expand((c) => c.phones)
+              .map((p) => p.number.replaceAll(RegExp(r'[^0-9+]'), ''))
+              .toList();
+
+          final result = await userRepo.findUsersByPhoneNumbers(phones);
+
+          if (mounted) {
+            setState(() {
+              _contacts = contacts;
+              result.fold(
+                (failure) => null, // Ignore failure in background
+                (users) => _appUsers = users,
+              );
+            });
+          }
         }
       }
     } catch (_) {
@@ -67,11 +87,30 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
   Future<void> _syncContacts() async {
     setState(() => _isLoading = true);
     final service = GetIt.I<ContactsService>();
+    final userRepo = GetIt.I<UserRepository>();
+
     try {
       final granted = await service.requestPermission();
       if (granted) {
         final contacts = await service.getContacts();
-        setState(() => _contacts = contacts);
+
+        // Sync with PayPulse users
+        final phones = contacts
+            .expand((c) => c.phones)
+            .map((p) => p.number.replaceAll(RegExp(r'[^0-9+]'), ''))
+            .toList();
+
+        final result = await userRepo.findUsersByPhoneNumbers(phones);
+
+        if (mounted) {
+          setState(() {
+            _contacts = contacts;
+            result.fold(
+              (failure) => _appUsers = [],
+              (users) => _appUsers = users,
+            );
+          });
+        }
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -85,13 +124,24 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
     }
   }
 
-  void _openSecureChat(Contact contact) {
+  void _openSecureChat({UserEntity? user, Contact? contact}) {
     HapticFeedback.lightImpact();
-    final chatId = contact.phones.isNotEmpty
-        ? contact.phones.first.number.replaceAll(RegExp(r'[^0-9]'), '')
-        : 'chat_${contact.id}';
+    String chatId;
+    String title;
 
-    context.push('/secure-chat/$chatId', extra: {'title': contact.displayName});
+    if (user != null) {
+      chatId = user.phoneNumber?.value ?? user.id;
+      title = user.fullName;
+    } else if (contact != null) {
+      chatId = contact.phones.isNotEmpty
+          ? contact.phones.first.number.replaceAll(RegExp(r'[^0-9]'), '')
+          : 'chat_${contact.id}';
+      title = contact.displayName;
+    } else {
+      return;
+    }
+
+    context.push('/secure-chat/$chatId', extra: {'title': title});
   }
 
   Future<void> _createGroupChat() async {
@@ -283,9 +333,9 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : _contacts.isEmpty
+                : (_contacts.isEmpty && _appUsers.isEmpty)
                     ? _buildEmptyState()
-                    : _buildContactList(),
+                    : _buildContactsList(),
           ),
         ],
       ),
@@ -347,25 +397,24 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
     );
   }
 
-  Widget _buildContactList() {
+  Widget _buildContactsList() {
     final theme = Theme.of(context);
 
-    // Simulate "App Users" logic - in production this would verify against backend
-    // For demo: Contacts with photos OR contacts starting with specific letters use app
-    final appUsers = _contacts
-        .where((c) =>
-            c.photo != null ||
-            (c.displayName.isNotEmpty &&
-                'ABCDE'.contains(c.displayName[0].toUpperCase())))
-        .toList();
-    final otherContacts =
-        _contacts.where((c) => !appUsers.contains(c)).toList();
+    // Filter contacts that are NOT in appUsers
+    // Assuming matching based on phone, but simplifying: show rest as invites
+    final otherContacts = _contacts.where((c) {
+      // Filter logic approx: if any phone of contact matches an app user phone?
+      // For now, simpler: Just show all contacts in "invite" except maybe exact matches if we tracked them.
+      // Since _appUsers come from contacts phones, we could try to remove them.
+      // But _appUsers doesn't link back to Contact ID.
+      return true;
+    }).toList();
 
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (appUsers.isNotEmpty) ...[
+          if (_appUsers.isNotEmpty) ...[
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: Text(
@@ -381,10 +430,9 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: appUsers.length,
+              itemCount: _appUsers.length,
               separatorBuilder: (context, index) => const Divider(height: 1),
-              itemBuilder: (context, index) =>
-                  _buildContactTile(appUsers[index], true),
+              itemBuilder: (context, index) => _buildUserTile(_appUsers[index]),
             ),
           ],
           if (otherContacts.isNotEmpty) ...[
@@ -406,7 +454,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
               itemCount: otherContacts.length,
               separatorBuilder: (context, index) => const Divider(height: 1),
               itemBuilder: (context, index) =>
-                  _buildContactTile(otherContacts[index], false),
+                  _buildContactTile(otherContacts[index]),
             ),
           ],
           const SizedBox(height: 20),
@@ -415,7 +463,63 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
     );
   }
 
-  Widget _buildContactTile(Contact contact, bool isAppUser) {
+  Widget _buildUserTile(UserEntity user) {
+    final theme = Theme.of(context);
+    return InkWell(
+      onTap: () => _openSecureChat(user: user),
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 24,
+              backgroundColor: theme.colorScheme.primaryContainer,
+              backgroundImage: user.profileImageUrl != null
+                  ? NetworkImage(user.profileImageUrl!)
+                  : null,
+              child: user.profileImageUrl == null
+                  ? Text(user.firstName.isNotEmpty ? user.firstName[0] : '?',
+                      style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.primary))
+                  : null,
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    user.fullName,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: theme.textTheme.bodyLarge?.color,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Available',
+                    style: TextStyle(
+                      color: theme.colorScheme.primary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  )
+                ],
+              ),
+            ),
+            Icon(Icons.chat_bubble_outline_rounded,
+                size: 20, color: theme.colorScheme.primary),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContactTile(Contact contact) {
     final theme = Theme.of(context);
     final isSelected = _selectedContacts.contains(contact);
 
@@ -429,8 +533,6 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
               _selectedContacts.add(contact);
             }
           });
-        } else if (isAppUser) {
-          _openSecureChat(contact);
         } else {
           // Invite flow
           if (contact.phones.isNotEmpty) {
@@ -451,9 +553,7 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
               children: [
                 CircleAvatar(
                   radius: 24,
-                  backgroundColor: isAppUser
-                      ? theme.colorScheme.primaryContainer
-                      : Colors.grey.shade200,
+                  backgroundColor: Colors.grey.shade200,
                   backgroundImage: contact.photo != null
                       ? MemoryImage(contact.photo!)
                       : null,
@@ -462,12 +562,10 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
                           contact.displayName.isNotEmpty
                               ? contact.displayName[0]
                               : '?',
-                          style: TextStyle(
+                          style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: isAppUser
-                                  ? theme.colorScheme.primary
-                                  : Colors.grey))
+                              color: Colors.grey))
                       : null,
                 ),
                 if (_showGroupCreation && isSelected)
@@ -494,57 +592,42 @@ class _ChatListScreenState extends ConsumerState<ChatListScreen> {
                 children: [
                   Text(
                     contact.displayName,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: isAppUser
-                          ? theme.textTheme.bodyLarge?.color
-                          : Colors.grey,
+                      color: Colors.grey,
                     ),
                   ),
                   const SizedBox(height: 4),
-                  if (isAppUser)
-                    Text(
-                      'Available',
-                      style: TextStyle(
-                        color: theme.colorScheme.primary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    )
-                  else
-                    Text(
-                      contact.phones.isNotEmpty
-                          ? contact.phones.first.number
-                          : 'No number',
-                      style: TextStyle(
-                        color: Colors.grey.shade400,
-                        fontSize: 12,
-                      ),
+                  Text(
+                    contact.phones.isNotEmpty
+                        ? contact.phones.first.number
+                        : 'No number',
+                    style: TextStyle(
+                      color: Colors.grey.shade400,
+                      fontSize: 12,
                     ),
+                  ),
                 ],
               ),
             ),
             if (!_showGroupCreation)
-              isAppUser
-                  ? Icon(Icons.chat_bubble_outline_rounded,
-                      size: 20, color: theme.colorScheme.primary)
-                  : Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.secondary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        'INVITE',
-                        style: TextStyle(
-                          color: theme.colorScheme.secondary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 10,
-                        ),
-                      ),
-                    ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.secondary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  'INVITE',
+                  style: TextStyle(
+                    color: theme.colorScheme.secondary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 10,
+                  ),
+                ),
+              ),
           ],
         ),
       ),

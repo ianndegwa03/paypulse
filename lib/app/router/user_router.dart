@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:paypulse/app/features/auth/presentation/screens/login_screen.dart';
 import 'package:paypulse/app/features/auth/presentation/screens/register_screen.dart';
@@ -6,7 +7,6 @@ import 'package:paypulse/app/features/dashboard/presentation/screens/dashboard_s
 import 'package:paypulse/app/features/dashboard/presentation/screens/settings/edit_profile_screen.dart';
 import 'package:paypulse/app/features/dashboard/presentation/screens/settings/security_settings_screen.dart';
 import 'package:paypulse/app/features/settings/presentation/screens/theme_settings_screen.dart';
-import 'package:paypulse/app/features/social/presentation/screens/chat_list_screen.dart';
 import 'package:paypulse/app/features/splash/presentation/screens/splash_screen.dart';
 import 'package:paypulse/app/features/wallet/presentation/screens/send_money_screen.dart';
 import 'package:paypulse/app/features/privacy/presentation/screens/privacy_settings_screen.dart';
@@ -17,18 +17,25 @@ import 'package:paypulse/app/features/wallet/presentation/screens/qr_scanner_scr
 import 'package:paypulse/app/features/wallet/presentation/screens/my_qr_screen.dart';
 import 'package:paypulse/app/features/wallet/presentation/screens/split_bill_screen.dart';
 import 'package:paypulse/app/features/wallet/presentation/screens/transaction_history_screen.dart';
-import 'package:paypulse/app/features/budgeting/presentation/screens/budgeting_dashboard_screen.dart';
 import 'package:paypulse/app/features/bills/presentation/screens/bill_reminder_screen.dart';
 import 'package:paypulse/app/features/dashboard/presentation/screens/profile_tab_screen.dart';
-import 'package:paypulse/app/features/analytics/presentation/screens/premium_insights_screen.dart';
 import 'package:paypulse/app/features/multicurrency/presentation/screens/multi_currency_wallet_screen.dart';
 import 'package:paypulse/app/features/dashboard/presentation/screens/settings/identity_config_screen.dart';
 import 'package:paypulse/app/features/dashboard/presentation/screens/settings/privacy_security_controls_screen.dart';
 import 'package:paypulse/app/features/wallet/presentation/screens/create_ghost_card_screen.dart';
-import 'package:paypulse/app/features/social/presentation/screens/secure_chat_screen.dart';
 import 'package:paypulse/app/features/dashboard/presentation/screens/settings/personal_info_screen.dart';
 import 'package:paypulse/app/features/dashboard/presentation/screens/settings/professional_profile_screen.dart';
 import 'package:paypulse/app/features/wallet/presentation/screens/bank_integration_flow_screen.dart';
+import 'package:paypulse/app/features/admin/presentation/screens/admin_dashboard_screen.dart'
+    deferred as admin_dashboard;
+import 'package:paypulse/app/features/social/presentation/screens/chat_list_screen.dart'
+    deferred as chat_list;
+import 'package:paypulse/app/features/analytics/presentation/screens/premium_insights_screen.dart'
+    deferred as premium_insights;
+import 'package:paypulse/app/features/budgeting/presentation/screens/budgeting_dashboard_screen.dart'
+    deferred as budgeting;
+import 'package:paypulse/app/features/social/presentation/screens/secure_chat_screen.dart'
+    deferred as secure_chat;
 import 'package:flutter_contacts/flutter_contacts.dart';
 
 class UserRouter {
@@ -69,7 +76,10 @@ class UserRouter {
       ),
       GoRoute(
         path: '/chats',
-        builder: (context, state) => const ChatListScreen(),
+        builder: (context, state) => _deferredWidget(
+          chat_list.loadLibrary(),
+          () => chat_list.ChatListScreen(),
+        ),
       ),
       GoRoute(
         path: '/send-money',
@@ -114,7 +124,10 @@ class UserRouter {
       ),
       GoRoute(
         path: '/budgets',
-        builder: (context, state) => const BudgetingDashboardScreen(),
+        builder: (context, state) => _deferredWidget(
+          budgeting.loadLibrary(),
+          () => budgeting.BudgetingDashboardScreen(),
+        ),
       ),
       GoRoute(
         path: '/bills',
@@ -122,7 +135,10 @@ class UserRouter {
       ),
       GoRoute(
         path: '/premium-insights',
-        builder: (context, state) => const PremiumInsightsScreen(),
+        builder: (context, state) => _deferredWidget(
+          premium_insights.loadLibrary(),
+          () => premium_insights.PremiumInsightsScreen(),
+        ),
       ),
       GoRoute(
         path: '/multi-currency',
@@ -142,10 +158,13 @@ class UserRouter {
       ),
       GoRoute(
         path: '/secure-chat/:chatId',
-        builder: (context, state) => SecureChatScreen(
-          chatId: state.pathParameters['chatId']!,
-          title:
-              (state.extra as Map<String, dynamic>?)?['title'] ?? 'Secure Chat',
+        builder: (context, state) => _deferredWidget(
+          secure_chat.loadLibrary(),
+          () => secure_chat.SecureChatScreen(
+            chatId: state.pathParameters['chatId']!,
+            title: (state.extra as Map<String, dynamic>?)?['title'] ??
+                'Secure Chat',
+          ),
         ),
       ),
       GoRoute(
@@ -160,6 +179,30 @@ class UserRouter {
         path: '/bank-integration-flow',
         builder: (context, state) => const BankIntegrationFlowScreen(),
       ),
+      GoRoute(
+        path: '/admin',
+        builder: (context, state) => _deferredWidget(
+          admin_dashboard.loadLibrary(),
+          () => admin_dashboard.AdminDashboardScreen(),
+        ),
+      ),
     ],
   );
+
+  static Widget _deferredWidget(
+      Future<dynamic> loadLibrary, Widget Function() builder) {
+    return FutureBuilder(
+      future: loadLibrary,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.done) {
+          return builder();
+        }
+        return const Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
+      },
+    );
+  }
 }

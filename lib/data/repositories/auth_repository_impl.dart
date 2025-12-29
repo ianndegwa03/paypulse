@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import 'package:paypulse/core/errors/exceptions.dart';
 import 'package:paypulse/core/errors/failures.dart';
@@ -45,12 +46,16 @@ class AuthRepositoryImpl implements AuthRepository {
       }
 
       final userEntity = userMapper.responseToEntity(response);
+      _logAudit('User ${userEntity.email} logged in', 'SUCCESS',
+          userId: userEntity.id);
       return Right(userEntity);
     } on ServerException catch (e) {
+      _logAudit('Login failed: ${e.message}', 'ERROR', userId: email);
       return Left(ServerFailure(message: e.message));
     } on CacheException catch (e) {
       return Left(CacheFailure(message: e.message));
     } catch (e) {
+      _logAudit('Login failed: $e', 'ERROR', userId: email);
       return Left(GenericFailure(message: 'Login failed: $e'));
     }
   }
@@ -89,12 +94,16 @@ class AuthRepositoryImpl implements AuthRepository {
       }
 
       final userEntity = userMapper.responseToEntity(response);
+      _logAudit('New user registered: ${userEntity.email}', 'SUCCESS',
+          userId: userEntity.id);
       return Right(userEntity);
     } on ServerException catch (e) {
+      _logAudit('Registration failed: ${e.message}', 'ERROR');
       return Left(ServerFailure(message: e.message));
     } on CacheException catch (e) {
       return Left(CacheFailure(message: e.message));
     } catch (e) {
+      _logAudit('Registration failed: $e', 'ERROR');
       return Left(GenericFailure(message: 'Registration failed: $e'));
     }
   }
@@ -117,6 +126,7 @@ class AuthRepositoryImpl implements AuthRepository {
         }
       }
 
+      _logAudit('User logged out', 'INFO');
       return const Right(null);
     } catch (e) {
       return Left(GenericFailure(message: 'Logout failed: $e'));
@@ -422,11 +432,20 @@ class AuthRepositoryImpl implements AuthRepository {
       final userEntity = userMapper.responseToEntity(response);
       return Right(userEntity);
     } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message));
-    } on CacheException catch (e) {
-      return Left(CacheFailure(message: e.message));
-    } catch (e) {
       return Left(GenericFailure(message: 'Apple sign-in failed: $e'));
+    }
+  }
+
+  Future<void> _logAudit(String message, String type, {String? userId}) async {
+    try {
+      await FirebaseFirestore.instance.collection('admin_logs').add({
+        'message': message,
+        'type': type,
+        'timestamp': FieldValue.serverTimestamp(),
+        'userId': userId,
+      });
+    } catch (_) {
+      // Fire and forget, don't block auth
     }
   }
 }

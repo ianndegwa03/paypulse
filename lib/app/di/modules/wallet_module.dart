@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:paypulse/domain/repositories/wallet_repository.dart';
 import 'package:paypulse/data/repositories/wallet_repository_impl.dart';
+import 'package:paypulse/domain/repositories/shared_space_repository.dart';
+import 'package:paypulse/data/repositories/shared_space_repository_impl.dart';
 import 'package:paypulse/domain/use_cases/wallet/get_wallet_use_case.dart';
 import 'package:paypulse/domain/use_cases/wallet/add_money_use_case.dart';
 import 'package:paypulse/domain/use_cases/wallet/transfer_money_use_case.dart';
@@ -70,5 +72,15 @@ class WalletModule {
     getIt.registerLazySingleton(() => CreateVaultUseCase(getIt()));
     getIt.registerLazySingleton(() => FundVaultUseCase(getIt()));
     getIt.registerLazySingleton(() => CreateVirtualCardUseCase(getIt()));
+
+    // Shared Spaces
+    if (!getIt.isRegistered<SharedSpaceRepository>()) {
+      getIt.registerLazySingleton<SharedSpaceRepository>(
+        () => SharedSpaceRepositoryImpl(
+          firestore: getIt<FirebaseFirestore>(),
+          auth: getIt<FirebaseAuth>(),
+        ),
+      );
+    }
   }
 }

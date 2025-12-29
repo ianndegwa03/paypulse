@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:paypulse/app/features/auth/presentation/state/auth_notifier.dart';
 import 'package:paypulse/app/features/wallet/presentation/state/wallet_providers.dart';
-import 'package:paypulse/core/theme/app_colors.dart';
+import 'package:paypulse/core/theme/design_system_v2.dart';
 
 import 'package:go_router/go_router.dart';
 import 'package:paypulse/app/features/dashboard/presentation/widgets/spending_chart.dart';
@@ -19,59 +19,59 @@ class HomeTabScreen extends ConsumerStatefulWidget {
 
 class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
   @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authNotifierProvider);
     final user = authState.currentUser;
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final walletState = ref.watch(walletStateProvider);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(PulseDesign.l),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Interactive Header
               _buildInteractiveHeader(context, user, theme),
-              const SizedBox(height: 24),
+              const SizedBox(height: PulseDesign.l),
 
               // Search Bar - Glassmorphic
               GestureDetector(
                 onTap: () => HapticFeedback.selectionClick(),
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: PulseDesign.m, vertical: PulseDesign.m),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.03),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.white.withOpacity(0.05)),
+                    color:
+                        isDark ? PulseDesign.glassDark : PulseDesign.glassLight,
+                    borderRadius: BorderRadius.circular(PulseDesign.radiusL),
+                    border: Border.all(color: theme.dividerColor),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.search_rounded,
-                          color: Colors.white24, size: 20),
-                      const SizedBox(width: 12),
+                      Icon(Icons.search_rounded,
+                          color: theme.colorScheme.onSurface.withOpacity(0.5),
+                          size: 20),
+                      const SizedBox(width: PulseDesign.s),
                       Text(
                         "Search assets, friends...",
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: Colors.white24,
+                          color: theme.colorScheme.onSurface.withOpacity(0.5),
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                       const Spacer(),
-                      Icon(Icons.tune_rounded, color: Colors.white12, size: 18),
+                      Icon(Icons.tune_rounded,
+                          color: theme.colorScheme.onSurface.withOpacity(0.5),
+                          size: 18),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: PulseDesign.xl),
 
               // PayPulse Interactive Card
               if (walletState.wallet != null)
@@ -81,40 +81,44 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
               else
                 _buildNoCardState(context),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: PulseDesign.xl),
 
-              // Interactive Financial Health Score (Soft-sell for Premium)
+              // Interactive Financial Health Score
               _buildPulseScoreCard(context, user),
 
               if (user?.isPremiumUser ?? false) ...[
-                const SizedBox(height: 24),
+                const SizedBox(height: PulseDesign.l),
                 _buildAIInsightCard(context),
               ],
 
-              const SizedBox(height: 32),
+              const SizedBox(height: PulseDesign.xl),
 
               // Quick Actions
               _buildSectionTitle(context, "Quick Actions"),
-              const SizedBox(height: 16),
+              const SizedBox(height: PulseDesign.m),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  _homeAction(context, Icons.send_rounded, "Send",
+                      PulseDesign.primary, () => context.push('/send-money')),
                   _homeAction(
                       context,
-                      Icons.send_rounded,
-                      "Send",
-                      theme.colorScheme.primary,
-                      () => context.push('/send-money')),
-                  _homeAction(context, Icons.account_balance_rounded, "Bank",
-                      Colors.orange, () => context.push('/connect-wallet')),
+                      Icons.account_balance_rounded,
+                      "Bank",
+                      PulseDesign.warning,
+                      () => context.push('/connect-wallet')),
                   _homeAction(context, Icons.splitscreen_rounded, "Split",
-                      Colors.purple, () => context.push('/split-bill')),
-                  _homeAction(context, Icons.grid_view_rounded, "More",
-                      Colors.blueGrey, () => _showMoreActions(context)),
+                      PulseDesign.accent, () => context.push('/split-bill')),
+                  _homeAction(
+                      context,
+                      Icons.grid_view_rounded,
+                      "More",
+                      theme.colorScheme.onSurfaceVariant,
+                      () => _showMoreActions(context)),
                 ],
               ),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: PulseDesign.xl),
 
               // Send Again section
               Row(
@@ -132,7 +136,7 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: PulseDesign.s),
               SizedBox(
                 height: 100,
                 child: ref.watch(contactsProvider).when(
@@ -146,13 +150,12 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
                             ),
                           );
                         }
-                        // Focus on contacts with photos first if possible, or just first few
                         final displayContacts = contacts.take(8).toList();
                         return ListView.separated(
                           scrollDirection: Axis.horizontal,
                           itemCount: displayContacts.length,
                           separatorBuilder: (context, index) =>
-                              const SizedBox(width: 16),
+                              const SizedBox(width: PulseDesign.m),
                           itemBuilder: (context, index) {
                             final contact = displayContacts[index];
                             final name = contact.displayName;
@@ -160,7 +163,6 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
                             return GestureDetector(
                               onTap: () {
                                 HapticFeedback.selectionClick();
-                                // Navigate to send money with this contact
                                 context.push('/send-money', extra: contact);
                               },
                               child: Column(
@@ -170,13 +172,13 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       border: Border.all(
-                                          color: theme.colorScheme.primary
+                                          color: PulseDesign.primary
                                               .withOpacity(0.1)),
                                     ),
                                     child: CircleAvatar(
                                       radius: 28,
-                                      backgroundColor: theme.colorScheme.primary
-                                          .withOpacity(0.1),
+                                      backgroundColor:
+                                          PulseDesign.primary.withOpacity(0.1),
                                       backgroundImage: photo != null
                                           ? MemoryImage(photo)
                                           : null,
@@ -185,9 +187,8 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
                                               name.isNotEmpty
                                                   ? name[0].toUpperCase()
                                                   : '?',
-                                              style: TextStyle(
-                                                  color:
-                                                      theme.colorScheme.primary,
+                                              style: const TextStyle(
+                                                  color: PulseDesign.primary,
                                                   fontWeight: FontWeight.bold),
                                             )
                                           : null,
@@ -213,15 +214,15 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
                         scrollDirection: Axis.horizontal,
                         itemCount: 5,
                         separatorBuilder: (context, index) =>
-                            const SizedBox(width: 16),
+                            const SizedBox(width: PulseDesign.m),
                         itemBuilder: (context, index) => const Column(
                           children: [
                             SkeletonLoader(
                                 width: 56,
                                 height: 56,
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(28))),
-                            SizedBox(height: 8),
+                                borderRadius: BorderRadius.all(
+                                    Radius.circular(PulseDesign.radiusFull))),
+                            const SizedBox(height: 8),
                             SkeletonLoader(width: 40, height: 10),
                           ],
                         ),
@@ -231,7 +232,7 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
                     ),
               ),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: PulseDesign.xl),
 
               // Insights / Chart
               Row(
@@ -248,7 +249,8 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius:
+                          BorderRadius.circular(PulseDesign.radiusFull),
                     ),
                     child: Text(
                       "This Week",
@@ -260,14 +262,15 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: PulseDesign.m),
               Container(
                 height: 240,
                 width: double.infinity,
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(PulseDesign.m),
                 decoration: BoxDecoration(
-                  color: theme.cardColor,
-                  borderRadius: BorderRadius.circular(24),
+                  color:
+                      isDark ? PulseDesign.bgDarkCard : PulseDesign.bgLightCard,
+                  borderRadius: BorderRadius.circular(PulseDesign.radiusL),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.05),
@@ -275,8 +278,7 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
                       offset: const Offset(0, 5),
                     )
                   ],
-                  border: Border.all(
-                      color: theme.colorScheme.outline.withOpacity(0.05)),
+                  border: Border.all(color: theme.dividerColor),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -285,20 +287,21 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text("Spending Trend",
-                            style: theme.textTheme.labelMedium
-                                ?.copyWith(color: Colors.grey)),
-                        Icon(Icons.show_chart,
-                            color: theme.colorScheme.primary, size: 20),
+                            style: theme.textTheme.labelMedium?.copyWith(
+                                color: theme.colorScheme.onSurface
+                                    .withOpacity(0.5))),
+                        const Icon(Icons.show_chart,
+                            color: PulseDesign.primary, size: 20),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: PulseDesign.m),
                     Expanded(
                         child: SpendingChart(
                             transactions: walletState.transactions)),
                   ],
                 ),
               ),
-              const SizedBox(height: 80), // Bottom padding
+              const SizedBox(height: 80),
             ],
           ),
         ),
@@ -322,13 +325,11 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
 
   Widget _buildInteractiveHeader(
       BuildContext context, dynamic user, ThemeData theme) {
-    // Get display name: Try firstName, then username, then "User"
     String displayName = "User";
     if (user?.firstName != null && user!.firstName!.isNotEmpty) {
       displayName = user!.firstName!;
     } else if (user?.username != null && user!.username!.isNotEmpty) {
       displayName = user!.username!;
-      // Capitalize first letter of username
       if (displayName.isNotEmpty) {
         displayName = displayName[0].toUpperCase() + displayName.substring(1);
       }
@@ -341,17 +342,24 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
             HapticFeedback.lightImpact();
             context.push('/profile');
           },
+          onLongPress: () {
+            HapticFeedback.heavyImpact();
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('⚡ Entering Admin Mode...')),
+            );
+            context.push('/admin');
+          },
           child: Container(
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: theme.colorScheme.primary.withOpacity(0.3),
+                color: PulseDesign.primary.withOpacity(0.3),
                 width: 2,
               ),
             ),
             child: CircleAvatar(
               radius: 24,
-              backgroundColor: theme.colorScheme.primaryContainer,
+              backgroundColor: PulseDesign.primary.withOpacity(0.1),
               backgroundImage: user?.profileImageUrl != null &&
                       user!.profileImageUrl!.isNotEmpty
                   ? NetworkImage(user!.profileImageUrl!)
@@ -363,7 +371,7 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
                           ? displayName[0].toUpperCase()
                           : 'U',
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: PulseDesign.primary,
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
                       ),
@@ -372,7 +380,7 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
             ),
           ),
         ),
-        const SizedBox(width: 14),
+        const SizedBox(width: PulseDesign.m),
         Expanded(
           child: GestureDetector(
             onTap: () {
@@ -393,7 +401,7 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
                     Text(
                       _getGreeting(),
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: Colors.grey.shade400,
+                        color: theme.colorScheme.onSurface.withOpacity(0.5),
                       ),
                     ),
                     const SizedBox(width: 4),
@@ -403,9 +411,8 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
                 ),
                 Text(
                   displayName,
-                  style: theme.textTheme.titleLarge?.copyWith(
+                  style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w900,
-                    color: Colors.white,
                     letterSpacing: -0.5,
                   ),
                 ),
@@ -430,7 +437,7 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
         IconButton(
           onPressed: () {
             HapticFeedback.lightImpact();
-            // TODO: Navigate to notifications
+            // Notifications
           },
           icon: Container(
             padding: const EdgeInsets.all(10),
@@ -471,16 +478,16 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
             width: 64,
             decoration: BoxDecoration(
               color: color.withOpacity(isDark ? 0.15 : 0.1),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(PulseDesign.radiusL),
             ),
             child: Icon(icon, color: color, size: 28),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: PulseDesign.s),
           Text(
             label,
             style: theme.textTheme.labelMedium?.copyWith(
               fontWeight: FontWeight.bold,
-              color: Colors.grey.shade600,
+              color: theme.colorScheme.onSurface.withOpacity(0.7),
             ),
           ),
         ],
@@ -494,13 +501,17 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
       height: 200,
       width: double.infinity,
       decoration: BoxDecoration(
-        gradient: AppColors.premiumGradient,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(
-            color: Colors.white.withOpacity(0.08)), // Subtle contrast border
+        // Use a mesh gradient or simpler robust gradient
+        gradient: LinearGradient(
+          colors: [PulseDesign.primary, PulseDesign.primaryDark],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(PulseDesign.radiusL),
+        border: Border.all(color: Colors.white.withOpacity(0.08)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.35),
+            color: PulseDesign.primary.withOpacity(0.3),
             blurRadius: 25,
             offset: const Offset(0, 12),
           ),
@@ -517,7 +528,7 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(28.0),
+            padding: const EdgeInsets.all(PulseDesign.l),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -576,25 +587,26 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
     final isPremium = user?.isPremiumUser ?? false;
 
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(PulseDesign.l),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.1)),
+        borderRadius: BorderRadius.circular(PulseDesign.radiusL),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: Column(
         children: [
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(PulseDesign.s),
                 decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.1),
+                  color: PulseDesign.success.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.bolt_rounded, color: Colors.green),
+                child:
+                    const Icon(Icons.bolt_rounded, color: PulseDesign.success),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: PulseDesign.m),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -609,8 +621,8 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
                       isPremium
                           ? "Your financial health is optimal"
                           : "84/100 · Strong Health",
-                      style: theme.textTheme.bodySmall
-                          ?.copyWith(color: Colors.grey),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface.withOpacity(0.5)),
                     ),
                   ],
                 ),
@@ -622,15 +634,54 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
                 ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: PulseDesign.m),
           ClipRRect(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(PulseDesign.radiusS),
             child: LinearProgressIndicator(
               value: 0.84,
               minHeight: 8,
-              backgroundColor: Colors.grey.withOpacity(0.1),
-              valueColor: const AlwaysStoppedAnimation(Colors.green),
+              backgroundColor: theme.colorScheme.surfaceContainerHighest,
+              valueColor: const AlwaysStoppedAnimation(PulseDesign.success),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAIInsightCard(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(PulseDesign.m),
+      decoration: BoxDecoration(
+        color: PulseDesign.accent.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(PulseDesign.radiusL),
+        border: Border.all(color: PulseDesign.accent.withOpacity(0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(PulseDesign.s),
+                decoration: BoxDecoration(
+                  color: PulseDesign.accent.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(PulseDesign.radiusS),
+                ),
+                child: const Icon(Icons.auto_awesome,
+                    color: PulseDesign.accent, size: 18),
+              ),
+              const SizedBox(width: PulseDesign.s),
+              const Text("AI Spending Insight",
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold, color: PulseDesign.accent)),
+            ],
+          ),
+          const SizedBox(height: PulseDesign.s),
+          const Text(
+            "You spent 12% more on Dining this week. We recommend setting a budget of \$200 for next week to save \$45.",
+            style: TextStyle(fontSize: 13, height: 1.4, color: Colors.white70),
           ),
         ],
       ),
@@ -646,9 +697,10 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
         height: MediaQuery.of(context).size.height * 0.7,
         decoration: BoxDecoration(
           color: Theme.of(context).scaffoldBackgroundColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+          borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(PulseDesign.radiusL)),
         ),
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(PulseDesign.xl),
         child: Column(
           children: [
             Container(
@@ -657,14 +709,15 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
                 decoration: BoxDecoration(
                     color: Colors.grey.withOpacity(0.3),
                     borderRadius: BorderRadius.circular(2))),
-            const SizedBox(height: 32),
-            const Icon(Icons.analytics_rounded, size: 64, color: Colors.blue),
-            const SizedBox(height: 24),
+            const SizedBox(height: PulseDesign.xl),
+            const Icon(Icons.analytics_rounded,
+                size: 64, color: PulseDesign.primary),
+            const SizedBox(height: PulseDesign.l),
             const Text(
               "Financial Analysis",
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: PulseDesign.m),
             const Text(
               "Get deep insights into your spending habits and optimized savings recommendations.",
               textAlign: TextAlign.center,
@@ -675,8 +728,10 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
               onPressed: () => Navigator.pop(context),
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 56),
+                backgroundColor: PulseDesign.primary,
+                foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16)),
+                    borderRadius: BorderRadius.circular(PulseDesign.radiusM)),
               ),
               child: const Text("Unlock Full Insights"),
             ),
@@ -686,66 +741,28 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
     );
   }
 
-  Widget _buildAIInsightCard(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.deepPurple.shade900.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.deepPurple.shade400.withOpacity(0.2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.deepPurple.shade400.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.auto_awesome,
-                    color: Colors.deepPurpleAccent, size: 18),
-              ),
-              const SizedBox(width: 12),
-              const Text("AI Spending Insight",
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.deepPurpleAccent)),
-            ],
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            "You spent 12% more on Dining this week. We recommend setting a budget of \$200 for next week to save \$45.",
-            style: TextStyle(fontSize: 13, height: 1.4, color: Colors.white70),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _showMoreActions(BuildContext context) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
+          borderRadius:
+              BorderRadius.vertical(top: Radius.circular(PulseDesign.radiusL))),
       builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(PulseDesign.l),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text("More Features",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 24),
+            const SizedBox(height: PulseDesign.l),
             ListTile(
               leading: const Icon(Icons.ac_unit_rounded, color: Colors.blue),
               title: const Text("Freeze Physical Card"),
               onTap: () => Navigator.pop(context),
             ),
             ListTile(
-              leading: const Icon(Icons.security_rounded, color: Colors.green),
+              leading: const Icon(Icons.security_rounded,
+                  color: PulseDesign.success),
               title: const Text("View Security Settings"),
               onTap: () {
                 Navigator.pop(context);
@@ -753,8 +770,8 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
               },
             ),
             ListTile(
-              leading:
-                  const Icon(Icons.help_outline_rounded, color: Colors.orange),
+              leading: const Icon(Icons.help_outline_rounded,
+                  color: PulseDesign.warning),
               title: const Text("Support Center"),
               onTap: () => Navigator.pop(context),
             ),
@@ -777,9 +794,9 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
         width: double.infinity,
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: BorderRadius.circular(PulseDesign.radiusL),
           border: Border.all(
-            color: theme.colorScheme.primary.withOpacity(0.2),
+            color: PulseDesign.primary.withOpacity(0.2),
             width: 2,
             strokeAlign: BorderSide.strokeAlignInside,
           ),
@@ -788,15 +805,15 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(PulseDesign.m),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withOpacity(0.1),
+                color: PulseDesign.primary.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
+              child: const Icon(
                 Icons.add_card_rounded,
                 size: 40,
-                color: theme.colorScheme.primary,
+                color: PulseDesign.primary,
               ),
             ),
             const SizedBox(height: 16),

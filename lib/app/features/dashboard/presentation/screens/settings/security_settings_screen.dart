@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:paypulse/app/features/auth/presentation/state/auth_notifier.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:go_router/go_router.dart';
 
 class SecuritySettingsScreen extends ConsumerWidget {
   const SecuritySettingsScreen({super.key});
@@ -54,37 +55,23 @@ class SecuritySettingsScreen extends ConsumerWidget {
                     return;
                   }
 
-                  // Attempting legacy API call due to potential version mismatch/analyzer issues
+                  // Clean local_auth v3 implementation
                   try {
-                    // Using dynamic to avoid static analysis errors if parameters changed
-                    // This attempts v2 signature: stickyAuth, biometricOnly as named params
-                    final bool didAuthenticate =
-                        await (auth as dynamic).authenticate(
+                    final bool didAuthenticate = await auth.authenticate(
                       localizedReason:
                           'Please authenticate to enable biometric login',
-                      stickyAuth: true,
                       biometricOnly: true,
+                      persistAcrossBackgrounding: true,
                     );
 
                     if (!didAuthenticate) return;
                   } catch (e) {
-                    // If that fails (e.g. it IS v3 and needs options), try v3 structure dynamically
-                    try {
-                      // Construct AuthenticationOptions dynamically if class exists?
-                      // We can't if we can't import it.
-                      // But if 'AuthenticationOptions' is missing, it's likely v2.
-                      // If it's v3, this catch block is reached because v2 params failed or MissingMethod.
-
-                      // We'll log error and return.
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Auth API Error: $e')),
-                        );
-                      }
-                      return;
-                    } catch (_) {
-                      return;
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Authentication Error: $e')),
+                      );
                     }
+                    return;
                   }
                 } catch (e) {
                   if (context.mounted) {
@@ -100,6 +87,14 @@ class SecuritySettingsScreen extends ConsumerWidget {
                   .enableBiometric(val);
             },
             secondary: const Icon(Icons.fingerprint),
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.assignment_ind_rounded),
+            title: const Text('Identity Configuration'),
+            subtitle: const Text('Manage Face ID & Fingerprints'),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            onTap: () => context.push('/identity-config'),
           ),
           const Divider(),
           Padding(

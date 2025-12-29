@@ -14,6 +14,7 @@ class ThemeNotifier extends StateNotifier<ThemeConfiguration> {
   final StorageService _storage;
   static const _themeModeKey = 'theme_mode';
   static const _primaryColorKey = 'theme_primary_color';
+  static const _useAnimationsKey = 'theme_use_animations';
 
   ThemeNotifier(this._storage) : super(const ThemeConfiguration()) {
     _loadTheme();
@@ -23,6 +24,7 @@ class ThemeNotifier extends StateNotifier<ThemeConfiguration> {
     try {
       final modeStr = await _storage.getString(_themeModeKey);
       final colorInt = await _storage.getInt(_primaryColorKey);
+      final useAnimations = await _storage.getBool(_useAnimationsKey);
 
       ThemeMode mode = ThemeMode.system;
       if (modeStr != null) {
@@ -32,12 +34,16 @@ class ThemeNotifier extends StateNotifier<ThemeConfiguration> {
         );
       }
 
-      Color primaryColor = const Color(0xFF6200EE);
+      Color primaryColor = const Color(0xFF000000);
       if (colorInt != null) {
         primaryColor = Color(colorInt);
       }
 
-      state = ThemeConfiguration(mode: mode, primaryColor: primaryColor);
+      state = ThemeConfiguration(
+        mode: mode,
+        primaryColor: primaryColor,
+        useAnimations: useAnimations ?? true,
+      );
     } catch (_) {
       // Fallback to default
     }
@@ -46,6 +52,7 @@ class ThemeNotifier extends StateNotifier<ThemeConfiguration> {
   Future<void> _saveTheme() async {
     await _storage.saveString(_themeModeKey, state.mode.toString());
     await _storage.saveInt(_primaryColorKey, state.primaryColor.value);
+    await _storage.saveBool(_useAnimationsKey, state.useAnimations);
   }
 
   void toggleTheme() {
@@ -75,5 +82,10 @@ class ThemeNotifier extends StateNotifier<ThemeConfiguration> {
 
   void setSystemMode() {
     setThemeMode(ThemeMode.system);
+  }
+
+  void toggleAnimations() {
+    state = state.copyWith(useAnimations: !state.useAnimations);
+    _saveTheme();
   }
 }

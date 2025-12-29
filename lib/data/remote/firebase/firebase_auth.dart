@@ -1,5 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'dart:io';
 import 'package:paypulse/core/errors/exceptions.dart';
 import 'package:paypulse/data/models/response/auth_response.dart';
 
@@ -7,12 +9,15 @@ import 'package:paypulse/data/models/response/auth_response.dart';
 class FirebaseAuthService {
   final FirebaseAuth _firebaseAuth;
   final FirebaseFirestore _firestore;
+  final FirebaseStorage _storage;
 
   FirebaseAuthService({
     FirebaseAuth? firebaseAuth,
     FirebaseFirestore? firestore,
+    FirebaseStorage? storage,
   })  : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance,
-        _firestore = firestore ?? FirebaseFirestore.instance;
+        _firestore = firestore ?? FirebaseFirestore.instance,
+        _storage = storage ?? FirebaseStorage.instance;
 
   /// Login with email and password
   Future<AuthResponse> login(String email, String password) async {
@@ -46,6 +51,19 @@ class FirebaseAuthService {
         firstName: userData['firstName'] as String? ?? '',
         lastName: userData['lastName'] as String? ?? '',
         phoneNumber: userData['phoneNumber'] as String?,
+        bio: userData['bio'] as String?,
+        dateOfBirth: userData['dateOfBirth'] != null
+            ? DateTime.parse(userData['dateOfBirth'] as String)
+            : null,
+        gender: userData['gender'] as String?,
+        address: userData['address'] as String?,
+        occupation: userData['occupation'] as String?,
+        nationality: userData['nationality'] as String?,
+        privacyLevel: userData['privacyLevel'] as String?,
+        stealthModeEnabled: userData['stealthModeEnabled'] as bool?,
+        isProfessionalProfileVisible:
+            userData['isProfessionalProfileVisible'] as bool?,
+        professionalBio: userData['professionalBio'] as String?,
         accessToken: idToken,
         refreshToken: await user.getIdToken(true),
         expiresIn: 3600,
@@ -63,6 +81,7 @@ class FirebaseAuthService {
   Future<AuthResponse> register({
     required String email,
     required String password,
+    required String username,
     required String firstName,
     required String lastName,
   }) async {
@@ -92,6 +111,7 @@ class FirebaseAuthService {
       await _firestore.collection('users').doc(user.uid).set({
         'userId': user.uid,
         'email': email,
+        'username': username,
         'firstName': firstName,
         'lastName': lastName,
         'emailVerified': false,
@@ -105,6 +125,7 @@ class FirebaseAuthService {
       return AuthResponse(
         userId: user.uid,
         email: email,
+        username: username,
         firstName: firstName,
         lastName: lastName,
         accessToken: idToken,
@@ -126,7 +147,35 @@ class FirebaseAuthService {
     try {
       await _firebaseAuth.signOut();
     } catch (e) {
-      throw AuthException(message: 'Logout failed: $e');
+      throw AuthException(message: e.toString());
+    }
+  }
+
+  /// Upload profile image to Firebase Storage
+  Future<String> uploadProfileImage(File imageFile) async {
+    try {
+      final user = _firebaseAuth.currentUser;
+      if (user == null) {
+        throw const AuthException(message: 'No user logged in');
+      }
+
+      final storageRef =
+          _storage.ref().child('profiles/${user.uid}/avatar.jpg');
+      await storageRef.putFile(imageFile);
+      final downloadUrl = await storageRef.getDownloadURL();
+
+      // Update user document in Firestore with new photo URL
+      await _firestore.collection('users').doc(user.uid).update({
+        'profileImageUrl': downloadUrl,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      // Update Firebase Auth user profile
+      await user.updatePhotoURL(downloadUrl);
+
+      return downloadUrl;
+    } catch (e) {
+      throw AuthException(message: 'Failed to upload image: $e');
     }
   }
 
@@ -161,6 +210,16 @@ class FirebaseAuthService {
     String? firstName,
     String? lastName,
     String? phoneNumber,
+    String? bio,
+    DateTime? dateOfBirth,
+    String? gender,
+    String? address,
+    String? occupation,
+    String? nationality,
+    String? privacyLevel,
+    bool? stealthModeEnabled,
+    bool? isProfessionalProfileVisible,
+    String? professionalBio,
   }) async {
     try {
       final user = _firebaseAuth.currentUser;
@@ -175,6 +234,19 @@ class FirebaseAuthService {
       if (firstName != null) updates['firstName'] = firstName;
       if (lastName != null) updates['lastName'] = lastName;
       if (phoneNumber != null) updates['phoneNumber'] = phoneNumber;
+      if (bio != null) updates['bio'] = bio;
+      if (dateOfBirth != null)
+        updates['dateOfBirth'] = dateOfBirth.toIso8601String();
+      if (gender != null) updates['gender'] = gender;
+      if (address != null) updates['address'] = address;
+      if (occupation != null) updates['occupation'] = occupation;
+      if (nationality != null) updates['nationality'] = nationality;
+      if (privacyLevel != null) updates['privacyLevel'] = privacyLevel;
+      if (stealthModeEnabled != null)
+        updates['stealthModeEnabled'] = stealthModeEnabled;
+      if (isProfessionalProfileVisible != null)
+        updates['isProfessionalProfileVisible'] = isProfessionalProfileVisible;
+      if (professionalBio != null) updates['professionalBio'] = professionalBio;
 
       if (firstName != null || lastName != null) {
         final displayName = '${firstName ?? ''} ${lastName ?? ''}'.trim();

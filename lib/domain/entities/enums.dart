@@ -1,30 +1,11 @@
-enum CurrencyType {
-  USD,
-  EUR,
-  GBP,
-  JPY,
-  ETH,
-  BTC,
 // ignore_for_file: constant_identifier_names
-}
 
-enum TransactionType {
-  credit,
-  debit,
-  transfer,
-  payment,
-}
+enum CurrencyType { USD, EUR, GBP, JPY, KES, NGN, ZAR }
 
-enum TransactionStatus {
-  completed,
-  pending,
-  failed,
-  cancelled,
-}
+enum TransactionType { credit, debit, transfer, payment }
 
-enum UserRole {
-  admin,
-  employee,
-  premium,
-  standard,
-}
+enum TransactionStatus { completed, pending, failed, cancelled }
+
+enum UserRole { admin, employee, premium, standard }
+
+enum CardType { visa, mastercard, amex, discover, other }

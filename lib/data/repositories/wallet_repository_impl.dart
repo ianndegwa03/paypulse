@@ -4,6 +4,13 @@ import 'package:paypulse/core/errors/failures.dart';
 import 'package:paypulse/data/remote/datasources/wallet_datasource.dart';
 import 'package:paypulse/domain/entities/transaction_entity.dart' as domain;
 import 'package:paypulse/domain/entities/wallet_entity.dart';
+import 'package:paypulse/domain/entities/card_entity.dart';
+import 'package:paypulse/data/models/wallet_model.dart';
+import 'package:paypulse/domain/entities/enums.dart';
+import 'package:paypulse/data/models/vault_model.dart';
+import 'package:paypulse/data/models/virtual_card_model.dart';
+import 'package:paypulse/domain/entities/vault_entity.dart';
+import 'package:paypulse/domain/entities/virtual_card_entity.dart';
 import 'package:paypulse/domain/repositories/wallet_repository.dart';
 
 class WalletRepositoryImpl implements WalletRepository {
@@ -66,6 +73,7 @@ class WalletRepositoryImpl implements WalletRepository {
     required String recipientId,
     required String amount,
     required String currency,
+    double fee = 0.0,
   }) async {
     try {
       if (_userId.isEmpty) {
@@ -114,6 +122,95 @@ class WalletRepositoryImpl implements WalletRepository {
       return Right(analytics);
     } catch (e) {
       return Left(ServerFailure(message: 'Failed to get analytics: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> updateWallet(Wallet wallet) async {
+    try {
+      if (_userId.isEmpty) {
+        return const Left(AuthFailure(message: 'User not authenticated'));
+      }
+
+      final model =
+          wallet is WalletModel ? wallet : WalletModel.fromEntity(wallet);
+      await _dataSource.updateWallet(_userId, model);
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(message: 'Failed to update wallet: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> linkCard(CardEntity card) async {
+    try {
+      if (_userId.isEmpty) {
+        return const Left(AuthFailure(message: 'User not authenticated'));
+      }
+
+      final walletResult = await getWallet();
+      return await walletResult.fold(
+        (failure) async {
+          // If wallet doesn't exist, create a new one with this card
+          final newWallet = Wallet(
+            id: _userId,
+            balance: 0,
+            currency: CurrencyType.USD,
+            linkedCards: [card],
+          );
+          return await updateWallet(newWallet);
+        },
+        (wallet) async {
+          final updatedCards = List<CardEntity>.from(wallet.linkedCards)
+            ..add(card);
+          final updatedWallet = wallet.copyWith(linkedCards: updatedCards);
+          return await updateWallet(updatedWallet);
+        },
+      );
+    } catch (e) {
+      return Left(ServerFailure(message: 'Failed to link card: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> createVault(VaultEntity vault) async {
+    try {
+      if (_userId.isEmpty) {
+        return const Left(AuthFailure(message: 'User not authenticated'));
+      }
+      await _dataSource.createVault(
+          _userId, VaultModel.fromEntity(vault).toMap());
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> fundVault(String vaultId, double amount) async {
+    try {
+      if (_userId.isEmpty) {
+        return const Left(AuthFailure(message: 'User not authenticated'));
+      }
+      await _dataSource.fundVault(_userId, vaultId, amount);
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> createVirtualCard(
+      VirtualCardEntity card) async {
+    try {
+      if (_userId.isEmpty) {
+        return const Left(AuthFailure(message: 'User not authenticated'));
+      }
+      await _dataSource.createVirtualCard(
+          _userId, VirtualCardModel.fromEntity(card).toMap());
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
     }
   }
 }

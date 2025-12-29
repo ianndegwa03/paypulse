@@ -1,4 +1,5 @@
 import 'package:paypulse/core/errors/exceptions.dart';
+import 'dart:io';
 import 'package:paypulse/data/models/response/auth_response.dart';
 import 'package:paypulse/data/remote/firebase/firebase_auth.dart';
 import 'package:paypulse/data/remote/firebase/social_auth_service.dart';
@@ -8,6 +9,7 @@ abstract class AuthDataSource {
   Future<AuthResponse> register(
     String email,
     String password,
+    String username,
     String firstName,
     String lastName,
   );
@@ -18,7 +20,14 @@ abstract class AuthDataSource {
     String? firstName,
     String? lastName,
     String? phoneNumber,
+    String? bio,
+    DateTime? dateOfBirth,
+    String? gender,
+    String? address,
+    String? occupation,
+    String? nationality,
   });
+  Future<String> uploadProfileImage(File image);
   Future<void> resetPassword(String token, String newPassword);
 
   // Social login methods
@@ -48,6 +57,7 @@ class AuthDataSourceImpl implements AuthDataSource {
   Future<AuthResponse> register(
     String email,
     String password,
+    String username,
     String firstName,
     String lastName,
   ) async {
@@ -55,6 +65,7 @@ class AuthDataSourceImpl implements AuthDataSource {
       return await _firebaseAuth.register(
         email: email,
         password: password,
+        username: username,
         firstName: firstName,
         lastName: lastName,
       );
@@ -112,18 +123,42 @@ class AuthDataSourceImpl implements AuthDataSource {
     String? firstName,
     String? lastName,
     String? phoneNumber,
+    String? bio,
+    DateTime? dateOfBirth,
+    String? gender,
+    String? address,
+    String? occupation,
+    String? nationality,
   }) async {
     try {
       await _firebaseAuth.updateProfile(
         firstName: firstName,
         lastName: lastName,
         phoneNumber: phoneNumber,
+        bio: bio,
+        dateOfBirth: dateOfBirth,
+        gender: gender,
+        address: address,
+        occupation: occupation,
+        nationality: nationality,
       );
     } catch (e) {
       if (e is AuthException) {
         throw ServerException(message: e.message);
       }
       throw ServerException(message: 'Profile update failed: $e');
+    }
+  }
+
+  @override
+  Future<String> uploadProfileImage(File image) async {
+    try {
+      return await _firebaseAuth.uploadProfileImage(image);
+    } catch (e) {
+      if (e is AuthException) {
+        rethrow;
+      }
+      throw AuthException(message: e.toString());
     }
   }
 

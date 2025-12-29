@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:paypulse/app/features/dashboard/presentation/widgets/spending_chart.dart';
 import 'package:paypulse/app/features/wallet/presentation/state/wallet_providers.dart';
 import 'package:paypulse/app/features/wallet/presentation/widgets/pay_pulse_card.dart';
 import 'package:paypulse/domain/entities/transaction_entity.dart';
+import 'package:paypulse/domain/entities/wallet_entity.dart';
 import 'package:paypulse/domain/entities/enums.dart';
 import 'package:paypulse/app/features/auth/presentation/state/auth_notifier.dart';
 
@@ -55,8 +57,15 @@ class WalletOverviewScreen extends ConsumerWidget {
                           PayPulseCard(
                             balance: walletState.wallet!.balance,
                             cardHolderName: user?.fullName ?? "Member",
-                            cardNumber: walletState.wallet!.cardNumber,
-                            expiryDate: walletState.wallet!.expiryDate,
+                            cardNumber: walletState
+                                    .wallet!.linkedCards.isNotEmpty
+                                ? walletState.wallet!.linkedCards.first.lastFour
+                                : "0000",
+                            expiryDate:
+                                walletState.wallet!.linkedCards.isNotEmpty
+                                    ? walletState
+                                        .wallet!.linkedCards.first.expiryDate
+                                    : "MM/YY",
                             isFrozen: walletState.wallet!.isFrozen,
                           ),
                           const SizedBox(height: 24),
@@ -64,9 +73,14 @@ class WalletOverviewScreen extends ConsumerWidget {
                         ],
 
                         const SizedBox(height: 32),
+                        _buildSectionTitle(context, "Security & Controls"),
+                        const SizedBox(height: 16),
+                        _buildCardControls(context, ref),
+
+                        const SizedBox(height: 32),
                         _buildSectionTitle(context, "Connected Banks"),
                         const SizedBox(height: 16),
-                        _buildBankCarousel(context),
+                        _buildBankCarousel(context, walletState.wallet),
 
                         const SizedBox(height: 32),
                         Row(
@@ -74,7 +88,9 @@ class WalletOverviewScreen extends ConsumerWidget {
                           children: [
                             _buildSectionTitle(context, "Activity History"),
                             TextButton(
-                                onPressed: () {}, child: const Text("See All")),
+                                onPressed: () =>
+                                    context.push('/transaction-history'),
+                                child: const Text("See All")),
                           ],
                         ),
                         const SizedBox(height: 8),
@@ -83,6 +99,20 @@ class WalletOverviewScreen extends ConsumerWidget {
                         else
                           _buildTransactionList(
                               context, walletState.transactions),
+
+                        const SizedBox(height: 32),
+                        _buildSectionTitle(context, "Spending Analytics"),
+                        const SizedBox(height: 16),
+                        Container(
+                          height: 200,
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: theme.cardColor,
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          child: SpendingChart(
+                              transactions: walletState.transactions),
+                        ),
 
                         const SizedBox(
                             height: 100), // Padding for floating nav bar
@@ -96,18 +126,18 @@ class WalletOverviewScreen extends ConsumerWidget {
   }
 
   Widget _buildQuickActions(BuildContext context) {
-    final theme = Theme.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _actionItem(context, Icons.add_circle_outline, "Top Up",
-            theme.colorScheme.primary, () {}),
-        _actionItem(context, Icons.send_rounded, "Transfer", Colors.orange,
-            () => context.push('/send-money')),
-        _actionItem(context, Icons.qr_code_scanner_rounded, "Scan",
-            Colors.green, () {}),
-        _actionItem(
-            context, Icons.more_horiz_rounded, "More", Colors.grey, () {}),
+        _actionItem(context, Icons.add_rounded, "Add", Colors.green,
+            () => context.push('/connect-wallet')),
+        _actionItem(context, Icons.swap_horiz_rounded, "Transfer",
+            Colors.orange, () => context.push('/send-money')),
+        _actionItem(context, Icons.pie_chart_rounded, "Budgets", Colors.blue,
+            () => context.push('/budgets')),
+        _actionItem(context, Icons.more_horiz_rounded, "More", Colors.grey, () {
+          // Show more actions bottom sheet if needed
+        }),
       ],
     );
   }
@@ -150,17 +180,23 @@ class WalletOverviewScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildBankCarousel(BuildContext context) {
+  Widget _buildBankCarousel(BuildContext context, Wallet? wallet) {
+    final cards = wallet?.linkedCards ?? [];
+
     return SizedBox(
       height: 90,
       child: ListView(
         scrollDirection: Axis.horizontal,
         clipBehavior: Clip.none,
         children: [
-          _bankCard(context, "Main Chase", "**** 9021", Colors.blue),
-          const SizedBox(width: 16),
-          _bankCard(context, "Apple Card", "**** 1184", Colors.grey),
-          const SizedBox(width: 16),
+          ...cards.map((card) => Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: _bankCard(
+                    context,
+                    card.cardHolderName,
+                    "**** ${card.lastFour}",
+                    card.type == CardType.visa ? Colors.blue : Colors.orange),
+              )),
           _addBankButton(context),
         ],
       ),
@@ -212,15 +248,21 @@ class WalletOverviewScreen extends ConsumerWidget {
   }
 
   Widget _addBankButton(BuildContext context) {
-    return Container(
-      width: 160,
-      decoration: BoxDecoration(
-        border: Border.all(
-            color: Colors.grey.withOpacity(0.2), style: BorderStyle.solid),
-        borderRadius: BorderRadius.circular(20),
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        context.push('/connect-wallet');
+      },
+      child: Container(
+        width: 160,
+        decoration: BoxDecoration(
+          border: Border.all(
+              color: Colors.grey.withOpacity(0.2), style: BorderStyle.solid),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Center(
+            child: Icon(Icons.add_link_rounded, color: Colors.grey.shade400)),
       ),
-      child: Center(
-          child: Icon(Icons.add_link_rounded, color: Colors.grey.shade400)),
     );
   }
 
@@ -288,6 +330,83 @@ class WalletOverviewScreen extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildCardControls(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authNotifierProvider);
+    final user = authState.currentUser;
+    final isPremium = user?.isPremiumUser ?? false;
+    final theme = Theme.of(context);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.05)),
+      ),
+      child: Column(
+        children: [
+          _controlTile(context, Icons.contactless_rounded,
+              "Contactless Payments", true, false),
+          const Divider(height: 1, indent: 64),
+          _controlTile(context, Icons.shopping_bag_outlined,
+              "Online Transactions", true, false),
+          const Divider(height: 1, indent: 64),
+          _controlTile(context, Icons.public_rounded, "International Spend",
+              false, !isPremium),
+          const Divider(height: 1, indent: 64),
+          _controlTile(context, Icons.security_rounded, "AI Spending Guard",
+              false, !isPremium),
+        ],
+      ),
+    );
+  }
+
+  Widget _controlTile(BuildContext context, IconData icon, String title,
+      bool value, bool isLocked) {
+    final theme = Theme.of(context);
+    return ListTile(
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: (isLocked ? Colors.amber : theme.colorScheme.primary)
+              .withOpacity(0.1),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(icon,
+            color: isLocked ? Colors.amber : theme.colorScheme.primary,
+            size: 20),
+      ),
+      title: Text(title,
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+      trailing: isLocked
+          ? Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.amber.shade100,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.lock_rounded, size: 12, color: Colors.amber),
+                  SizedBox(width: 4),
+                  Text("PRO",
+                      style: TextStyle(
+                          color: Colors.amber,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 10)),
+                ],
+              ),
+            )
+          : Switch.adaptive(
+              value: value,
+              onChanged: (v) {
+                HapticFeedback.lightImpact();
+              },
+              activeColor: theme.colorScheme.primary,
+            ),
     );
   }
 }

@@ -18,6 +18,11 @@ abstract class LocalDataSource {
   Future<void> setBiometricEnabled(bool enabled);
   Future<bool> isBiometricEnabled();
 
+  Future<void> setPinEnabled(bool enabled);
+  Future<bool> isPinEnabled();
+  Future<void> setPin(String pin);
+  Future<String?> getPin();
+
   Future<void> setOnboardingComplete(bool complete);
   Future<bool> isOnboardingComplete();
 
@@ -128,6 +133,42 @@ class LocalDataSourceImpl implements LocalDataSource {
       return await _storageService.getBool('biometric_enabled') ?? false;
     } catch (e) {
       throw CacheException(message: 'Failed to get biometric setting: $e');
+    }
+  }
+
+  @override
+  Future<void> setPinEnabled(bool enabled) async {
+    try {
+      await _storageService.saveBool('pin_enabled', enabled);
+    } catch (e) {
+      throw CacheException(message: 'Failed to save PIN setting: $e');
+    }
+  }
+
+  @override
+  Future<bool> isPinEnabled() async {
+    try {
+      return await _storageService.getBool('pin_enabled') ?? false;
+    } catch (e) {
+      throw CacheException(message: 'Failed to get PIN setting: $e');
+    }
+  }
+
+  @override
+  Future<void> setPin(String pin) async {
+    try {
+      await _storageService.saveString('user_pin', pin);
+    } catch (e) {
+      throw CacheException(message: 'Failed to save PIN: $e');
+    }
+  }
+
+  @override
+  Future<String?> getPin() async {
+    try {
+      return await _storageService.getString('user_pin');
+    } catch (e) {
+      throw CacheException(message: 'Failed to get PIN: $e');
     }
   }
 

@@ -6,6 +6,11 @@ import 'package:paypulse/data/repositories/wallet_repository_impl.dart';
 import 'package:paypulse/domain/use_cases/wallet/get_wallet_use_case.dart';
 import 'package:paypulse/domain/use_cases/wallet/add_money_use_case.dart';
 import 'package:paypulse/domain/use_cases/wallet/transfer_money_use_case.dart';
+import 'package:paypulse/domain/use_cases/wallet/link_card_use_case.dart';
+import 'package:paypulse/domain/use_cases/wallet/update_wallet_use_case.dart';
+import 'package:paypulse/domain/use_cases/wallet/create_vault_use_case.dart';
+import 'package:paypulse/domain/use_cases/wallet/fund_vault_use_case.dart';
+import 'package:paypulse/domain/use_cases/wallet/create_virtual_card_use_case.dart';
 import 'package:paypulse/data/remote/datasources/wallet_datasource.dart';
 import 'package:paypulse/data/remote/datasources/wallet_datasource_impl.dart';
 
@@ -50,5 +55,20 @@ class WalletModule {
         () => TransferMoneyUseCase(getIt<WalletRepository>()),
       );
     }
+
+    if (!getIt.isRegistered<LinkCardUseCase>()) {
+      getIt.registerLazySingleton<LinkCardUseCase>(
+        () => LinkCardUseCase(getIt<WalletRepository>()),
+      );
+    }
+
+    if (!getIt.isRegistered<UpdateWalletUseCase>()) {
+      getIt.registerLazySingleton<UpdateWalletUseCase>(
+        () => UpdateWalletUseCase(getIt<WalletRepository>()),
+      );
+    }
+    getIt.registerLazySingleton(() => CreateVaultUseCase(getIt()));
+    getIt.registerLazySingleton(() => FundVaultUseCase(getIt()));
+    getIt.registerLazySingleton(() => CreateVirtualCardUseCase(getIt()));
   }
 }

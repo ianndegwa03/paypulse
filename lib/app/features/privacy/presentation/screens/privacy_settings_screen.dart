@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:paypulse/app/features/privacy/presentation/state/privacy_provider.dart';
+import 'package:paypulse/app/features/auth/presentation/state/auth_notifier.dart';
+import 'package:paypulse/app/features/wallet/presentation/state/currency_provider.dart';
+import 'package:paypulse/domain/entities/enums.dart';
 
 class PrivacySettingsScreen extends ConsumerWidget {
   const PrivacySettingsScreen({super.key});
@@ -9,6 +12,7 @@ class PrivacySettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final privacyState = ref.watch(privacyProvider);
+    final user = ref.watch(authNotifierProvider).currentUser;
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -23,6 +27,10 @@ class PrivacySettingsScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
+          if (user != null) ...[
+            _buildUserHeader(context, user),
+            const SizedBox(height: 32),
+          ],
           _buildSectionHeader(context, 'Visibility'),
           const SizedBox(height: 12),
           _buildCard(
@@ -59,18 +67,6 @@ class PrivacySettingsScreen extends ConsumerWidget {
           _buildCard(
             context,
             children: [
-              _buildSwitchTile(
-                context,
-                title: 'Biometric Login',
-                subtitle: 'FaceID or TouchID',
-                icon: Icons.fingerprint_rounded,
-                value: privacyState.isBiometricRequired,
-                onChanged: (val) {
-                  HapticFeedback.selectionClick();
-                  ref.read(privacyProvider.notifier).requireBiometric(val);
-                },
-              ),
-              const Divider(indent: 50),
               _buildActionTile(
                 context,
                 title: 'Change PIN',
@@ -92,7 +88,7 @@ class PrivacySettingsScreen extends ConsumerWidget {
               _buildSwitchTile(
                 context,
                 title: 'Incognito Mode',
-                subtitle: 'Private transactions',
+                subtitle: 'Send money anonymously',
                 icon: Icons.vpn_lock_rounded,
                 value: privacyState.isIncognitoMode,
                 onChanged: (val) {
@@ -101,14 +97,7 @@ class PrivacySettingsScreen extends ConsumerWidget {
                 },
               ),
               const Divider(indent: 50),
-              _buildActionTile(
-                context,
-                title: 'Export Data',
-                icon: Icons.download_outlined,
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                },
-              ),
+              _buildCurrencyTile(context, ref),
             ],
           ),
           const SizedBox(height: 48),
@@ -181,6 +170,111 @@ class PrivacySettingsScreen extends ConsumerWidget {
         value: value,
         onChanged: onChanged,
         activeColor: theme.colorScheme.primary,
+      ),
+    );
+  }
+
+  Widget _buildUserHeader(BuildContext context, user) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 30,
+            backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+            child: Text(
+                (user.firstName.isNotEmpty ? user.firstName[0] : '?')
+                    .toUpperCase(),
+                style: TextStyle(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 24)),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(user.fullName,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 18)),
+                Text('@${user.username}',
+                    style: TextStyle(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w500)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCurrencyTile(BuildContext context, WidgetRef ref) {
+    final selectedCurrency = ref.watch(currencyProvider).selectedCurrency;
+    return ListTile(
+      onTap: () => _showCurrencyPicker(context, ref),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      leading: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.orange.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Icon(Icons.currency_exchange_rounded,
+            color: Colors.orange, size: 22),
+      ),
+      title: const Text('Local Currency',
+          style: TextStyle(fontWeight: FontWeight.w600)),
+      subtitle: Text(selectedCurrency.name,
+          style: Theme.of(context).textTheme.bodySmall),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(selectedCurrency.name,
+              style: const TextStyle(
+                  fontWeight: FontWeight.bold, color: Colors.grey)),
+          const Icon(Icons.chevron_right_rounded, color: Colors.grey, size: 20),
+        ],
+      ),
+    );
+  }
+
+  void _showCurrencyPicker(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text("Select Currency",
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 24),
+            ...CurrencyType.values.map((c) {
+              final meta = getCurrencyMetadata(c);
+              return ListTile(
+                leading: Text(meta.symbol,
+                    style: const TextStyle(
+                        fontSize: 20, fontWeight: FontWeight.bold)),
+                title: Text(meta.name),
+                trailing: Text(c.name),
+                onTap: () {
+                  ref.read(currencyProvider.notifier).setCurrency(c);
+                  Navigator.of(context).pop();
+                },
+              );
+            }).toList(),
+            const SizedBox(height: 24),
+          ],
+        ),
       ),
     );
   }

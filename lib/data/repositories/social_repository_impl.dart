@@ -20,9 +20,29 @@ class SocialRepositoryImpl implements SocialRepository {
   }
 
   @override
-  Future<Either<Failure, void>> createPost(String content) async {
+  Future<Either<Failure, void>> createPost({
+    required String content,
+    PostType type = PostType.regular,
+    double? totalAmount,
+    double? collectedAmount,
+    String? transactionCategory,
+    String? linkedId,
+    String? title,
+    List<String>? pollOptions,
+    DateTime? deadline,
+  }) async {
     try {
-      await dataSource.createPost(content);
+      await dataSource.createPost(
+        content: content,
+        type: type.name,
+        totalAmount: totalAmount,
+        collectedAmount: collectedAmount,
+        transactionCategory: transactionCategory,
+        linkedId: linkedId,
+        title: title,
+        pollOptions: pollOptions,
+        deadline: deadline,
+      );
       return const Right(null);
     } catch (e) {
       return Left(ServerFailure(message: 'Failed to create post: $e'));

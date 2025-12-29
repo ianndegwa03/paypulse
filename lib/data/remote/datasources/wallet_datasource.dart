@@ -15,4 +15,9 @@ abstract class WalletDataSource {
   Future<List<TransactionModel>> getTransactions(String userId,
       {int limit = 10, int offset = 0});
   Future<Map<String, dynamic>> getWalletAnalytics(String userId);
+  Future<void> updateWallet(String userId, WalletModel wallet);
+  Future<void> linkCard(String userId, Map<String, dynamic> cardData);
+  Future<void> createVault(String userId, Map<String, dynamic> vaultData);
+  Future<void> fundVault(String userId, String vaultId, double amount);
+  Future<void> createVirtualCard(String userId, Map<String, dynamic> cardData);
 }

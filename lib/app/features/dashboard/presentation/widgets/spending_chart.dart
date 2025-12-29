@@ -37,41 +37,81 @@ class SpendingChart extends StatelessWidget {
     }).toList();
 
     return Padding(
-      padding: const EdgeInsets.only(top: 24.0, right: 8.0, left: 0),
+      padding: const EdgeInsets.only(top: 10.0, right: 10.0, left: 10),
       child: LineChart(
         LineChartData(
           lineTouchData: LineTouchData(
+            handleBuiltInTouches: true,
             touchTooltipData: LineTouchTooltipData(
-              tooltipBgColor: theme.colorScheme.secondaryContainer,
-              tooltipRoundedRadius: 12,
+              tooltipBgColor: theme.colorScheme.onSurface.withOpacity(0.8),
+              tooltipRoundedRadius: 8,
               getTooltipItems: (touchedSpots) {
                 return touchedSpots.map((spot) {
                   return LineTooltipItem(
                     '\$${spot.y.toStringAsFixed(2)}',
-                    TextStyle(
-                      color: theme.colorScheme.onSecondaryContainer,
+                    const TextStyle(
+                      color: Colors.white,
                       fontWeight: FontWeight.bold,
+                      fontSize: 12,
                     ),
                   );
                 }).toList();
               },
             ),
           ),
-          gridData: const FlGridData(show: false),
-          titlesData: const FlTitlesData(
-            leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          gridData: FlGridData(
+            show: true,
+            drawVerticalLine: false,
+            horizontalInterval: 50,
+            getDrawingHorizontalLine: (value) {
+              return FlLine(
+                color: theme.colorScheme.outline.withOpacity(0.05),
+                strokeWidth: 1,
+              );
+            },
+          ),
+          titlesData: FlTitlesData(
+            leftTitles:
+                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles:
+                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles:
+                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 30,
+                interval: 1,
+                getTitlesWidget: (value, meta) {
+                  final index = value.toInt();
+                  if (index >= 0 && index < displayData.length) {
+                    final date = displayData[index].date;
+                    final days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+                    return Text(
+                      days[date.weekday - 1],
+                      style: TextStyle(
+                        color: Colors.grey.withOpacity(0.6),
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    );
+                  }
+                  return const Text('');
+                },
+              ),
+            ),
           ),
           borderData: FlBorderData(show: false),
           minX: 0,
-          maxX: (displayData.length - 1).toDouble(),
+          maxX: (displayData.length - 1).toDouble() > 0
+              ? (displayData.length - 1).toDouble()
+              : 6,
           minY: 0,
           lineBarsData: [
             LineChartBarData(
               spots: spots,
               isCurved: true,
+              curveSmoothness: 0.35,
               gradient: LinearGradient(
                 colors: [
                   theme.colorScheme.primary,
@@ -84,7 +124,7 @@ class SpendingChart extends StatelessWidget {
                 show: true,
                 getDotPainter: (spot, percent, barData, index) =>
                     FlDotCirclePainter(
-                  radius: 4,
+                  radius: 3,
                   color: Colors.white,
                   strokeWidth: 2,
                   strokeColor: theme.colorScheme.primary,
@@ -94,7 +134,7 @@ class SpendingChart extends StatelessWidget {
                 show: true,
                 gradient: LinearGradient(
                   colors: [
-                    theme.colorScheme.primary.withOpacity(0.3),
+                    theme.colorScheme.primary.withOpacity(0.2),
                     theme.colorScheme.primary.withOpacity(0.0),
                   ],
                   begin: Alignment.topCenter,

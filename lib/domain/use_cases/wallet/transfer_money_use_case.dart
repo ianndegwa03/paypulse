@@ -11,11 +11,17 @@ class TransferMoneyUseCase {
     required String recipientId,
     required String amount,
     required String currency,
+    bool isPremium = false,
   }) async {
+    final double amountVal = double.tryParse(amount) ?? 0.0;
+    final double fee =
+        isPremium ? 0.0 : (amountVal * 0.015); // 1.5% fee for free users
+
     return await repository.transferMoney(
       recipientId: recipientId,
       amount: amount,
       currency: currency,
+      fee: fee,
     );
   }
 }

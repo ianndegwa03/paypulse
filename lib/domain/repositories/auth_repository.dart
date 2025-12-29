@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:dartz/dartz.dart';
 import 'package:paypulse/core/errors/failures.dart';
 import 'package:paypulse/domain/entities/user_entity.dart';
@@ -8,6 +9,7 @@ abstract class AuthRepository {
   Future<Either<Failure, UserEntity>> register(
     String email,
     String password,
+    String username,
     String firstName,
     String lastName,
   );
@@ -27,7 +29,17 @@ abstract class AuthRepository {
 
   Future<Either<Failure, void>> updateProfile(UserEntity user);
 
+  Future<Either<Failure, String>> uploadProfileImage(File image);
+
   Future<Either<Failure, void>> enableBiometric(bool enable);
+
+  Future<Either<Failure, bool>> isBiometricEnabled();
+
+  Future<Either<Failure, void>> enablePin(bool enable, String? pin);
+
+  Future<Either<Failure, bool>> isPinEnabled();
+
+  Future<Either<Failure, UserEntity>> loginWithPin(String pin);
 
   Future<Either<Failure, void>> verifyEmail(String token);
 

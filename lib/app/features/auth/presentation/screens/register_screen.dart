@@ -20,6 +20,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _confirmPasswordController = TextEditingController();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -29,6 +30,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     _confirmPasswordController.dispose();
     _firstNameController.dispose();
     _lastNameController.dispose();
+    _usernameController.dispose();
     super.dispose();
   }
 
@@ -39,6 +41,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       await notifier.register(
         _emailController.text.trim(),
         _passwordController.text,
+        _usernameController.text.trim(),
         _firstNameController.text.trim(),
         _lastNameController.text.trim(),
       );
@@ -119,6 +122,16 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             ),
                           ),
                         ],
+                      ),
+                      const SizedBox(height: 20),
+                      _buildInput(
+                        context,
+                        controller: _usernameController,
+                        label: 'Username',
+                        hint: 'johndoe',
+                        icon: Icons.alternate_email_rounded,
+                        validator: (v) =>
+                            (v?.isEmpty ?? true) ? 'Required' : null,
                       ),
                       const SizedBox(height: 20),
                       _buildInput(

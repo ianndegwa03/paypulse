@@ -21,6 +21,7 @@ class UserMapper {
       ),
       firstName: response.firstName ?? '',
       lastName: response.lastName ?? '',
+      username: response.username ?? response.email?.split('@').first ?? 'user',
       role: UserRole.standard, // Default for auth response
       phoneNumber: phoneNumber?.fold((_) => null, (valid) => valid),
       profileImageUrl: response.profileImageUrl,
@@ -48,6 +49,7 @@ class UserMapper {
       ),
       firstName: model.firstName,
       lastName: model.lastName,
+      username: model.username,
       role: model.role,
       phoneNumber: phoneNumber?.fold((_) => null, (valid) => valid),
       profileImageUrl: model.profileImageUrl,
@@ -57,6 +59,16 @@ class UserMapper {
       updatedAt: model.updatedAt,
       preferences: model.preferences,
       securitySettings: model.securitySettings,
+      bio: model.bio,
+      dateOfBirth: model.dateOfBirth,
+      gender: model.gender,
+      address: model.address,
+      occupation: model.occupation,
+      nationality: model.nationality,
+      privacyLevel: model.privacyLevel,
+      stealthModeEnabled: model.stealthModeEnabled,
+      isProfessionalProfileVisible: model.isProfessionalProfileVisible,
+      professionalBio: model.professionalBio,
     );
   }
 
@@ -67,6 +79,7 @@ class UserMapper {
       email: entity.email.value,
       firstName: entity.firstName,
       lastName: entity.lastName,
+      username: entity.username,
       role: entity.role,
       phoneNumber: entity.phoneNumber?.value,
       profileImageUrl: entity.profileImageUrl,
@@ -76,6 +89,16 @@ class UserMapper {
       updatedAt: entity.updatedAt,
       preferences: entity.preferences,
       securitySettings: entity.securitySettings,
+      bio: entity.bio,
+      dateOfBirth: entity.dateOfBirth,
+      gender: entity.gender,
+      address: entity.address,
+      occupation: entity.occupation,
+      nationality: entity.nationality,
+      privacyLevel: entity.privacyLevel,
+      stealthModeEnabled: entity.stealthModeEnabled,
+      isProfessionalProfileVisible: entity.isProfessionalProfileVisible,
+      professionalBio: entity.professionalBio,
     );
   }
 
@@ -86,6 +109,7 @@ class UserMapper {
       email: response.email ?? '',
       firstName: response.firstName ?? '',
       lastName: response.lastName ?? '',
+      username: response.username ?? response.email?.split('@').first ?? 'user',
       role: UserRole.standard, // Default for auth response
       phoneNumber: null,
       profileImageUrl: response.profileImageUrl,

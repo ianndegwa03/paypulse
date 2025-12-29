@@ -47,12 +47,32 @@ class SocialFeedNotifier extends StateNotifier<SocialFeedState> {
     );
   }
 
-  Future<void> createPost(String content) async {
+  Future<void> createPost({
+    required String content,
+    PostType type = PostType.regular,
+    double? totalAmount,
+    double? collectedAmount,
+    String? transactionCategory,
+    String? linkedId,
+    String? title,
+    List<String>? pollOptions,
+    DateTime? deadline,
+  }) async {
     if (content.isEmpty) return;
-    final result = await _repository.createPost(content);
+    final result = await _repository.createPost(
+      content: content,
+      type: type,
+      totalAmount: totalAmount,
+      collectedAmount: collectedAmount,
+      transactionCategory: transactionCategory,
+      linkedId: linkedId,
+      title: title,
+      pollOptions: pollOptions,
+      deadline: deadline,
+    );
     result.fold(
-      (failure) {}, // Handle error if needed
-      (_) => loadFeed(), // Refresh feed
+      (failure) => state = state.copyWith(error: failure.message),
+      (_) => loadFeed(),
     );
   }
 
@@ -60,16 +80,8 @@ class SocialFeedNotifier extends StateNotifier<SocialFeedState> {
     // Optimistic update
     final currentPosts = state.posts.map((post) {
       if (post.id == postId) {
-        return SocialPostEntity(
-          id: post.id,
-          userId: post.userId,
-          userName: post.userName,
-          content: post.content,
-          timestamp: post.timestamp,
-          mediaUrl: post.mediaUrl,
-          userAvatarUrl: post.userAvatarUrl,
+        return post.copyWith(
           likes: post.likes + (post.isLiked ? -1 : 1),
-          comments: post.comments,
           isLiked: !post.isLiked,
         );
       }

@@ -106,6 +106,4 @@ const _$CurrencyTypeEnumMap = {
   CurrencyType.EUR: 'EUR',
   CurrencyType.GBP: 'GBP',
   CurrencyType.JPY: 'JPY',
-  CurrencyType.ETH: 'ETH',
-  CurrencyType.BTC: 'BTC',
 };

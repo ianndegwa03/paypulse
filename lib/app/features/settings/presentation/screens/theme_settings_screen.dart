@@ -14,7 +14,8 @@ class ThemeSettingsScreen extends ConsumerStatefulWidget {
 
 class _ThemeSettingsScreenState extends ConsumerState<ThemeSettingsScreen> {
   static const List<Color> _freeColors = [
-    Color(0xFF6200EE), // Default Purple-ish
+    Color(0xFF000000), // Premium Black
+    Color(0xFF6200EE), // Classic Purple
     Colors.blue,
     Colors.green,
     Colors.red,
@@ -53,6 +54,10 @@ class _ThemeSettingsScreenState extends ConsumerState<ThemeSettingsScreen> {
               _buildSectionHeader('Appearance'),
               const SizedBox(height: 16),
               _buildModeSelector(themeConfig.mode),
+              const SizedBox(height: 24),
+              _buildSectionHeader('Motion & Effects'),
+              const SizedBox(height: 16),
+              _buildAnimationToggle(themeConfig.useAnimations),
               const SizedBox(height: 32),
               _buildSectionHeader('Accent Color'),
               const SizedBox(height: 8),
@@ -126,6 +131,26 @@ class _ThemeSettingsScreenState extends ConsumerState<ThemeSettingsScreen> {
             onChanged: (mode) => ref.read(themeProvider.notifier).setDarkMode(),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildAnimationToggle(bool useAnimations) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Theme.of(context).dividerColor),
+      ),
+      child: SwitchListTile(
+        title: const Text('Motion Effects'),
+        subtitle: const Text('Enable smooth transitions and animations'),
+        value: useAnimations,
+        onChanged: (val) => ref.read(themeProvider.notifier).toggleAnimations(),
+        secondary: Icon(
+          Icons.animation_rounded,
+          color: Theme.of(context).colorScheme.primary,
+        ),
       ),
     );
   }

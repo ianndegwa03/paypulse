@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:paypulse/app/features/auth/presentation/state/auth_notifier.dart';
 import 'package:paypulse/app/features/wallet/presentation/state/wallet_providers.dart';
+import 'package:paypulse/app/features/wallet/presentation/state/currency_provider.dart';
 import 'package:paypulse/core/widgets/buttons/primary_button.dart';
 
 class ProfileTabScreen extends ConsumerWidget {
@@ -59,33 +60,39 @@ class ProfileTabScreen extends ConsumerWidget {
                       const SizedBox(height: 60),
                       Hero(
                         tag: 'profile_pic',
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                                color:
-                                    theme.colorScheme.primary.withOpacity(0.5),
-                                width: 2),
-                          ),
-                          child: CircleAvatar(
-                            radius: 50,
-                            backgroundColor: theme.colorScheme.surface,
-                            backgroundImage: user.profileImageUrl != null
-                                ? NetworkImage(user.profileImageUrl!)
-                                : null,
-                            child: user.profileImageUrl == null
-                                ? Text(
-                                    user.firstName.isNotEmpty
-                                        ? user.firstName[0].toUpperCase()
-                                        : '?',
-                                    style:
-                                        theme.textTheme.displaySmall?.copyWith(
-                                      color: theme.colorScheme.primary,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  )
-                                : null,
+                        child: GestureDetector(
+                          onTap: () {
+                            HapticFeedback.mediumImpact();
+                            context.push('/profile-icons');
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                  color: theme.colorScheme.primary
+                                      .withOpacity(0.5),
+                                  width: 2),
+                            ),
+                            child: CircleAvatar(
+                              radius: 50,
+                              backgroundColor: theme.colorScheme.surface,
+                              backgroundImage: user.profileImageUrl != null
+                                  ? NetworkImage(user.profileImageUrl!)
+                                  : null,
+                              child: user.profileImageUrl == null
+                                  ? Text(
+                                      user.firstName.isNotEmpty
+                                          ? user.firstName[0].toUpperCase()
+                                          : '?',
+                                      style: theme.textTheme.displaySmall
+                                          ?.copyWith(
+                                        color: theme.colorScheme.primary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    )
+                                  : null,
+                            ),
                           ),
                         ),
                       ),
@@ -97,22 +104,43 @@ class ProfileTabScreen extends ConsumerWidget {
                           letterSpacing: -0.5,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20),
+                      Text(
+                        '@${user.username}',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: Colors.grey,
+                          fontWeight: FontWeight.w500,
                         ),
-                        child: Text(
-                          user.isPremiumUser ? "PREMIUM MEMBER" : "FREE PLAN",
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: theme.colorScheme.primary,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1,
+                      ),
+                      if (user.bio != null && user.bio!.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 40),
+                          child: Text(
+                            user.bio!,
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: Colors.grey.shade600,
+                              fontStyle: FontStyle.italic,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
+                      ],
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _buildBadge(
+                              theme,
+                              user.isPremiumUser ? "PREMIUM" : "FREE",
+                              user.isPremiumUser
+                                  ? theme.colorScheme.primary
+                                  : Colors.grey),
+                          const SizedBox(width: 8),
+                          _buildBadge(theme, "SINCE ${user.createdAt.year}",
+                              theme.colorScheme.secondary),
+                        ],
                       ),
                     ],
                   ),
@@ -125,6 +153,11 @@ class ProfileTabScreen extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
                 children: [
+                  const SizedBox(height: 24),
+                  // Personal Identity Overview
+                  _buildIdentityOverview(context, user),
+                  const SizedBox(height: 24),
+
                   // Quick Wallet Stats
                   _buildWalletSummary(context, walletState),
                   const SizedBox(height: 32),
@@ -134,21 +167,25 @@ class ProfileTabScreen extends ConsumerWidget {
                         context,
                         Icons.person_outline_rounded,
                         'Personal Information',
-                        'Name, Email, Phone',
-                        () => context.push('/edit-profile')),
-                    _buildTile(context, Icons.account_balance_wallet_outlined,
-                        'Payment Methods', 'Cards, Bank Accounts', () {}),
+                        'Name, DOB, Contact, Address',
+                        () => context.push('/personal-info')),
                     _buildTile(
                         context,
-                        Icons.history_rounded,
-                        'Transaction History',
-                        'All your spending in one place',
-                        () {}),
+                        Icons.badge_outlined,
+                        'Professional Profile',
+                        'Occupation, Nationality, Public Bio',
+                        () => context.push('/professional-profile')),
+                    _buildTile(
+                        context,
+                        Icons.account_balance_wallet_outlined,
+                        'Payment Methods',
+                        'Cards, Bank Accounts',
+                        () => context.push('/connect-wallet')),
                   ]),
 
                   const SizedBox(height: 24),
 
-                  _buildSection(context, 'Security & Privacy', [
+                  _buildSection(context, 'Security & Freedom', [
                     _buildTile(
                         context,
                         Icons.shield_outlined,
@@ -158,9 +195,9 @@ class ProfileTabScreen extends ConsumerWidget {
                     _buildTile(
                         context,
                         Icons.privacy_tip_outlined,
-                        'Privacy & Visibility',
-                        'Balance masking, App blur',
-                        () => context.push('/privacy-settings')),
+                        'Privacy & Controls',
+                        'Visibility, Data, Sharing',
+                        () => context.push('/privacy-controls')),
                   ]),
 
                   const SizedBox(height: 24),
@@ -228,9 +265,16 @@ class ProfileTabScreen extends ConsumerWidget {
                   style: theme.textTheme.labelMedium
                       ?.copyWith(color: Colors.grey)),
               const SizedBox(height: 4),
-              Text("\$${balance.toStringAsFixed(2)}",
-                  style: theme.textTheme.headlineSmall
-                      ?.copyWith(fontWeight: FontWeight.bold)),
+              Consumer(
+                builder: (context, ref, child) {
+                  final currencyNotifier = ref.watch(currencyProvider.notifier);
+                  return Text(
+                    currencyNotifier.formatAmount(balance),
+                    style: theme.textTheme.headlineSmall
+                        ?.copyWith(fontWeight: FontWeight.bold),
+                  );
+                },
+              ),
             ],
           ),
           const Spacer(),
@@ -325,6 +369,69 @@ class ProfileTabScreen extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildBadge(ThemeData theme, String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.2)),
+      ),
+      child: Text(
+        label,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: color,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIdentityOverview(BuildContext context, user) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary.withOpacity(0.03),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: theme.colorScheme.primary.withOpacity(0.05)),
+      ),
+      child: Column(
+        children: [
+          _buildIdentityRow(
+              context, Icons.email_outlined, 'Email', user.email.value),
+          const Divider(height: 32),
+          _buildIdentityRow(context, Icons.phone_android_outlined, 'Phone',
+              user.phoneNumber?.value ?? 'Not set'),
+          const Divider(height: 32),
+          _buildIdentityRow(context, Icons.work_outline_rounded, 'Occupation',
+              user.occupation ?? 'Not set'),
+          const Divider(height: 32),
+          _buildIdentityRow(context, Icons.location_on_outlined, 'Residence',
+              user.address ?? 'Not set'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIdentityRow(
+      BuildContext context, IconData icon, String label, String value) {
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: theme.colorScheme.primary.withOpacity(0.6)),
+        const SizedBox(width: 12),
+        Text(label,
+            style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey)),
+        const Spacer(),
+        Text(value,
+            style: theme.textTheme.bodyMedium
+                ?.copyWith(fontWeight: FontWeight.w600)),
+      ],
     );
   }
 }

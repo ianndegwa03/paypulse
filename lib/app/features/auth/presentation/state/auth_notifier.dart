@@ -1,6 +1,9 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:paypulse/app/features/auth/presentation/state/auth_state.dart';
 import 'package:paypulse/app/di/injector.dart';
+import 'package:paypulse/core/services/biometric/biometric_service.dart';
 import 'package:paypulse/core/logging/logger_service.dart';
 import 'package:paypulse/core/errors/failures.dart';
 import 'package:paypulse/domain/use_cases/auth/login_use_case.dart';
@@ -13,6 +16,8 @@ import 'package:paypulse/domain/use_cases/auth/update_profile_use_case.dart';
 import 'package:paypulse/domain/use_cases/auth/enable_biometric_use_case.dart';
 import 'package:paypulse/domain/use_cases/auth/check_auth_status_use_case.dart';
 import 'package:paypulse/domain/use_cases/auth/get_current_user_use_case.dart';
+import 'package:paypulse/domain/use_cases/auth/biometric_login_use_case.dart';
+import 'package:paypulse/domain/use_cases/auth/pin_login_use_case.dart';
 import 'package:paypulse/domain/value_objects/phone_number.dart';
 
 class AuthNotifier extends StateNotifier<AuthState> {
@@ -26,6 +31,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
   final EnableBiometricUseCase enableBiometricUseCase;
   final CheckAuthStatusUseCase checkAuthStatusUseCase;
   final GetCurrentUserUseCase getCurrentUserUseCase;
+  final BiometricLoginUseCase biometricLoginUseCase;
+  final PinLoginUseCase pinLoginUseCase;
+  final BiometricService biometricService;
   final _logger = LoggerService.instance;
 
   AuthNotifier({
@@ -39,8 +47,40 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required this.enableBiometricUseCase,
     required this.checkAuthStatusUseCase,
     required this.getCurrentUserUseCase,
+    required this.biometricLoginUseCase,
+    required this.pinLoginUseCase,
+    required this.biometricService,
   }) : super(const AuthState()) {
     checkAuthStatus();
+    checkBiometricStatus();
+    checkPinStatus();
+  }
+
+  bool _biometricPrompted = false;
+
+  Future<void> checkBiometricStatus() async {
+    try {
+      final isAvailable =
+          await biometricLoginUseCase.repository.isBiometricEnabled();
+      isAvailable.fold(
+        (_) => state = state.copyWith(isBiometricEnabled: false),
+        (enabled) => state = state.copyWith(isBiometricEnabled: enabled),
+      );
+    } catch (e) {
+      _logger.e('Error checking biometric status: $e', tag: 'AuthNotifier');
+    }
+  }
+
+  Future<void> checkPinStatus() async {
+    try {
+      final isAvailable = await biometricLoginUseCase.repository.isPinEnabled();
+      isAvailable.fold(
+        (_) => state = state.copyWith(isPinEnabled: false),
+        (enabled) => state = state.copyWith(isPinEnabled: enabled),
+      );
+    } catch (e) {
+      _logger.e('Error checking PIN status: $e', tag: 'AuthNotifier');
+    }
   }
 
   Future<void> checkAuthStatus() async {
@@ -56,13 +96,23 @@ class AuthNotifier extends StateNotifier<AuthState> {
         final userResult = await getCurrentUserUseCase.execute();
         userResult.fold(
             (f) => _logger.e('Failed to fetch current user: ${f.message}',
-                tag: 'AuthNotifier'), (user) {
+                tag: 'AuthNotifier'), (user) async {
           state = state.copyWith(
               isAuthenticated: true,
               currentUser: user,
               userId: user.id,
               email: user.email.value,
               isLoading: false);
+
+          // Trigger biometric prompt only if enabled and not yet prompted this session
+          if (user.securitySettings['biometric_enabled'] == true &&
+              !_biometricPrompted) {
+            _biometricPrompted = true; // Set flag immediately
+            // We can trigger a biometric verify use case here or UI can react to this
+            // For now, assuming the UI reacts to 'isAuthenticated' and handles prompt,
+            // but if the prompt is logic-driven here:
+            // await _triggerBiometricVerify();
+          }
         });
       }
     });
@@ -82,9 +132,21 @@ class AuthNotifier extends StateNotifier<AuthState> {
             errorMessage: failure.message,
           );
         },
-        (user) {
+        (user) async {
           _logger.i('User logged in successfully: ${user.id}',
               tag: 'AuthNotifier');
+
+          // If biometric is enabled, save these credentials
+          if (state.isBiometricEnabled) {
+            try {
+              final creds = json.encode({'email': email, 'password': password});
+              await biometricService.saveBiometricCredentials('default', creds);
+            } catch (e) {
+              _logger.e('Failed to save biometric credentials: $e',
+                  tag: 'AuthNotifier');
+            }
+          }
+
           state = state.copyWith(
             isAuthenticated: true,
             userId: user.id,
@@ -180,6 +242,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> register(
     String email,
     String password,
+    String username,
     String firstName,
     String lastName,
   ) async {
@@ -189,6 +252,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final result = await registerUseCase.execute(
         email: email,
         password: password,
+        username: username,
         firstName: firstName,
         lastName: lastName,
       );
@@ -242,9 +306,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
         },
         (_) {
           _logger.i('User logged out successfully', tag: 'AuthNotifier');
-          state = const AuthState(
+          state = AuthState(
             isAuthenticated: false,
             isLoading: false,
+            isBiometricEnabled: state.isBiometricEnabled,
+            isOnboardingComplete: state.isOnboardingComplete,
           );
         },
       );
@@ -284,7 +350,18 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> updateProfile({
     String? firstName,
     String? lastName,
+    String? username,
     String? phoneNumber,
+    String? bio,
+    DateTime? dateOfBirth,
+    String? gender,
+    String? address,
+    String? occupation,
+    String? nationality,
+    String? privacyLevel,
+    bool? stealthModeEnabled,
+    bool? isProfessionalProfileVisible,
+    String? professionalBio,
   }) async {
     state = state.copyWith(
       isLoading: true,
@@ -314,7 +391,19 @@ class AuthNotifier extends StateNotifier<AuthState> {
     final updatedUser = currentUser.copyWith(
       firstName: firstName ?? currentUser.firstName,
       lastName: lastName ?? currentUser.lastName,
+      username: username ?? currentUser.username,
       phoneNumber: newPhone,
+      bio: bio ?? currentUser.bio,
+      dateOfBirth: dateOfBirth ?? currentUser.dateOfBirth,
+      gender: gender ?? currentUser.gender,
+      address: address ?? currentUser.address,
+      occupation: occupation ?? currentUser.occupation,
+      nationality: nationality ?? currentUser.nationality,
+      privacyLevel: privacyLevel ?? currentUser.privacyLevel,
+      stealthModeEnabled: stealthModeEnabled ?? currentUser.stealthModeEnabled,
+      isProfessionalProfileVisible: isProfessionalProfileVisible ??
+          currentUser.isProfessionalProfileVisible,
+      professionalBio: professionalBio ?? currentUser.professionalBio,
     );
 
     try {
@@ -348,6 +437,110 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  Future<void> uploadProfileImage(File image) async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+
+    try {
+      final result =
+          await biometricLoginUseCase.repository.uploadProfileImage(image);
+
+      result.fold(
+        (failure) {
+          state = state.copyWith(
+            isLoading: false,
+            errorMessage: failure.message,
+          );
+        },
+        (imageUrl) {
+          if (state.currentUser != null) {
+            state = state.copyWith(
+              isLoading: false,
+              currentUser:
+                  state.currentUser!.copyWith(profileImageUrl: imageUrl),
+              successMessage: 'Photo updated successfully',
+            );
+          } else {
+            state = state.copyWith(isLoading: false);
+          }
+        },
+      );
+    } catch (e) {
+      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+    }
+  }
+
+  Future<void> loginWithBiometrics() async {
+    state = state.copyWith(isLoading: true);
+
+    try {
+      final result = await biometricLoginUseCase.execute();
+
+      result.fold(
+        (failure) {
+          _logger.e('Biometric login failed: ${failure.message}',
+              tag: 'AuthNotifier');
+          state = state.copyWith(
+            isLoading: false,
+            errorMessage: failure.message,
+          );
+        },
+        (user) {
+          _logger.i('User logged in via biometrics: ${user.id}',
+              tag: 'AuthNotifier');
+          state = state.copyWith(
+            isAuthenticated: true,
+            userId: user.id,
+            email: user.email.value,
+            currentUser: user,
+            isLoading: false,
+          );
+        },
+      );
+    } catch (e) {
+      _logger.e('Unexpected error during biometric login: $e',
+          tag: 'AuthNotifier');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+
+  Future<void> loginWithPin(String pin) async {
+    state = state.copyWith(isLoading: true);
+
+    try {
+      final result = await pinLoginUseCase.execute(pin);
+
+      result.fold(
+        (failure) {
+          _logger.e('PIN login failed: ${failure.message}',
+              tag: 'AuthNotifier');
+          state = state.copyWith(
+            isLoading: false,
+            errorMessage: failure.message,
+          );
+        },
+        (user) {
+          _logger.i('User logged in via PIN: ${user.id}', tag: 'AuthNotifier');
+          state = state.copyWith(
+            isAuthenticated: true,
+            userId: user.id,
+            email: user.email.value,
+            currentUser: user,
+            isLoading: false,
+          );
+        },
+      );
+    } catch (e) {
+      _logger.e('Unexpected error during PIN login: $e', tag: 'AuthNotifier');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+
   Future<void> enableBiometric(bool enable) async {
     final currentUser = state.currentUser;
     if (currentUser == null) return;
@@ -365,7 +558,32 @@ class AuthNotifier extends StateNotifier<AuthState> {
           newSettings['biometric_enabled'] = enable;
           final updatedUser =
               currentUser.copyWith(securitySettings: newSettings);
-          state = state.copyWith(currentUser: updatedUser);
+          state = state.copyWith(
+            currentUser: updatedUser,
+            isBiometricEnabled: enable,
+          );
+          _logger.i('Biometric ${enable ? 'enabled' : 'disabled'}',
+              tag: 'AuthNotifier');
+        },
+      );
+    } catch (e) {
+      state = state.copyWith(errorMessage: e.toString());
+    }
+  }
+
+  Future<void> enablePin(bool enable, String? pin) async {
+    try {
+      final result =
+          await biometricLoginUseCase.repository.enablePin(enable, pin);
+
+      result.fold(
+        (failure) {
+          state = state.copyWith(errorMessage: failure.message);
+        },
+        (_) {
+          state = state.copyWith(isPinEnabled: enable, pin: pin);
+          _logger.i('PIN ${enable ? 'enabled' : 'disabled'}',
+              tag: 'AuthNotifier');
         },
       );
     } catch (e) {
@@ -406,5 +624,8 @@ final authNotifierProvider =
     enableBiometricUseCase: getIt<EnableBiometricUseCase>(),
     checkAuthStatusUseCase: getIt<CheckAuthStatusUseCase>(),
     getCurrentUserUseCase: getIt<GetCurrentUserUseCase>(),
+    biometricLoginUseCase: getIt<BiometricLoginUseCase>(),
+    pinLoginUseCase: getIt<PinLoginUseCase>(),
+    biometricService: getIt<BiometricService>(),
   );
 });

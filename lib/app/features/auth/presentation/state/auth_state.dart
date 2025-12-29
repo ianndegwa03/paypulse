@@ -7,6 +7,8 @@ class AuthState extends BaseState {
   final String? email;
   final UserEntity? currentUser;
   final bool isBiometricEnabled;
+  final bool isPinEnabled;
+  final String? pin;
   final bool isOnboardingComplete;
 
   const AuthState({
@@ -15,6 +17,8 @@ class AuthState extends BaseState {
     this.email,
     this.currentUser,
     this.isBiometricEnabled = false,
+    this.isPinEnabled = false,
+    this.pin,
     this.isOnboardingComplete = false,
     super.isLoading,
     super.errorMessage,
@@ -28,6 +32,8 @@ class AuthState extends BaseState {
     String? email,
     UserEntity? currentUser,
     bool? isBiometricEnabled,
+    bool? isPinEnabled,
+    String? pin,
     bool? isOnboardingComplete,
     bool? isLoading,
     String? errorMessage,
@@ -39,6 +45,8 @@ class AuthState extends BaseState {
       email: email ?? this.email,
       currentUser: currentUser ?? this.currentUser,
       isBiometricEnabled: isBiometricEnabled ?? this.isBiometricEnabled,
+      isPinEnabled: isPinEnabled ?? this.isPinEnabled,
+      pin: pin ?? this.pin,
       isOnboardingComplete: isOnboardingComplete ?? this.isOnboardingComplete,
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage ?? this.errorMessage,
@@ -53,6 +61,8 @@ class AuthState extends BaseState {
         email,
         currentUser,
         isBiometricEnabled,
+        isPinEnabled,
+        pin,
         isOnboardingComplete,
         ...super.props,
       ];

@@ -14,6 +14,7 @@ import 'package:paypulse/core/security/encryption/crypto_utils.dart';
 import 'package:paypulse/app/di/injector.dart';
 import 'package:paypulse/app/di/config/di_config.dart';
 import 'package:paypulse/core/services/contacts/contacts_service.dart';
+import 'package:paypulse/core/services/biometric/biometric_service.dart';
 
 /// Core module for registering core services
 class CoreModule {
@@ -105,9 +106,20 @@ class CoreModule {
       getIt.registerSingleton<FirebaseAuth>(FirebaseAuth.instance);
     }
 
+    // Biometric Service
+    if (!getIt.isRegistered<BiometricService>()) {
+      getIt.registerLazySingleton<BiometricService>(
+        () => BiometricServiceImpl(
+          secureStorage: getIt<SecureStorageService>(),
+        ),
+      );
+    }
+
     // Contacts Service
     if (!getIt.isRegistered<ContactsService>()) {
-      getIt.registerLazySingleton<ContactsService>(() => ContactsServiceImpl());
+      getIt.registerLazySingleton<ContactsService>(
+        () => ContactsServiceImpl(storageService: getIt<StorageService>()),
+      );
     }
 
     LoggerService.instance.d('CoreModule initialized', tag: 'DI');

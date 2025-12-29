@@ -12,19 +12,20 @@ abstract class BiometricService {
   Future<bool> hasBiometricCredentials(String identifier);
   Future<List<BiometricType>> getAvailableBiometrics();
   Future<void> disableBiometric();
+  Future<bool> authenticateForLogin();
 }
 
 class BiometricServiceImpl implements BiometricService {
   final LocalAuthentication _localAuth;
   final SecureStorageService _secureStorage;
   final Logger _logger = Logger();
-  
+
   BiometricServiceImpl({
     LocalAuthentication? localAuth,
     required SecureStorageService secureStorage,
-  }) : _localAuth = localAuth ?? LocalAuthentication(),
-       _secureStorage = secureStorage;
-  
+  })  : _localAuth = localAuth ?? LocalAuthentication(),
+        _secureStorage = secureStorage;
+
   @override
   Future<bool> isBiometricAvailable() async {
     try {
@@ -36,7 +37,7 @@ class BiometricServiceImpl implements BiometricService {
       );
     }
   }
-  
+
   @override
   Future<bool> authenticate({required String reason}) async {
     try {
@@ -47,11 +48,13 @@ class BiometricServiceImpl implements BiometricService {
           data: {'available': false},
         );
       }
-      
+
       final didAuthenticate = await _localAuth.authenticate(
         localizedReason: reason,
+        biometricOnly: true,
+        persistAcrossBackgrounding: true,
       );
-      
+
       return didAuthenticate;
     } catch (e) {
       throw BiometricException(
@@ -60,16 +63,17 @@ class BiometricServiceImpl implements BiometricService {
       );
     }
   }
-  
+
   @override
-  Future<void> saveBiometricCredentials(String identifier, String credentials) async {
+  Future<void> saveBiometricCredentials(
+      String identifier, String credentials) async {
     try {
       // Store credentials in secure storage
       await _secureStorage.writeBiometricKey(identifier);
-      
+
       // Also store the actual credentials encrypted
       await _secureStorage.write('biometric_creds_$identifier', credentials);
-      
+
       // Mark biometric as enabled for this identifier
       await _secureStorage.write('biometric_enabled_$identifier', 'true');
     } catch (e) {
@@ -79,16 +83,17 @@ class BiometricServiceImpl implements BiometricService {
       );
     }
   }
-  
+
   @override
   Future<String?> getBiometricCredentials(String identifier) async {
     try {
       // First check if biometric is enabled for this identifier
-      final isEnabled = await _secureStorage.read('biometric_enabled_$identifier');
+      final isEnabled =
+          await _secureStorage.read('biometric_enabled_$identifier');
       if (isEnabled != 'true') {
         return null;
       }
-      
+
       // Get the stored credentials
       return await _secureStorage.read('biometric_creds_$identifier');
     } catch (e) {
@@ -98,7 +103,7 @@ class BiometricServiceImpl implements BiometricService {
       );
     }
   }
-  
+
   @override
   Future<void> deleteBiometricCredentials(String identifier) async {
     try {
@@ -112,11 +117,12 @@ class BiometricServiceImpl implements BiometricService {
       );
     }
   }
-  
+
   @override
   Future<bool> hasBiometricCredentials(String identifier) async {
     try {
-      final isEnabled = await _secureStorage.read('biometric_enabled_$identifier');
+      final isEnabled =
+          await _secureStorage.read('biometric_enabled_$identifier');
       return isEnabled == 'true';
     } catch (e) {
       throw BiometricException(
@@ -125,7 +131,7 @@ class BiometricServiceImpl implements BiometricService {
       );
     }
   }
-  
+
   @override
   Future<List<BiometricType>> getAvailableBiometrics() async {
     try {
@@ -137,13 +143,13 @@ class BiometricServiceImpl implements BiometricService {
       );
     }
   }
-  
+
   @override
   Future<void> disableBiometric() async {
     try {
       // Clear all biometric-related data
       await _secureStorage.deleteBiometricKey();
-      
+
       // You might want to clear all biometric credentials
       // This is a simplified version
     } catch (e) {
@@ -153,32 +159,33 @@ class BiometricServiceImpl implements BiometricService {
       );
     }
   }
-  
+
   // Additional biometric methods for PayPulse
-  
-  Future<bool> authenticateForTransaction({required double amount, required String recipient}) async {
+
+  Future<bool> authenticateForTransaction(
+      {required double amount, required String recipient}) async {
     final reason = 'Confirm transaction of \$$amount to $recipient';
     return await authenticate(reason: reason);
   }
-  
+
   Future<bool> authenticateForLogin() async {
     return await authenticate(reason: 'Login to your PayPulse account');
   }
-  
+
   Future<bool> authenticateForSettings() async {
     return await authenticate(reason: 'Access security settings');
   }
-  
+
   Future<bool> authenticateForPayment() async {
     return await authenticate(reason: 'Authorize payment');
   }
-  
+
   Future<Map<String, dynamic>> getBiometricStatus() async {
     try {
       final isAvailable = await isBiometricAvailable();
       final availableTypes = await getAvailableBiometrics();
       final hasStoredCredentials = await hasBiometricCredentials('default');
-      
+
       return {
         'available': isAvailable,
         'available_types': availableTypes.map((type) => type.name).toList(),
@@ -192,22 +199,24 @@ class BiometricServiceImpl implements BiometricService {
       );
     }
   }
-  
-  Future<void> setupBiometric({required String userId, required String authToken}) async {
+
+  Future<void> setupBiometric(
+      {required String userId, required String authToken}) async {
     try {
       // First authenticate to ensure it's the real user
-      final authenticated = await authenticate(reason: 'Setup biometric authentication');
-      
+      final authenticated =
+          await authenticate(reason: 'Setup biometric authentication');
+
       if (!authenticated) {
         throw BiometricException(
           message: 'Biometric setup cancelled or failed',
           data: {'userId': userId},
         );
       }
-      
+
       // Store the user's authentication token with biometric protection
       await saveBiometricCredentials(userId, authToken);
-      
+
       // Log the setup
       _logger.d('Biometric authentication setup completed for user: $userId');
     } catch (e) {

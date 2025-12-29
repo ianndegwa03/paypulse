@@ -12,7 +12,52 @@ class SocialPostModel extends SocialPostEntity {
     super.likes,
     super.comments,
     super.isLiked,
+    super.shares,
+    super.isVerified,
+    super.type,
+    super.totalAmount,
+    super.collectedAmount,
+    super.title,
   });
+
+  @override
+  SocialPostModel copyWith({
+    String? id,
+    String? userId,
+    String? userName,
+    String? content,
+    String? mediaUrl,
+    String? userAvatarUrl,
+    DateTime? timestamp,
+    int? likes,
+    int? comments,
+    bool? isLiked,
+    int? shares,
+    bool? isVerified,
+    PostType? type,
+    double? totalAmount,
+    double? collectedAmount,
+    String? title,
+  }) {
+    return SocialPostModel(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      userName: userName ?? this.userName,
+      content: content ?? this.content,
+      mediaUrl: mediaUrl ?? this.mediaUrl,
+      userAvatarUrl: userAvatarUrl ?? this.userAvatarUrl,
+      timestamp: timestamp ?? this.timestamp,
+      likes: likes ?? this.likes,
+      comments: comments ?? this.comments,
+      isLiked: isLiked ?? this.isLiked,
+      shares: shares ?? this.shares,
+      isVerified: isVerified ?? this.isVerified,
+      type: type ?? this.type,
+      totalAmount: totalAmount ?? this.totalAmount,
+      collectedAmount: collectedAmount ?? this.collectedAmount,
+      title: title ?? this.title,
+    );
+  }
 
   factory SocialPostModel.fromJson(Map<String, dynamic> json) {
     return SocialPostModel(
@@ -28,6 +73,12 @@ class SocialPostModel extends SocialPostEntity {
       likes: json['likes'] as int? ?? 0,
       comments: json['comments'] as int? ?? 0,
       isLiked: json['is_liked'] as bool? ?? false,
+      shares: json['shares'] as int? ?? 0,
+      isVerified: json['is_verified'] as bool? ?? false,
+      type: PostType.values.byName(json['type'] as String? ?? 'regular'),
+      totalAmount: (json['total_amount'] as num?)?.toDouble(),
+      collectedAmount: (json['collected_amount'] as num?)?.toDouble(),
+      title: json['title'] as String?,
     );
   }
 
@@ -43,6 +94,12 @@ class SocialPostModel extends SocialPostEntity {
       'likes': likes,
       'comments': comments,
       'is_liked': isLiked,
+      'shares': shares,
+      'is_verified': isVerified,
+      'type': type.name,
+      'total_amount': totalAmount,
+      'collected_amount': collectedAmount,
+      'title': title,
     };
   }
 }

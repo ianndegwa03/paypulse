@@ -14,11 +14,13 @@ import 'package:paypulse/domain/use_cases/auth/biometric_login_use_case.dart';
 import 'package:paypulse/domain/use_cases/auth/enable_biometric_use_case.dart';
 import 'package:paypulse/domain/use_cases/auth/check_auth_status_use_case.dart';
 import 'package:paypulse/domain/use_cases/auth/get_current_user_use_case.dart';
+import 'package:paypulse/domain/use_cases/auth/pin_login_use_case.dart';
 import 'package:paypulse/data/repositories/auth_repository_impl.dart';
 import 'package:paypulse/data/remote/datasources/auth_datasource.dart';
 import 'package:paypulse/data/local/datasources/local_datasource.dart';
 import 'package:paypulse/core/network/connectivity/network_info.dart';
 import 'package:paypulse/data/remote/mappers/user_mapper.dart';
+import 'package:paypulse/core/services/biometric/biometric_service.dart';
 
 /// Auth module for dependency injection
 class AuthModule {
@@ -97,7 +99,15 @@ class AuthModule {
     }
     if (!getIt.isRegistered<BiometricLoginUseCase>()) {
       getIt.registerLazySingleton<BiometricLoginUseCase>(
-        () => BiometricLoginUseCase(getIt<AuthRepository>()),
+        () => BiometricLoginUseCase(
+          getIt<AuthRepository>(),
+          getIt<BiometricService>(),
+        ),
+      );
+    }
+    if (!getIt.isRegistered<PinLoginUseCase>()) {
+      getIt.registerLazySingleton<PinLoginUseCase>(
+        () => PinLoginUseCase(getIt<AuthRepository>()),
       );
     }
     if (!getIt.isRegistered<EnableBiometricUseCase>()) {

@@ -1,9 +1,20 @@
 import 'package:paypulse/data/models/social_post_model.dart';
+import 'package:paypulse/domain/entities/social_post_entity.dart';
 import 'package:paypulse/core/services/local_storage/storage_service.dart';
 
 abstract class SocialDataSource {
   Future<List<SocialPostModel>> getFeed();
-  Future<void> createPost(String content);
+  Future<void> createPost({
+    required String content,
+    String? type,
+    double? totalAmount,
+    double? collectedAmount,
+    String? transactionCategory,
+    String? linkedId,
+    String? title,
+    List<String>? pollOptions,
+    DateTime? deadline,
+  });
   Future<void> likePost(String postId);
 }
 
@@ -15,45 +26,16 @@ class SocialDataSourceImpl implements SocialDataSource {
 
   @override
   Future<List<SocialPostModel>> getFeed() async {
-    // Try to load from storage
     final List<dynamic>? storedList = await storageService.getList(_feedKey);
-
     if (storedList != null && storedList.isNotEmpty) {
-      try {
-        return storedList
-            .map((e) => SocialPostModel.fromJson(Map<String, dynamic>.from(e)))
-            .toList();
-      } catch (e) {
-        // Fallback if parsing fails
-      }
+      return storedList
+          .map((e) => SocialPostModel.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
     }
 
-    // Seed Data (Simulated Real Initial Data)
-    final seedData = [
-      SocialPostModel(
-        id: '1',
-        userId: 'u1',
-        userName: 'Alice',
-        content: 'Just reached my savings goal for the new car! #PayPulse',
-        timestamp: DateTime.now().subtract(const Duration(hours: 2)),
-        likes: 12,
-        comments: 3,
-        isLiked: true,
-      ),
-      SocialPostModel(
-        id: '2',
-        userId: 'u2',
-        userName: 'Bob',
-        content:
-            'The investment features in this app are game changing. Highly recommend!',
-        timestamp: DateTime.now().subtract(const Duration(hours: 5)),
-        likes: 25,
-        comments: 6,
-      ),
-    ];
-
-    await _saveFeed(seedData);
-    return seedData;
+    // No mock seed data as per user request.
+    // Return empty list if no user-generated posts exist yet.
+    return [];
   }
 
   Future<void> _saveFeed(List<SocialPostModel> feed) async {
@@ -63,20 +45,34 @@ class SocialDataSourceImpl implements SocialDataSource {
   }
 
   @override
-  Future<void> createPost(String content) async {
+  Future<void> createPost({
+    required String content,
+    String? type,
+    double? totalAmount,
+    double? collectedAmount,
+    String? transactionCategory,
+    String? linkedId,
+    String? title,
+    List<String>? pollOptions,
+    DateTime? deadline,
+  }) async {
     final currentFeed = await getFeed();
     final newPost = SocialPostModel(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      userId: 'current_user', // TODO: Get actual user ID
-      userName: 'You', // TODO: Get actual user name
+      userId: 'current_user',
+      userName: 'You',
       content: content,
+      userAvatarUrl: 'https://i.pravatar.cc/150?u=current_user',
       timestamp: DateTime.now(),
-      likes: 0,
-      comments: 0,
+      type: type != null
+          ? PostType.values
+              .firstWhere((e) => e.name == type, orElse: () => PostType.regular)
+          : PostType.regular,
+      totalAmount: totalAmount,
+      collectedAmount: collectedAmount,
+      title: title,
     );
-
-    final updatedFeed = [newPost, ...currentFeed];
-    await _saveFeed(updatedFeed);
+    await _saveFeed([newPost, ...currentFeed]);
   }
 
   @override
@@ -85,22 +81,11 @@ class SocialDataSourceImpl implements SocialDataSource {
     final updatedFeed = currentFeed.map((post) {
       if (post.id == postId) {
         final isLiked = !post.isLiked;
-        return SocialPostModel(
-          id: post.id,
-          userId: post.userId,
-          userName: post.userName,
-          content: post.content,
-          timestamp: post.timestamp,
-          mediaUrl: post.mediaUrl,
-          userAvatarUrl: post.userAvatarUrl,
-          likes: post.likes + (isLiked ? 1 : -1),
-          comments: post.comments,
-          isLiked: isLiked,
-        );
+        return post.copyWith(
+            likes: post.likes + (isLiked ? 1 : -1), isLiked: isLiked);
       }
       return post;
     }).toList();
-
     await _saveFeed(updatedFeed);
   }
 }

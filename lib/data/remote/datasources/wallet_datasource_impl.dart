@@ -46,12 +46,23 @@ class WalletDataSourceImpl implements WalletDataSource {
     await _firestore.runTransaction((transaction) async {
       final snapshot = await transaction.get(walletRef);
       if (!snapshot.exists) {
-        transaction.set(walletRef,
-            {'balance': amountVal, 'currency': currency, 'id': userId});
+        transaction.set(walletRef, {
+          'balances': {currency: amountVal},
+          'primaryCurrency': currency,
+          'id': userId
+        });
       } else {
-        final currentBalance =
-            (snapshot.data()?['balance'] as num?)?.toDouble() ?? 0.0;
-        transaction.update(walletRef, {'balance': currentBalance + amountVal});
+        final data = snapshot.data();
+        final balances = Map<String, dynamic>.from(data?['balances'] ?? {});
+        // fallback for legacy
+        if (balances.isEmpty && data?['balance'] != null) {
+          balances[data?['currency'] ?? 'USD'] = data?['balance'];
+        }
+
+        final currentBalance = (balances[currency] as num?)?.toDouble() ?? 0.0;
+        balances[currency] = currentBalance + amountVal;
+
+        transaction.update(walletRef, {'balances': balances});
       }
 
       final txRef = walletRef.collection('transactions').doc();
@@ -80,18 +91,39 @@ class WalletDataSourceImpl implements WalletDataSource {
       final senderSnapshot = await transaction.get(walletRef);
       if (!senderSnapshot.exists) throw Exception('Sender wallet not found');
 
-      final currentBalance =
-          (senderSnapshot.data()?['balance'] as num?)?.toDouble() ?? 0.0;
-      if (currentBalance < amountVal) throw Exception('Insufficient funds');
+      final senderData = senderSnapshot.data();
+      final senderBalances =
+          Map<String, dynamic>.from(senderData?['balances'] ?? {});
+      // fallback for legacy
+      if (senderBalances.isEmpty && senderData?['balance'] != null) {
+        senderBalances[senderData?['currency'] ?? 'USD'] =
+            senderData?['balance'];
+      }
 
-      transaction.update(walletRef, {'balance': currentBalance - amountVal});
+      final senderCurrentBalance =
+          (senderBalances[currency] as num?)?.toDouble() ?? 0.0;
+      if (senderCurrentBalance < amountVal)
+        throw Exception('Insufficient funds');
+
+      senderBalances[currency] = senderCurrentBalance - amountVal;
+      transaction.update(walletRef, {'balances': senderBalances});
 
       final recipientSnapshot = await transaction.get(recipientRef);
       if (recipientSnapshot.exists) {
-        final recipientBalance =
-            (recipientSnapshot.data()?['balance'] as num?)?.toDouble() ?? 0.0;
-        transaction
-            .update(recipientRef, {'balance': recipientBalance + amountVal});
+        final recipientData = recipientSnapshot.data();
+        final recipientBalances =
+            Map<String, dynamic>.from(recipientData?['balances'] ?? {});
+        // fallback for legacy
+        if (recipientBalances.isEmpty && recipientData?['balance'] != null) {
+          recipientBalances[recipientData?['currency'] ?? 'USD'] =
+              recipientData?['balance'];
+        }
+
+        final recipientCurrentBalance =
+            (recipientBalances[currency] as num?)?.toDouble() ?? 0.0;
+        recipientBalances[currency] = recipientCurrentBalance + amountVal;
+
+        transaction.update(recipientRef, {'balances': recipientBalances});
       }
 
       final senderTxRef = walletRef.collection('transactions').doc();
@@ -173,7 +205,18 @@ class WalletDataSourceImpl implements WalletDataSource {
       final snap = await transaction.get(walletRef);
       if (!snap.exists) return;
       final data = snap.data()!;
-      final double balance = (data['balance'] as num).toDouble();
+
+      final balances = Map<String, dynamic>.from(data['balances'] ?? {});
+      // fallback for legacy - assuming USD for vaults for now or primary
+      String primaryCurrency =
+          data['primaryCurrency'] ?? data['currency'] ?? 'USD';
+      if (balances.isEmpty && data['balance'] != null) {
+        balances[primaryCurrency] = data['balance'];
+      }
+
+      final double balance =
+          (balances[primaryCurrency] as num?)?.toDouble() ?? 0.0;
+
       if (balance < amount) throw Exception('Insufficient balance');
 
       final List<dynamic> vaults = List.from(data['vaults'] ?? []);
@@ -185,8 +228,9 @@ class WalletDataSourceImpl implements WalletDataSource {
           (vault['currentAmount'] as num).toDouble() + amount;
       vaults[index] = vault;
 
-      transaction
-          .update(walletRef, {'balance': balance - amount, 'vaults': vaults});
+      balances[primaryCurrency] = balance - amount;
+
+      transaction.update(walletRef, {'balances': balances, 'vaults': vaults});
     });
   }
 

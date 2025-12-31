@@ -2,8 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:paypulse/app/features/privacy/presentation/state/privacy_provider.dart';
+import 'package:paypulse/app/features/security_privacy/presentation/state/security_privacy_notifier.dart';
 import 'package:paypulse/app/features/wallet/presentation/state/currency_provider.dart';
 import 'package:paypulse/app/features/auth/presentation/state/auth_notifier.dart';
 
@@ -97,7 +96,7 @@ class _PayPulseCardState extends ConsumerState<PayPulseCard>
 
     final color = widget.cardColor ??
         (isPremium ? const Color(0xFF1E1E1E) : theme.primaryColor);
-    final isHidden = ref.watch(privacyProvider).isBalanceHidden;
+    final isHidden = ref.watch(securityPrivacyProvider).isBalanceHidden;
 
     return Container(
       width: double.infinity,
@@ -178,7 +177,7 @@ class _PayPulseCardState extends ConsumerState<PayPulseCard>
                             onTap: () {
                               HapticFeedback.selectionClick();
                               ref
-                                  .read(privacyProvider.notifier)
+                                  .read(securityPrivacyProvider.notifier)
                                   .toggleBalanceVisibility();
                             },
                             child: Row(
@@ -406,9 +405,7 @@ class _PayPulseCardState extends ConsumerState<PayPulseCard>
                 _backAction(Icons.add_moderator_outlined, "Limits",
                     Colors.green, !isPremium, null),
                 _backAction(Icons.auto_awesome_outlined, "Virtual",
-                    Colors.purple, !isPremium, () {
-                  GoRouter.of(context).push('/create-ghost-card');
-                }),
+                    Colors.purple, !isPremium, null),
               ],
             ),
           ),

@@ -1,5 +1,6 @@
 import 'package:paypulse/core/errors/exceptions.dart';
 import 'package:paypulse/core/services/local_storage/storage_service.dart';
+import 'package:paypulse/core/security/storage/secure_storage_service.dart';
 import 'package:paypulse/data/models/shared/user_model.dart';
 
 abstract class LocalDataSource {
@@ -31,8 +32,9 @@ abstract class LocalDataSource {
 
 class LocalDataSourceImpl implements LocalDataSource {
   final StorageService _storageService;
+  final SecureStorageService _secureStorageService;
 
-  LocalDataSourceImpl(this._storageService);
+  LocalDataSourceImpl(this._storageService, this._secureStorageService);
 
   @override
   Future<void> cacheUser(UserModel user) async {
@@ -67,7 +69,7 @@ class LocalDataSourceImpl implements LocalDataSource {
   @override
   Future<void> setAuthToken(String token) async {
     try {
-      await _storageService.saveString('auth_token', token);
+      await _secureStorageService.writeAuthToken(token);
     } catch (e) {
       throw CacheException(message: 'Failed to save auth token: $e');
     }
@@ -76,7 +78,7 @@ class LocalDataSourceImpl implements LocalDataSource {
   @override
   Future<String?> getAuthToken() async {
     try {
-      return await _storageService.getString('auth_token');
+      return await _secureStorageService.readAuthToken();
     } catch (e) {
       throw CacheException(message: 'Failed to get auth token: $e');
     }
@@ -85,7 +87,7 @@ class LocalDataSourceImpl implements LocalDataSource {
   @override
   Future<void> clearAuthToken() async {
     try {
-      await _storageService.delete('auth_token');
+      await _secureStorageService.deleteAuthToken();
     } catch (e) {
       throw CacheException(message: 'Failed to clear auth token: $e');
     }
@@ -94,7 +96,7 @@ class LocalDataSourceImpl implements LocalDataSource {
   @override
   Future<void> setRefreshToken(String token) async {
     try {
-      await _storageService.saveString('refresh_token', token);
+      await _secureStorageService.writeRefreshToken(token);
     } catch (e) {
       throw CacheException(message: 'Failed to save refresh token: $e');
     }
@@ -103,7 +105,7 @@ class LocalDataSourceImpl implements LocalDataSource {
   @override
   Future<String?> getRefreshToken() async {
     try {
-      return await _storageService.getString('refresh_token');
+      return await _secureStorageService.readRefreshToken();
     } catch (e) {
       throw CacheException(message: 'Failed to get refresh token: $e');
     }
@@ -112,7 +114,7 @@ class LocalDataSourceImpl implements LocalDataSource {
   @override
   Future<void> clearRefreshToken() async {
     try {
-      await _storageService.delete('refresh_token');
+      await _secureStorageService.deleteRefreshToken();
     } catch (e) {
       throw CacheException(message: 'Failed to clear refresh token: $e');
     }
@@ -157,7 +159,7 @@ class LocalDataSourceImpl implements LocalDataSource {
   @override
   Future<void> setPin(String pin) async {
     try {
-      await _storageService.saveString('user_pin', pin);
+      await _secureStorageService.writeUserPin(pin);
     } catch (e) {
       throw CacheException(message: 'Failed to save PIN: $e');
     }
@@ -166,7 +168,7 @@ class LocalDataSourceImpl implements LocalDataSource {
   @override
   Future<String?> getPin() async {
     try {
-      return await _storageService.getString('user_pin');
+      return await _secureStorageService.readUserPin();
     } catch (e) {
       throw CacheException(message: 'Failed to get PIN: $e');
     }

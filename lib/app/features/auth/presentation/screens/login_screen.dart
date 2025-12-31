@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:paypulse/app/features/auth/presentation/state/auth_notifier.dart';
@@ -71,18 +72,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
-  Future<void> _handlePinLogin(String pin) async {
-    HapticFeedback.mediumImpact();
-    final notifier = ref.read(authNotifierProvider.notifier);
-    await notifier.loginWithPin(pin);
-
-    if (!mounted) return;
-    final state = ref.read(authNotifierProvider);
-    if (state.isAuthenticated) {
-      context.go('/dashboard');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -92,17 +81,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Background Aesthetic
           _buildBackground(theme, isDark),
-
           SafeArea(
             child: Center(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                child: ((state.isBiometricEnabled || state.isPinEnabled) &&
-                        !_showStandardLogin)
-                    ? _buildFastLoginView(context, theme, state, isDark)
-                    : _buildStandardLoginView(context, theme, state, isDark),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 400),
+                child: AnimatedSwitcher(
+                  duration: 400.ms,
+                  child: ((state.isBiometricEnabled || state.isPinEnabled) &&
+                          !_showStandardLogin)
+                      ? _buildFastLoginView(context, theme, state)
+                      : _buildStandardLoginView(context, theme, state),
+                ),
               ),
             ),
           ),
@@ -112,170 +102,139 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Widget _buildBackground(ThemeData theme, bool isDark) {
-    return Stack(
-      children: [
-        Positioned(
-          top: -100,
-          right: -100,
-          child: Container(
-            width: 300,
-            height: 300,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: theme.colorScheme.primary.withOpacity(isDark ? 0.1 : 0.05),
-            ),
-          ),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [theme.scaffoldBackgroundColor, theme.colorScheme.surface]
+              : [Colors.white, theme.colorScheme.primary.withOpacity(0.05)],
         ),
-        Positioned(
-          bottom: -50,
-          left: -50,
-          child: Container(
-            width: 200,
-            height: 200,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color:
-                  theme.colorScheme.secondary.withOpacity(isDark ? 0.1 : 0.05),
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 
   Widget _buildFastLoginView(
-      BuildContext context, ThemeData theme, AuthState state, bool isDark) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
+      BuildContext context, ThemeData theme, AuthState state) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 40),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          _buildLogo(theme),
+          _buildHeroIcon(
+              theme, Icons.security_rounded, theme.colorScheme.primary),
           const SizedBox(height: 32),
           Text(
-            'Fast Login',
-            style: theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.w900,
-              letterSpacing: -1,
-            ),
-          ),
+            'Secure Access',
+            style: theme.textTheme.headlineMedium
+                ?.copyWith(fontWeight: FontWeight.w900, letterSpacing: -1),
+          ).animate().fadeIn().moveY(begin: 10, end: 0),
           const SizedBox(height: 8),
           Text(
-            'Authenticate to continue',
-            style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey),
-          ),
-          const SizedBox(height: 48),
-          if (state.isBiometricEnabled)
-            _socialButton(
+            'Authenticate to unlock your wallet',
+            style: theme.textTheme.bodyMedium
+                ?.copyWith(color: Colors.grey.shade600),
+          ).animate().fadeIn(delay: 100.ms),
+          const SizedBox(height: 64),
+          if (state.isBiometricEnabled) ...[
+            _buildLoginMethod(
               context,
-              Icons.fingerprint_rounded,
-              theme.colorScheme.primary,
-              _handleBiometricLogin,
-              label: 'Use Biometrics',
-            ),
-          if (state.isBiometricEnabled && state.isPinEnabled)
-            const SizedBox(height: 24),
+              icon: Icons.fingerprint_rounded,
+              label: 'Biometric Unlock',
+              onTap: _handleBiometricLogin,
+              color: theme.colorScheme.primary,
+            ).animate().scale(delay: 200.ms, curve: Curves.easeOutBack),
+            const SizedBox(height: 32),
+          ],
           if (state.isPinEnabled)
-            _socialButton(
+            _buildLoginMethod(
               context,
-              Icons.dialpad_rounded,
-              theme.colorScheme.secondary,
-              () => _showPinDialog(context, theme),
-              label: 'Use PIN',
-            ),
+              icon: Icons.lock_rounded,
+              label: 'Login with PIN',
+              onTap: () => context.push('/pin-login'),
+              color: theme.colorScheme.secondary,
+            ).animate().scale(delay: 300.ms, curve: Curves.easeOutBack),
           const SizedBox(height: 48),
           TextButton(
             onPressed: () => setState(() => _showStandardLogin = true),
             child: Text(
-              'Switch to Email/Password',
+              'Switch to Email & Password',
               style: TextStyle(
-                color: theme.colorScheme.primary,
-                fontWeight: FontWeight.bold,
-              ),
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.bold),
             ),
-          ),
+          ).animate().fadeIn(delay: 400.ms),
         ],
       ),
     );
   }
 
   Widget _buildStandardLoginView(
-      BuildContext context, ThemeData theme, AuthState state, bool isDark) {
+      BuildContext context, ThemeData theme, AuthState state) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
+      padding: const EdgeInsets.all(40),
       child: Form(
         key: _formKey,
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildLogo(theme),
+            _buildHeroIcon(
+                theme, Icons.wallet_rounded, theme.colorScheme.primary),
             const SizedBox(height: 32),
             Text(
               'Welcome Back',
-              style: theme.textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.w900,
-                letterSpacing: -1,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Securely access your global wallet',
-              style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey),
+              style: theme.textTheme.headlineMedium
+                  ?.copyWith(fontWeight: FontWeight.w900, letterSpacing: -1),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 48),
-            _buildInputLabel(context, 'Email Address'),
+            _buildFieldLabel(theme, 'EMAIL ADDRESS'),
             const SizedBox(height: 8),
             TextFormField(
               controller: _emailController,
               validator: EmailValidator.validate,
               keyboardType: TextInputType.emailAddress,
-              decoration: _inputDecoration(
-                  context, 'name@example.com', Icons.alternate_email_rounded),
+              decoration: _inputStyle(
+                  theme, 'name@example.com', Icons.alternate_email_rounded),
             ),
             const SizedBox(height: 24),
-            _buildInputLabel(context, 'Password'),
+            _buildFieldLabel(theme, 'PASSWORD'),
             const SizedBox(height: 8),
             TextFormField(
               controller: _passwordController,
               validator: PasswordValidator.validate,
               obscureText: !_isPasswordVisible,
-              decoration: _inputDecoration(
-                context,
+              decoration: _inputStyle(
+                theme,
                 '••••••••',
                 Icons.lock_outline_rounded,
-                suffixIcon: IconButton(
+                suffix: IconButton(
                   icon: Icon(
-                    _isPasswordVisible
-                        ? Icons.visibility_off_rounded
-                        : Icons.visibility_rounded,
-                    size: 20,
-                    color: Colors.grey,
-                  ),
+                      _isPasswordVisible
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                      color: Colors.grey,
+                      size: 20),
                   onPressed: () =>
                       setState(() => _isPasswordVisible = !_isPasswordVisible),
                 ),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
                 onPressed: () => context.push('/forgot-password'),
-                child: Text(
-                  'Forgot Password?',
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                child: Text('Forgot Password?',
+                    style: TextStyle(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.bold)),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
             PrimaryButton(
-              label: 'Login',
+              label: 'Sign In',
               isLoading: state.isLoading,
               onPressed: _handleLogin,
             ),
@@ -285,148 +244,66 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 state.errorMessage!,
                 style: TextStyle(color: theme.colorScheme.error, fontSize: 13),
                 textAlign: TextAlign.center,
-              ),
+              ).animate().shake(),
             ],
             const SizedBox(height: 40),
-            _buildSocialDivider(theme),
-            const SizedBox(height: 24),
-            _buildSocialButtons(context, theme, state, isDark),
-            const SizedBox(height: 40),
-            _buildSignUpLink(context, theme),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text("New to PayPulse?",
+                    style: TextStyle(color: Colors.grey.shade600)),
+                TextButton(
+                  onPressed: () => context.push('/register'),
+                  child: Text('Create Account',
+                      style: TextStyle(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
           ],
-        ),
+        ).animate().fadeIn(duration: 400.ms).moveY(begin: 20, end: 0),
       ),
     );
   }
 
-  Widget _buildLogo(ThemeData theme) {
+  Widget _buildHeroIcon(ThemeData theme, IconData icon, Color color) {
     return Center(
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: theme.colorScheme.primary.withOpacity(0.1),
+          color: color.withOpacity(0.1),
           shape: BoxShape.circle,
         ),
-        child: Icon(
-          Icons.wallet_rounded,
-          size: 48,
-          color: theme.colorScheme.primary,
-        ),
+        child: Icon(icon, size: 48, color: color),
       ),
-    );
+    ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack);
   }
 
-  Widget _buildSocialDivider(ThemeData theme) {
-    return Row(
-      children: [
-        const Expanded(child: Divider()),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text('OR CONTINUE WITH',
-              style: theme.textTheme.labelSmall
-                  ?.copyWith(color: Colors.grey, letterSpacing: 1)),
-        ),
-        const Expanded(child: Divider()),
-      ],
-    );
-  }
-
-  Widget _buildSocialButtons(
-      BuildContext context, ThemeData theme, AuthState state, bool isDark) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _socialButton(context, Icons.g_mobiledata_rounded, Colors.red, () {}),
-        const SizedBox(width: 20),
-        _socialButton(context, Icons.apple_rounded,
-            isDark ? Colors.white : Colors.black, () {}),
-      ],
-    );
-  }
-
-  Widget _buildSignUpLink(BuildContext context, ThemeData theme) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const Text("Don't have an account?"),
-        TextButton(
-          onPressed: () => context.push('/register'),
-          child: Text('Sign Up',
-              style: TextStyle(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.bold)),
-        ),
-      ],
-    );
-  }
-
-  void _showPinDialog(BuildContext context, ThemeData theme) {
-    final pinController = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Enter PIN'),
-        content: TextField(
-          controller: pinController,
-          keyboardType: TextInputType.number,
-          obscureText: true,
-          maxLength: 4,
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 24, letterSpacing: 16),
-          decoration: const InputDecoration(
-            hintText: '••••',
-            counterText: '',
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final pin = pinController.text;
-              if (pin.length == 4) {
-                Navigator.pop(context);
-                _handlePinLogin(pin);
-              }
-            },
-            child: const Text('Unlock'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInputLabel(BuildContext context, String label) {
+  Widget _buildFieldLabel(ThemeData theme, String label) {
     return Text(
       label,
-      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: Colors.grey.shade600,
-          ),
+      style: theme.textTheme.labelSmall?.copyWith(
+        color: Colors.grey.shade600,
+        fontWeight: FontWeight.w900,
+        letterSpacing: 1.2,
+      ),
     );
   }
 
-  InputDecoration _inputDecoration(
-      BuildContext context, String hint, IconData icon,
-      {Widget? suffixIcon}) {
-    final theme = Theme.of(context);
+  InputDecoration _inputStyle(ThemeData theme, String hint, IconData icon,
+      {Widget? suffix}) {
     final isDark = theme.brightness == Brightness.dark;
     return InputDecoration(
       hintText: hint,
       prefixIcon: Icon(icon,
           size: 20, color: theme.colorScheme.primary.withOpacity(0.5)),
-      suffixIcon: suffixIcon,
+      suffixIcon: suffix,
       filled: true,
-      fillColor: isDark
-          ? Colors.white.withOpacity(0.05)
-          : Colors.grey.withOpacity(0.05),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      fillColor:
+          isDark ? Colors.white.withOpacity(0.05) : Colors.grey.withAlpha(10),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide.none,
-      ),
+          borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
         borderSide:
@@ -437,41 +314,38 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         borderSide:
             BorderSide(color: theme.colorScheme.primary.withOpacity(0.5)),
       ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
     );
   }
 
-  Widget _socialButton(
-      BuildContext context, IconData icon, Color color, VoidCallback onTap,
-      {String? label}) {
-    final theme = Theme.of(context);
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        InkWell(
-          onTap: () {
-            HapticFeedback.lightImpact();
-            onTap();
-          },
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
-            width: 70,
-            height: 60,
+  Widget _buildLoginMethod(BuildContext context,
+      {required IconData icon,
+      required String label,
+      required VoidCallback onTap,
+      required Color color}) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.mediumImpact();
+        onTap();
+      },
+      child: Column(
+        children: [
+          Container(
+            width: 80,
+            height: 80,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border:
-                  Border.all(color: theme.colorScheme.outline.withOpacity(0.1)),
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: color.withOpacity(0.2)),
             ),
-            child: Icon(icon, size: 32, color: color),
+            child: Icon(icon, size: 40, color: color),
           ),
-        ),
-        if (label != null) ...[
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: theme.textTheme.labelSmall?.copyWith(color: Colors.grey),
-          ),
+          const SizedBox(height: 12),
+          Text(label,
+              style:
+                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
         ],
-      ],
+      ),
     );
   }
 }

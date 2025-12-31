@@ -1,10 +1,12 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:paypulse/core/errors/exceptions.dart';
 import 'dart:io';
 import 'package:paypulse/data/models/response/auth_response.dart';
 import 'package:paypulse/data/remote/firebase/firebase_auth.dart';
-import 'package:paypulse/data/remote/firebase/social_auth_service.dart';
+import 'package:paypulse/data/remote/firebase/third_party_auth_service.dart';
 
 abstract class AuthDataSource {
+  User? get currentUser;
   Future<AuthResponse> login(String email, String password);
   Future<AuthResponse> register(
     String email,
@@ -30,16 +32,19 @@ abstract class AuthDataSource {
   Future<String> uploadProfileImage(File image);
   Future<void> resetPassword(String token, String newPassword);
 
-  // Social login methods
+  // Third-party login methods
   Future<AuthResponse> signInWithGoogle();
   Future<AuthResponse> signInWithApple();
 }
 
 class AuthDataSourceImpl implements AuthDataSource {
   final FirebaseAuthService _firebaseAuth;
-  final SocialAuthService _socialAuth;
+  final ThirdPartyAuthService _thirdPartyAuth;
 
-  AuthDataSourceImpl(this._firebaseAuth, this._socialAuth);
+  AuthDataSourceImpl(this._firebaseAuth, this._thirdPartyAuth);
+
+  @override
+  User? get currentUser => _firebaseAuth.currentUser;
 
   @override
   Future<AuthResponse> login(String email, String password) async {
@@ -82,7 +87,7 @@ class AuthDataSourceImpl implements AuthDataSource {
     try {
       await _firebaseAuth.logout();
       // Also sign out from Google if signed in
-      await _socialAuth.signOutGoogle();
+      await _thirdPartyAuth.signOutGoogle();
     } catch (e) {
       if (e is AuthException) {
         throw ServerException(message: e.message);
@@ -174,7 +179,7 @@ class AuthDataSourceImpl implements AuthDataSource {
   @override
   Future<AuthResponse> signInWithGoogle() async {
     try {
-      return await _socialAuth.signInWithGoogle();
+      return await _thirdPartyAuth.signInWithGoogle();
     } catch (e) {
       if (e is AuthException) {
         throw ServerException(message: e.message);
@@ -186,7 +191,7 @@ class AuthDataSourceImpl implements AuthDataSource {
   @override
   Future<AuthResponse> signInWithApple() async {
     try {
-      return await _socialAuth.signInWithApple();
+      return await _thirdPartyAuth.signInWithApple();
     } catch (e) {
       if (e is AuthException) {
         throw ServerException(message: e.message);

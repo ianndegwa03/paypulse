@@ -4,14 +4,6 @@ import 'package:paypulse/app/di/modules/core_module.dart';
 import 'package:paypulse/app/di/modules/auth_module.dart';
 import 'package:paypulse/app/di/modules/wallet_module.dart';
 import 'package:paypulse/app/di/modules/transaction_module.dart';
-import 'package:paypulse/app/di/modules/healthcare_finance_module.dart';
-
-import 'package:paypulse/app/di/modules/quantum_security_module.dart';
-import 'package:paypulse/app/di/modules/investment_module.dart';
-import 'package:paypulse/app/di/modules/savings_module.dart';
-import 'package:paypulse/app/di/modules/bills_module.dart';
-import 'package:paypulse/app/di/modules/gamification_module.dart';
-import 'package:paypulse/app/di/modules/social_module.dart';
 
 final GetIt getIt = GetIt.instance;
 
@@ -27,20 +19,9 @@ class UserInjector {
     // Initialize core module
     await CoreModule().init();
 
-    // Initialize shared feature modules
+    // Initialize core feature modules
     await AuthModule().init();
     await WalletModule().init();
     await TransactionModule().init();
-    // await BehavioralCoachingModule().init(); // Removed AI Feature
-    await HealthcareFinanceModule().init();
-    // await PredictiveAnalyticsModule().init(); // Removed AI Feature
-    await QuantumSecurityModule().init();
-    await InvestmentModule().init();
-    await SavingsModule().init();
-    await BillsModule().init();
-    await GamificationModule().init();
-    await SocialModule().init();
-
-    // NO AdminModule here
   }
 }

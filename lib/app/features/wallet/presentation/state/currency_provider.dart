@@ -85,6 +85,13 @@ class CurrencyState {
     if (lastUpdated == null) return true;
     return DateTime.now().difference(lastUpdated!) > const Duration(minutes: 5);
   }
+
+  /// Get rate between any two currencies (from -> to)
+  double getRate(CurrencyType from, CurrencyType to) {
+    final fromRate = exchangeRates[from] ?? 1.0;
+    final toRate = exchangeRates[to] ?? 1.0;
+    return toRate / fromRate;
+  }
 }
 
 /// Enhanced currency notifier with multi-source rate fetching

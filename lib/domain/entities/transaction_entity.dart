@@ -9,7 +9,9 @@ class Transaction extends Equatable {
   final String categoryId;
   final String paymentMethodId;
   final TransactionType type;
-  final CurrencyType currency;
+  final String currencyCode;
+  final String? targetCurrencyCode;
+  final double? exchangeRate;
   final TransactionStatus status;
 
   const Transaction({
@@ -20,9 +22,23 @@ class Transaction extends Equatable {
     required this.categoryId,
     required this.paymentMethodId,
     this.type = TransactionType.debit,
-    this.currency = CurrencyType.USD,
+    this.currencyCode = 'USD',
+    this.targetCurrencyCode,
+    this.exchangeRate,
     this.status = TransactionStatus.completed,
   });
+
+  // Backward compatibility
+  CurrencyType get currency {
+    try {
+      return CurrencyType.values.firstWhere(
+        (e) => e.name.toUpperCase() == currencyCode.toUpperCase(),
+        orElse: () => CurrencyType.USD,
+      );
+    } catch (_) {
+      return CurrencyType.USD;
+    }
+  }
 
   @override
   List<Object?> get props => [
@@ -33,7 +49,9 @@ class Transaction extends Equatable {
         categoryId,
         paymentMethodId,
         type,
-        currency,
+        currencyCode,
+        targetCurrencyCode,
+        exchangeRate,
         status,
       ];
 }

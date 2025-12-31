@@ -11,7 +11,9 @@ class TransactionModel extends entity.Transaction {
     required super.categoryId,
     required super.paymentMethodId,
     super.type,
-    super.currency,
+    super.currencyCode,
+    super.targetCurrencyCode,
+    super.exchangeRate,
     super.status,
   });
 
@@ -28,10 +30,9 @@ class TransactionModel extends entity.Transaction {
         (e) => e.name == (data['type'] as String? ?? 'debit'),
         orElse: () => TransactionType.debit,
       ),
-      currency: CurrencyType.values.firstWhere(
-        (e) => e.name == (data['currency'] as String? ?? 'USD'),
-        orElse: () => CurrencyType.USD,
-      ),
+      currencyCode: data['currency'] as String? ?? 'USD',
+      targetCurrencyCode: data['targetCurrency'],
+      exchangeRate: (data['exchangeRate'] as num?)?.toDouble(),
       status: TransactionStatus.values.firstWhere(
         (e) => e.name == (data['status'] as String? ?? 'completed'),
         orElse: () => TransactionStatus.completed,
@@ -47,7 +48,9 @@ class TransactionModel extends entity.Transaction {
     String? categoryId,
     String? paymentMethodId,
     TransactionType? type,
-    CurrencyType? currency,
+    String? currencyCode,
+    String? targetCurrencyCode,
+    double? exchangeRate,
     TransactionStatus? status,
   }) {
     return TransactionModel(
@@ -58,7 +61,9 @@ class TransactionModel extends entity.Transaction {
       categoryId: categoryId ?? this.categoryId,
       paymentMethodId: paymentMethodId ?? this.paymentMethodId,
       type: type ?? this.type,
-      currency: currency ?? this.currency,
+      currencyCode: currencyCode ?? this.currencyCode,
+      targetCurrencyCode: targetCurrencyCode ?? this.targetCurrencyCode,
+      exchangeRate: exchangeRate ?? this.exchangeRate,
       status: status ?? this.status,
     );
   }
@@ -71,7 +76,9 @@ class TransactionModel extends entity.Transaction {
       'categoryId': categoryId,
       'paymentMethodId': paymentMethodId,
       'type': type.name,
-      'currency': currency.name,
+      'currency': currencyCode,
+      'targetCurrency': targetCurrencyCode,
+      'exchangeRate': exchangeRate,
       'status': status.name,
     };
   }

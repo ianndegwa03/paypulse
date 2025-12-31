@@ -108,19 +108,27 @@ class FirebaseAuthService {
       }
 
       // Store additional user info in Firestore
-      await _firestore.collection('users').doc(user.uid).set({
-        'userId': user.uid,
-        'email': email,
-        'username': username,
-        'firstName': firstName,
-        'lastName': lastName,
-        'emailVerified': false,
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+      try {
+        await _firestore.collection('users').doc(user.uid).set({
+          'userId': user.uid,
+          'email': email,
+          'username': username,
+          'firstName': firstName,
+          'lastName': lastName,
+          'emailVerified': false,
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        }).timeout(const Duration(seconds: 10));
+      } catch (e) {
+        // Log the error but allow registration to complete if auth succeeded
+        print('Firestore user creation failed or timed out: $e');
+      }
 
       // Get ID token for API authentication
-      final idToken = await user.getIdToken();
+      final idToken = await user
+          .getIdToken()
+          .timeout(const Duration(seconds: 10))
+          .catchError((e) => '');
 
       return AuthResponse(
         userId: user.uid,
@@ -129,7 +137,10 @@ class FirebaseAuthService {
         firstName: firstName,
         lastName: lastName,
         accessToken: idToken,
-        refreshToken: await user.getIdToken(true),
+        refreshToken: await user
+            .getIdToken(true)
+            .timeout(const Duration(seconds: 10))
+            .catchError((e) => ''),
         expiresIn: 3600,
         isEmailVerified: false,
       );

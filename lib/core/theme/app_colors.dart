@@ -68,13 +68,14 @@ class AppColors {
   // ═══════════════════════════════════════════════════════════════════════════
 
   /// Glass effect backgrounds (use with BackdropFilter)
-  static Color glassLight = Colors.white.withOpacity(0.72);
-  static Color glassDark = Colors.black.withOpacity(0.65);
-  static Color glassWhite = Colors.white.withOpacity(0.08);
+  static Color glassLight = Colors.white.withOpacity(0.65);
+  static Color glassDark = const Color(0xFF1E1E24).withOpacity(0.65);
+  static Color glassWhite = Colors.white.withOpacity(0.05);
+  static Color glassBlack = Colors.black.withOpacity(0.3);
 
   /// Glass borders
-  static Color glassBorderLight = Colors.white.withOpacity(0.5);
-  static Color glassBorderDark = Colors.white.withOpacity(0.12);
+  static Color glassBorderLight = Colors.white.withAlpha(80);
+  static Color glassBorderDark = Colors.white.withAlpha(25);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // BORDERS & DIVIDERS

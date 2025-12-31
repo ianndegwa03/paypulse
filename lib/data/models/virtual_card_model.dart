@@ -15,6 +15,9 @@ class VirtualCardModel extends VirtualCardEntity {
     super.merchantLock,
     super.maxTransactionLimit,
     super.anonymityScore,
+    super.cardHolderName = 'PAYPULSE USER',
+    super.design = CardDesign.metalBlack,
+    super.network = CardNetwork.visa,
   });
 
   factory VirtualCardModel.fromEntity(VirtualCardEntity entity) {
@@ -32,6 +35,9 @@ class VirtualCardModel extends VirtualCardEntity {
       merchantLock: entity.merchantLock,
       maxTransactionLimit: entity.maxTransactionLimit,
       anonymityScore: entity.anonymityScore,
+      cardHolderName: entity.cardHolderName,
+      design: entity.design,
+      network: entity.network,
     );
   }
 
@@ -52,6 +58,8 @@ class VirtualCardModel extends VirtualCardEntity {
       merchantLock: map['merchantLock'],
       maxTransactionLimit: map['maxTransactionLimit']?.toDouble(),
       anonymityScore: map['anonymityScore'] ?? 0,
+      cardHolderName: map['cardHolderName'] ?? 'PAYPULSE USER',
+      // design and network would need parsing from string/int, simplify for now
     );
   }
 

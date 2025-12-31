@@ -14,6 +14,7 @@ dependencies:
     sdk: flutter
 
   # Core
+  http: ^1.1.0
   cupertino_icons: ^1.0.8
   firebase_core: ^4.2.0
   firebase_auth: ^6.1.1
@@ -31,32 +32,30 @@ dependencies:
   path_provider: ^2.1.1
   equatable: ^2.0.5
   connectivity_plus: ^6.0.0
-  encrypt: ^5.0.3
-  dartz: ^0.10.1
-  web3dart: ^2.7.3
-  http: ^1.2.0
-  path: ^1.9.1
-  firebase_analytics: ^12.1.0
-  firebase_messaging: ^16.1.0
-  local_auth: ^3.0.0
+  # Features
+  fl_chart: ^0.66.1
   flutter_local_notifications: ^19.5.0
   sqflite: ^2.4.2
-  ml_algo: ^16.18.0
-  ml_dataframe: ^1.6.0
-  ml_preprocessing: ^7.0.2
-  pointycastle: ^3.9.1
-  asn1lib: ^1.6.5
-  fl_chart: ^0.66.1
   json_annotation: ^4.8.1
   logger: ^2.6.2
   permission_handler: ^12.0.1
   flutter_contacts: ^1.1.9+2
   qr_flutter: ^4.1.0
-  another_telephony: ^0.4.1
   flutter_animate: ^4.5.0
   mobile_scanner: ^7.1.4
   image_picker: ^1.2.1
   firebase_storage: ^13.0.5
+  firebase_analytics: ^12.1.0
+  firebase_messaging: ^16.1.0
+  local_auth: ^3.0.0
+  dartz: ^0.10.1
+  path: ^1.9.1
+  intl: any
+  encrypt: ^5.0.3
+  uuid: ^4.5.2
+  pdf: ^3.11.3
+  printing: ^5.14.2
+  smooth_page_indicator: ^2.0.1
   
 dev_dependencies:
   flutter_test:

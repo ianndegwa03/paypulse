@@ -6,18 +6,20 @@ import 'package:paypulse/domain/entities/virtual_card_entity.dart';
 
 class Wallet extends Equatable {
   final String id;
-  final double balance;
-  final CurrencyType currency;
+  final Map<String, double> balances;
+  final String primaryCurrency;
   final bool hasPlatformWallet;
   final List<CardEntity> linkedCards;
   final List<VaultEntity> vaults;
   final List<VirtualCardEntity> virtualCards;
+  final Map<String, double> costBasis; // Average purchase price in USD
   final bool isFrozen;
 
   const Wallet({
     required this.id,
-    required this.balance,
-    required this.currency,
+    this.balances = const {},
+    this.costBasis = const {},
+    this.primaryCurrency = 'USD',
     this.hasPlatformWallet = false,
     this.linkedCards = const [],
     this.vaults = const [],
@@ -25,11 +27,26 @@ class Wallet extends Equatable {
     this.isFrozen = false,
   });
 
+  // Backward compatibility getters
+  double get balance => balances[primaryCurrency] ?? 0.0;
+
+  CurrencyType get currency {
+    try {
+      return CurrencyType.values.firstWhere(
+        (e) => e.name.toUpperCase() == primaryCurrency.toUpperCase(),
+        orElse: () => CurrencyType.USD,
+      );
+    } catch (_) {
+      return CurrencyType.USD;
+    }
+  }
+
   @override
   List<Object?> get props => [
         id,
-        balance,
-        currency,
+        balances,
+        costBasis,
+        primaryCurrency,
         hasPlatformWallet,
         linkedCards,
         vaults,
@@ -39,8 +56,9 @@ class Wallet extends Equatable {
 
   Wallet copyWith({
     String? id,
-    double? balance,
-    CurrencyType? currency,
+    Map<String, double>? balances,
+    Map<String, double>? costBasis,
+    String? primaryCurrency,
     bool? hasPlatformWallet,
     List<CardEntity>? linkedCards,
     List<VaultEntity>? vaults,
@@ -49,8 +67,9 @@ class Wallet extends Equatable {
   }) {
     return Wallet(
       id: id ?? this.id,
-      balance: balance ?? this.balance,
-      currency: currency ?? this.currency,
+      balances: balances ?? this.balances,
+      costBasis: costBasis ?? this.costBasis,
+      primaryCurrency: primaryCurrency ?? this.primaryCurrency,
       hasPlatformWallet: hasPlatformWallet ?? this.hasPlatformWallet,
       linkedCards: linkedCards ?? this.linkedCards,
       vaults: vaults ?? this.vaults,

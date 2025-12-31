@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:paypulse/app/features/auth/presentation/state/auth_notifier.dart';
+import 'package:paypulse/app/features/auth/presentation/state/auth_state.dart';
 import 'package:paypulse/core/theme/theme_provider.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
@@ -16,6 +17,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
   late Animation<double> _opacityAnimation;
+
+  bool _animationCompleted = false;
 
   @override
   void initState() {
@@ -33,20 +36,26 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.5)),
     );
 
-    _controller.forward();
-
-    // Navigate to next screen after animation
-    Future.delayed(const Duration(seconds: 2), () {
-      _checkAuthAndNavigate();
+    _controller.forward().whenComplete(() {
+      _animationCompleted = true;
+      _attemptNavigation();
     });
   }
 
-  void _checkAuthAndNavigate() {
+  void _attemptNavigation() {
+    if (!_animationCompleted) return;
+
     final authState = ref.read(authNotifierProvider);
+
+    // Only navigate if AuthNotifier is initialized
+    if (!authState.isInitialized) return;
+
     if (authState.isAuthenticated) {
-      context.go('/dashboard');
-    } else {
+      context.go('/auth-selection');
+    } else if (authState.isOnboardingComplete) {
       context.go('/login');
+    } else {
+      context.go('/onboarding');
     }
   }
 
@@ -58,6 +67,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<AuthState>(authNotifierProvider, (previous, next) {
+      _attemptNavigation();
+    });
+
     final themeConfig = ref.watch(themeProvider);
     final primaryColor = themeConfig.primaryColor;
 

@@ -9,20 +9,22 @@ class WalletModel extends Wallet {
   factory WalletModel.fromEntity(Wallet entity) {
     return WalletModel(
       id: entity.id,
-      balance: entity.balance,
-      currency: entity.currency,
+      balances: entity.balances,
+      primaryCurrency: entity.primaryCurrency,
       hasPlatformWallet: entity.hasPlatformWallet,
       linkedCards: entity.linkedCards,
       vaults: entity.vaults,
       virtualCards: entity.virtualCards,
+      costBasis: entity.costBasis,
       isFrozen: entity.isFrozen,
     );
   }
 
   const WalletModel({
     required super.id,
-    required super.balance,
-    required super.currency,
+    super.balances,
+    super.costBasis,
+    super.primaryCurrency,
     super.hasPlatformWallet,
     super.linkedCards,
     super.vaults,
@@ -39,19 +41,41 @@ class WalletModel extends Wallet {
   factory WalletModel.empty() {
     return const WalletModel(
       id: '',
-      balance: 0.0,
-      currency: CurrencyType.USD,
+      balances: {'USD': 0.0},
+      costBasis: {'USD': 1.0},
+      primaryCurrency: 'USD',
     );
   }
 
   factory WalletModel.fromMap(String id, Map<String, dynamic> data) {
+    // Handle legacy data or new balances map
+    final Map<String, double> balances = {};
+    final Map<String, double> costBasis = {};
+
+    if (data['balances'] != null) {
+      final map = data['balances'] as Map<String, dynamic>;
+      map.forEach((key, value) {
+        balances[key] = (value as num).toDouble();
+      });
+    }
+
+    if (data['costBasis'] != null) {
+      final map = data['costBasis'] as Map<String, dynamic>;
+      map.forEach((key, value) {
+        costBasis[key] = (value as num).toDouble();
+      });
+    }
+
+    // Ensure at least USD exists if empty
+    if (balances.isEmpty) {
+      balances['USD'] = 0.0;
+    }
+
     return WalletModel(
       id: id,
-      balance: (data['balance'] as num).toDouble(),
-      currency: CurrencyType.values.firstWhere(
-        (e) => e.name == data['currency'],
-        orElse: () => CurrencyType.USD,
-      ),
+      balances: balances,
+      costBasis: costBasis,
+      primaryCurrency: data['primaryCurrency'] ?? data['currency'] ?? 'USD',
       hasPlatformWallet: data['hasPlatformWallet'] ?? false,
       isFrozen: data['isFrozen'] ?? false,
       linkedCards: (data['linkedCards'] as List<dynamic>?)
@@ -71,6 +95,10 @@ class WalletModel extends Wallet {
 
   Map<String, dynamic> toDocument() {
     return {
+      'balances': balances,
+      'costBasis': costBasis,
+      'primaryCurrency': primaryCurrency,
+      // derived fields for legacy support if needed
       'balance': balance,
       'currency': currency.name,
       'hasPlatformWallet': hasPlatformWallet,

@@ -10,6 +10,7 @@ class AuthState extends BaseState {
   final bool isPinEnabled;
   final String? pin;
   final bool isOnboardingComplete;
+  final bool isInitialized;
 
   const AuthState({
     this.isAuthenticated = false,
@@ -20,6 +21,7 @@ class AuthState extends BaseState {
     this.isPinEnabled = false,
     this.pin,
     this.isOnboardingComplete = false,
+    this.isInitialized = false,
     super.isLoading,
     super.errorMessage,
     super.successMessage,
@@ -35,6 +37,7 @@ class AuthState extends BaseState {
     bool? isPinEnabled,
     String? pin,
     bool? isOnboardingComplete,
+    bool? isInitialized,
     bool? isLoading,
     String? errorMessage,
     String? successMessage,
@@ -48,6 +51,7 @@ class AuthState extends BaseState {
       isPinEnabled: isPinEnabled ?? this.isPinEnabled,
       pin: pin ?? this.pin,
       isOnboardingComplete: isOnboardingComplete ?? this.isOnboardingComplete,
+      isInitialized: isInitialized ?? this.isInitialized,
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage ?? this.errorMessage,
       successMessage: successMessage ?? this.successMessage,
@@ -64,6 +68,7 @@ class AuthState extends BaseState {
         isPinEnabled,
         pin,
         isOnboardingComplete,
+        isInitialized,
         ...super.props,
       ];
 }

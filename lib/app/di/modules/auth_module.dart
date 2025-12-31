@@ -1,6 +1,6 @@
 import 'package:paypulse/app/di/injector.dart';
 import 'package:paypulse/data/remote/firebase/firebase_auth.dart';
-import 'package:paypulse/data/remote/firebase/social_auth_service.dart';
+import 'package:paypulse/data/remote/firebase/third_party_auth_service.dart';
 import 'package:paypulse/core/logging/logger_service.dart';
 import 'package:paypulse/domain/repositories/auth_repository.dart';
 import 'package:paypulse/domain/use_cases/auth/login_use_case.dart';
@@ -32,10 +32,10 @@ class AuthModule {
       );
     }
 
-    // Social Auth Service
-    if (!getIt.isRegistered<SocialAuthService>()) {
-      getIt.registerSingleton<SocialAuthService>(
-        SocialAuthService(),
+    // Third Party Auth Service (Google/Apple)
+    if (!getIt.isRegistered<ThirdPartyAuthService>()) {
+      getIt.registerSingleton<ThirdPartyAuthService>(
+        ThirdPartyAuthService(),
       );
     }
 
@@ -44,7 +44,7 @@ class AuthModule {
       getIt.registerLazySingleton<AuthDataSource>(
         () => AuthDataSourceImpl(
           getIt<FirebaseAuthService>(),
-          getIt<SocialAuthService>(),
+          getIt<ThirdPartyAuthService>(),
         ),
       );
     }

@@ -6,7 +6,7 @@ import 'package:paypulse/core/localization/app_localizations.dart';
 import 'package:paypulse/core/localization/locale_manager.dart';
 import 'package:paypulse/core/accessibility/accessibility_service.dart';
 import 'package:paypulse/app/observers/app_bloc_observer.dart';
-import 'package:paypulse/app/features/privacy/presentation/widgets/privacy_guard.dart';
+import 'package:paypulse/app/features/security/presentation/widgets/privacy_overlay_wrapper.dart';
 
 class PayPulseApp extends ConsumerStatefulWidget {
   final RouterConfig<Object> routerConfig;
@@ -49,7 +49,7 @@ class _PayPulseAppState extends ConsumerState<PayPulseApp> {
       supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: widget.routerConfig,
       builder: (context, child) =>
-          PrivacyGuard(child: child ?? const SizedBox.shrink()),
+          PrivacyOverlayWrapper(child: child ?? const SizedBox.shrink()),
     );
   }
 }

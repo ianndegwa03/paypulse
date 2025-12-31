@@ -1,4 +1,4 @@
-import 'package:another_telephony/telephony.dart';
+// import 'package:another_telephony/telephony.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:paypulse/domain/entities/transaction_entity.dart';
 import 'package:paypulse/domain/entities/enums.dart';
@@ -63,9 +63,24 @@ class DailySpending {
   });
 }
 
+/// Simplified message model for mock data
+class MockSmsMessage {
+  final String? address;
+  final String? body;
+  final int? date;
+  final int? id;
+
+  MockSmsMessage({
+    this.address,
+    this.body,
+    this.date,
+    this.id,
+  });
+}
+
 /// Enhanced SMS Service with comprehensive parsing for African financial services
 class SMSService {
-  final Telephony telephony = Telephony.instance;
+  // final Telephony telephony = Telephony.instance;
 
   // ═══════════════════════════════════════════════════════════════════════════
   // M-PESA PATTERNS (Kenya - Safaricom)
@@ -131,18 +146,6 @@ class SMSService {
     caseSensitive: false,
   );
 
-  // Equity Bank specific
-  static final _equityBankRegex = RegExp(
-    r'(?:EQUITY|EQTY)[^\d]*([\d,]+\.?\d*)\s+(?:credited|debited)',
-    caseSensitive: false,
-  );
-
-  // KCB Bank specific
-  static final _kcbBankRegex = RegExp(
-    r'KCB[^\d]*([\d,]+\.?\d*)\s+(?:credited|debited)',
-    caseSensitive: false,
-  );
-
   // ═══════════════════════════════════════════════════════════════════════════
   // NIGERIAN PATTERNS
   // ═══════════════════════════════════════════════════════════════════════════
@@ -186,6 +189,7 @@ class SMSService {
     bool granted = await requestPermission();
     if (!granted) return [];
 
+    /*
     List<SmsMessage> messages = await telephony.getInboxSms(
       columns: [
         SmsColumn.ADDRESS,
@@ -194,6 +198,8 @@ class SMSService {
         SmsColumn.ID
       ],
     );
+    */
+    List<MockSmsMessage> messages = _getMockMessages();
 
     List<ParsedSMSTransaction> transactions = [];
 
@@ -294,7 +300,7 @@ class SMSService {
       '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 
   /// Parse a single SMS message
-  ParsedSMSTransaction? _parseMessage(SmsMessage msg) {
+  ParsedSMSTransaction? _parseMessage(MockSmsMessage msg) {
     final body = msg.body ?? '';
     final address = msg.address?.toLowerCase() ?? '';
     final bodyLower = body.toLowerCase();
@@ -332,7 +338,7 @@ class SMSService {
   }
 
   ParsedSMSTransaction? _tryParseMPesa(
-    SmsMessage msg,
+    MockSmsMessage msg,
     String body,
     String provider,
   ) {
@@ -391,7 +397,7 @@ class SMSService {
   }
 
   ParsedSMSTransaction? _tryParseAirtel(
-    SmsMessage msg,
+    MockSmsMessage msg,
     String body,
     String provider,
   ) {
@@ -427,7 +433,7 @@ class SMSService {
   }
 
   ParsedSMSTransaction? _tryParseBank(
-    SmsMessage msg,
+    MockSmsMessage msg,
     String body,
     String address,
     String provider,
@@ -505,7 +511,7 @@ class SMSService {
   }
 
   ParsedSMSTransaction _createTransaction({
-    required SmsMessage msg,
+    required MockSmsMessage msg,
     required String body,
     required double amount,
     required bool isCredit,
@@ -534,7 +540,7 @@ class SMSService {
       categoryId: category ?? _categorizeByContent(body),
       paymentMethodId: 'SMS_IMPORT',
       type: isCredit ? TransactionType.credit : TransactionType.debit,
-      currency: currency,
+      currencyCode: currency.name,
       status: TransactionStatus.completed,
     );
 
@@ -686,6 +692,10 @@ class SMSService {
 
   bool _matchesAny(String text, List<String> keywords) {
     return keywords.any((k) => text.contains(k));
+  }
+
+  List<MockSmsMessage> _getMockMessages() {
+    return [];
   }
 }
 

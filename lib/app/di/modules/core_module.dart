@@ -83,7 +83,8 @@ class CoreModule {
     // Local Data Source (persistent local storage wrapper)
     if (!getIt.isRegistered<LocalDataSource>()) {
       getIt.registerLazySingleton<LocalDataSource>(
-        () => LocalDataSourceImpl(getIt<StorageService>()),
+        () => LocalDataSourceImpl(
+            getIt<StorageService>(), getIt<SecureStorageService>()),
       );
     }
 

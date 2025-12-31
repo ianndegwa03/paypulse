@@ -25,4 +25,10 @@ abstract class WalletRepository {
   Future<Either<Failure, void>> createVault(VaultEntity vault);
   Future<Either<Failure, void>> fundVault(String vaultId, double amount);
   Future<Either<Failure, void>> createVirtualCard(VirtualCardEntity card);
+  Future<Either<Failure, void>> convertCurrency({
+    required String fromCurrency,
+    required String toCurrency,
+    required double amount,
+    required double rate,
+  });
 }

@@ -6,7 +6,7 @@ import 'package:paypulse/domain/entities/wallet_entity.dart';
 import 'package:paypulse/domain/entities/card_entity.dart';
 import 'package:paypulse/domain/entities/vault_entity.dart';
 import 'package:paypulse/domain/entities/virtual_card_entity.dart';
-import 'package:paypulse/domain/entities/enums.dart';
+
 import 'package:paypulse/domain/use_cases/wallet/get_wallet_use_case.dart';
 import 'package:paypulse/domain/use_cases/wallet/link_card_use_case.dart';
 import 'package:paypulse/domain/use_cases/wallet/update_wallet_use_case.dart';
@@ -112,10 +112,10 @@ class WalletNotifier extends StateNotifier<WalletState> {
   Future<void> togglePlatformWallet(bool enabled) async {
     state = state.copyWith(isLoading: true);
     final wallet = state.wallet ??
-        Wallet(
+        const Wallet(
           id: '', // repo will inject real ID
-          balance: 0,
-          currency: CurrencyType.USD,
+          balances: {'USD': 0.0},
+          primaryCurrency: 'USD',
         );
 
     final updatedWallet = wallet.copyWith(hasPlatformWallet: enabled);

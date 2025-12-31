@@ -51,9 +51,28 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required this.pinLoginUseCase,
     required this.biometricService,
   }) : super(const AuthState()) {
-    checkAuthStatus();
-    checkBiometricStatus();
-    checkPinStatus();
+    _init();
+  }
+
+  Future<void> _init() async {
+    await checkAuthStatus();
+    await checkBiometricStatus();
+    await checkPinStatus();
+    await checkOnboardingStatus();
+    state = state.copyWith(isInitialized: true);
+  }
+
+  Future<void> checkOnboardingStatus() async {
+    final result = await loginUseCase.repository.isOnboardingComplete();
+    result.fold(
+      (_) => state = state.copyWith(isOnboardingComplete: false),
+      (complete) => state = state.copyWith(isOnboardingComplete: complete),
+    );
+  }
+
+  Future<void> completeOnboarding() async {
+    await loginUseCase.repository.setOnboardingComplete(true);
+    state = state.copyWith(isOnboardingComplete: true);
   }
 
   bool _biometricPrompted = false;
@@ -97,6 +116,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
         userResult.fold(
             (f) => _logger.e('Failed to fetch current user: ${f.message}',
                 tag: 'AuthNotifier'), (user) async {
+          // Self-heal: If user is authenticated, ensure onboarding is marked complete
+          await completeOnboarding();
+
           state = state.copyWith(
               isAuthenticated: true,
               currentUser: user,
@@ -147,6 +169,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
             }
           }
 
+          await completeOnboarding();
           state = state.copyWith(
             isAuthenticated: true,
             userId: user.id,
@@ -180,9 +203,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
             errorMessage: failure.message,
           );
         },
-        (user) {
+        (user) async {
           _logger.i('User signed in with Google: ${user.id}',
               tag: 'AuthNotifier');
+          await completeOnboarding();
           state = state.copyWith(
             isAuthenticated: true,
             userId: user.id,
@@ -217,9 +241,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
             errorMessage: failure.message,
           );
         },
-        (user) {
+        (user) async {
           _logger.i('User signed in with Apple: ${user.id}',
               tag: 'AuthNotifier');
+          await completeOnboarding();
           state = state.copyWith(
             isAuthenticated: true,
             userId: user.id,
@@ -266,9 +291,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
             errorMessage: failure.message,
           );
         },
-        (user) {
+        (user) async {
           _logger.i('User registered successfully: ${user.id}',
               tag: 'AuthNotifier');
+          await completeOnboarding();
           state = state.copyWith(
             isAuthenticated: true,
             userId: user.id,
@@ -484,9 +510,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
             errorMessage: failure.message,
           );
         },
-        (user) {
+        (user) async {
           _logger.i('User logged in via biometrics: ${user.id}',
               tag: 'AuthNotifier');
+          await completeOnboarding();
           state = state.copyWith(
             isAuthenticated: true,
             userId: user.id,
@@ -521,8 +548,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
             errorMessage: failure.message,
           );
         },
-        (user) {
+        (user) async {
           _logger.i('User logged in via PIN: ${user.id}', tag: 'AuthNotifier');
+          await completeOnboarding();
           state = state.copyWith(
             isAuthenticated: true,
             userId: user.id,

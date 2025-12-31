@@ -13,6 +13,12 @@ import 'package:paypulse/app/features/wallet/presentation/state/wallet_notifier.
 import 'package:paypulse/app/features/wallet/presentation/state/wallet_state.dart';
 
 import 'package:paypulse/app/features/auth/presentation/state/auth_notifier.dart';
+import 'package:paypulse/domain/services/exchange_rate_service.dart';
+import 'package:paypulse/data/services/exchange_rate_service_impl.dart';
+
+final exchangeRateServiceProvider = Provider<ExchangeRateService>((ref) {
+  return ExchangeRateServiceImpl();
+});
 
 final walletStateProvider =
     StateNotifierProvider<WalletNotifier, WalletState>((ref) {

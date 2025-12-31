@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:paypulse/app/features/wallet/presentation/state/wallet_providers.dart';
+import 'package:paypulse/app/features/wallet/presentation/state/wallet_state.dart';
 import 'package:paypulse/app/features/wallet/presentation/state/currency_provider.dart';
 import 'package:paypulse/app/features/wallet/presentation/widgets/vault_card.dart';
 import 'package:paypulse/app/features/wallet/presentation/widgets/virtual_card_widget.dart';
@@ -25,82 +26,71 @@ class WalletTabScreen extends ConsumerWidget {
     final wallet = walletState.wallet;
     final transactions = walletState.transactions;
 
+    // Calculate total balance in selected currency
+    double totalBalance = 0.0;
+    if (wallet != null) {
+      wallet.balances.forEach((code, amount) {
+        // Map code string to CurrencyType if possible, else default to USD
+        final fromCurrency = CurrencyType.values
+            .firstWhere((e) => e.name == code, orElse: () => CurrencyType.USD);
+
+        // Convert amount to selected currency
+        final amountInSelected = currencyNotifier.convert(
+            amount, fromCurrency, currencyState.selectedCurrency);
+        totalBalance += amountInSelected;
+      });
+    }
+
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      body: Stack(
-        children: [
-          // Dynamic theme-aware background glows
-          _buildBackgroundGlows(theme),
-
-          SafeArea(
-            child: CustomScrollView(
-              physics: const BouncingScrollPhysics(),
-              slivers: [
-                _buildThemedHeader(context, currencyState, currencyNotifier),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildThemedBalanceHero(context, wallet?.balance ?? 0.0,
-                                currencyNotifier)
-                            .animate()
-                            .scale(duration: 600.ms, curve: Curves.easeOutBack),
-                        const SizedBox(height: 32),
-                        _buildThemedQuickActions(context),
-                        const SizedBox(height: 40),
-                        _buildSectionTitle(context, "Identity Cards",
-                            Icons.credit_card_rounded),
-                        const SizedBox(height: 16),
-                        _buildCardsRail(context, wallet?.virtualCards ?? []),
-                        const SizedBox(height: 32),
-                        _buildSectionTitle(
-                            context, "Sovereign Vaults", Icons.savings_rounded),
-                        const SizedBox(height: 16),
-                        _buildVaultsRail(context, wallet?.vaults ?? []),
-                        const SizedBox(height: 32),
-                        _buildSectionTitle(
-                            context, "Network Ledger", Icons.history_rounded),
-                        const SizedBox(height: 16),
-                        _buildThemedTransactionList(
-                            context, transactions, currencyNotifier),
-                        const SizedBox(height: 120),
-                      ],
-                    ),
-                  ),
+      body: SafeArea(
+        bottom: false,
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            _buildThemedHeader(context, currencyState, currencyNotifier),
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              sliver: SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 16),
+                    _buildThemedBalanceHero(context, totalBalance,
+                            currencyNotifier, currencyState.selectedCurrency)
+                        .animate()
+                        .fadeIn(duration: 600.ms)
+                        .slideY(begin: 0.2, end: 0, curve: Curves.easeOutBack),
+                    const SizedBox(height: 48),
+                    _buildSectionTitle(context, "Currency Pockets",
+                        Icons.account_balance_wallet_rounded,
+                        onAction: () => context.push('/currency-trends')),
+                    const SizedBox(height: 20),
+                    _buildPocketsRail(context, wallet?.balances ?? {},
+                        currencyNotifier, currencyState, walletState),
+                    const SizedBox(height: 20),
+                    _buildSectionTitle(
+                        context, "Digital Assets", Icons.credit_card_rounded),
+                    const SizedBox(height: 20),
+                    _buildCardsRail(context, wallet?.virtualCards ?? []),
+                    const SizedBox(height: 40),
+                    _buildSectionTitle(context, "Protected Vaults",
+                        Icons.lock_outline_rounded),
+                    const SizedBox(height: 20),
+                    _buildVaultsRail(context, wallet?.vaults ?? []),
+                    const SizedBox(height: 40),
+                    _buildSectionTitle(
+                        context, "Transaction Ledger", Icons.history_rounded),
+                    const SizedBox(height: 20),
+                    _buildThemedTransactionList(
+                        context, transactions, currencyNotifier, currencyState),
+                    const SizedBox(height: 140), // Padding for FloatingDock
+                  ],
                 ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBackgroundGlows(ThemeData theme) {
-    final isDark = theme.brightness == Brightness.dark;
-    return Positioned.fill(
-      child: Stack(
-        children: [
-          Positioned(
-            top: -50,
-            right: -50,
-            child: Container(
-              width: 250,
-              height: 250,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color:
-                    theme.colorScheme.primary.withOpacity(isDark ? 0.1 : 0.05),
               ),
             ),
-          ),
-          BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 60, sigmaY: 60),
-            child: Container(color: Colors.transparent),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -222,10 +212,11 @@ class WalletTabScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildThemedBalanceHero(BuildContext context, double balanceUSD,
-      CurrencyNotifier currencyNotifier) {
+  Widget _buildThemedBalanceHero(BuildContext context, double balance,
+      CurrencyNotifier currencyNotifier, CurrencyType currencyType) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final metadata = getCurrencyMetadata(currencyType);
 
     return Container(
       width: double.infinity,
@@ -281,18 +272,21 @@ class WalletTabScreen extends ConsumerWidget {
                           Icon(Icons.verified_user_rounded,
                               color: Colors.blueAccent, size: 10),
                           SizedBox(width: 4),
-                          Text("SECURE",
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 8,
-                                  fontWeight: FontWeight.w900)),
+                          Text(
+                            "SECURE",
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 8,
+                                fontWeight: FontWeight.w900),
+                          ),
                         ],
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
-                Text(currencyNotifier.formatAmount(balanceUSD),
+                const SizedBox(height: 12),
+                Text('${metadata.symbol}${balance.toStringAsFixed(2)}',
                     style: const TextStyle(
                         color: Colors.white,
                         fontSize: 52,
@@ -301,12 +295,27 @@ class WalletTabScreen extends ConsumerWidget {
                 const Spacer(),
                 Row(
                   children: [
-                    _heroStat("Portfolio Delta", "+4.2%", Colors.greenAccent),
-                    const SizedBox(width: 40),
-                    _heroStat(
-                        "Daily Outflow",
-                        currencyNotifier.formatAmount(42.50),
-                        Colors.white.withOpacity(0.8)),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12)),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.trending_up_rounded,
+                              color: Colors.greenAccent, size: 16),
+                          SizedBox(width: 8),
+                          Text(
+                            "Active",
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 )
               ],
@@ -317,80 +326,8 @@ class WalletTabScreen extends ConsumerWidget {
     );
   }
 
-  Widget _heroStat(String label, String value, Color color) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label,
-            style: TextStyle(
-                color: Colors.white.withOpacity(0.4),
-                fontSize: 10,
-                fontWeight: FontWeight.w900)),
-        Text(value,
-            style: TextStyle(
-                color: color,
-                fontWeight: FontWeight.w900,
-                fontSize: 16,
-                letterSpacing: -0.5)),
-      ],
-    );
-  }
-
-  Widget _buildThemedQuickActions(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _themedActionBtn(context, "Send", Icons.send_rounded, Colors.blue,
-            onTap: () => context.push('/send-money')),
-        _themedActionBtn(
-            context, "Receive", Icons.qr_code_scanner_rounded, Colors.purple,
-            onTap: () => context.push('/my-qr')),
-        _themedActionBtn(
-            context, "Split", Icons.group_add_rounded, Colors.orange,
-            onTap: () => context.push('/split-bill')),
-        _themedActionBtn(context, "Connect", Icons.hub_rounded, Colors.teal,
-            onTap: () => context.push('/connect-wallet')),
-      ],
-    ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2);
-  }
-
-  Widget _themedActionBtn(
-      BuildContext context, String label, IconData icon, Color accentColor,
-      {required VoidCallback onTap}) {
-    final theme = Theme.of(context);
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.mediumImpact();
-        onTap();
-      },
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-                color: theme.colorScheme.surface,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: accentColor.withOpacity(0.1)),
-                boxShadow: [
-                  BoxShadow(
-                      color: accentColor.withOpacity(0.08),
-                      blurRadius: 15,
-                      offset: const Offset(0, 8))
-                ]),
-            child: Icon(icon, color: accentColor, size: 28),
-          ),
-          const SizedBox(height: 12),
-          Text(label,
-              style: theme.textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 11,
-                  letterSpacing: 0.5)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(BuildContext context, String title, IconData icon) {
+  Widget _buildSectionTitle(BuildContext context, String title, IconData icon,
+      {VoidCallback? onAction}) {
     final theme = Theme.of(context);
     return Row(
       children: [
@@ -402,8 +339,15 @@ class WalletTabScreen extends ConsumerWidget {
                 letterSpacing: 1,
                 color: theme.colorScheme.onSurface.withOpacity(0.6))),
         const Spacer(),
-        Icon(Icons.chevron_right_rounded,
-            color: theme.colorScheme.onSurface.withOpacity(0.2)),
+        if (onAction != null)
+          IconButton(
+            onPressed: onAction,
+            icon: Icon(Icons.chevron_right_rounded,
+                color: theme.colorScheme.onSurface.withOpacity(0.2)),
+          )
+        else
+          Icon(Icons.chevron_right_rounded,
+              color: theme.colorScheme.onSurface.withOpacity(0.2)),
       ],
     );
   }
@@ -465,6 +409,143 @@ class WalletTabScreen extends ConsumerWidget {
     ).animate().fadeIn(delay: 400.ms).slideX(begin: 0.1);
   }
 
+  Widget _buildPocketsRail(
+      BuildContext context,
+      Map<String, double> balances,
+      CurrencyNotifier currencyNotifier,
+      CurrencyState currencyState,
+      WalletState walletState) {
+    if (balances.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final selectedCurrency = currencyState.selectedCurrency;
+
+    // Sort balances: selected currency first, then others
+    final sortedKeys = balances.keys.toList()
+      ..sort((a, b) {
+        if (a == selectedCurrency.name) return -1;
+        if (b == selectedCurrency.name) return 1;
+        return a.compareTo(b);
+      });
+
+    return SizedBox(
+      height: 145, // Increased height for P/L chip
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        clipBehavior: Clip.none,
+        itemCount: sortedKeys.length,
+        itemBuilder: (context, index) {
+          final code = sortedKeys[index];
+          final amount = balances[code]!;
+
+          final type = CurrencyType.values.firstWhere((e) => e.name == code,
+              orElse: () => CurrencyType.USD);
+          final meta = getCurrencyMetadata(type);
+
+          // Calculate Profit/Loss
+          // We compare current rate vs cost basis
+          final currentRate = currencyState.getRate(CurrencyType.USD, type);
+          final basisRate = walletState.wallet?.costBasis[code] ?? currentRate;
+
+          double plPercent = 0.0;
+          if (basisRate > 0) {
+            // If basis is 135 and current is 140, we gained value (more KES per USD? No, wait)
+            // If we bought KES at 135 KES/USD, and now it's 130 KES/USD, the KES strengthened.
+            // Our USD value increased.
+            // Gain = (Amount / currentRate) - (Amount / basisRate)
+            // But let's simplify for the UI: basisRate is the rate we BOUGHT at.
+            // If currentRate < basisRate, KES reached a better position.
+            plPercent = ((basisRate - currentRate) / basisRate) * 100;
+          }
+
+          final isGain = plPercent > 0;
+
+          // Approximate value in selected currency for reference if different
+          String? subValue;
+          if (type != selectedCurrency) {
+            final conv =
+                currencyNotifier.convert(amount, type, selectedCurrency);
+            final selectedMeta = getCurrencyMetadata(selectedCurrency);
+            subValue = '≈ ${selectedMeta.symbol}${conv.toStringAsFixed(2)}';
+          }
+
+          return Container(
+            width: 140,
+            margin: const EdgeInsets.only(right: 16),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                  color: type == selectedCurrency
+                      ? Theme.of(context).colorScheme.primary.withOpacity(0.5)
+                      : Theme.of(context).dividerColor.withOpacity(0.1),
+                  width: type == selectedCurrency ? 2 : 1),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
+                )
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Text(meta.flag, style: const TextStyle(fontSize: 16)),
+                        const SizedBox(width: 8),
+                        Text(code,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 12)),
+                      ],
+                    ),
+                    if (type != CurrencyType.USD)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: (isGain ? Colors.green : Colors.red)
+                              .withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          "${isGain ? '+' : ''}${plPercent.toStringAsFixed(1)}%",
+                          style: TextStyle(
+                            color: isGain ? Colors.green : Colors.red,
+                            fontSize: 8,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const Spacer(),
+                Text('${meta.symbol}${amount.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w900, fontSize: 18),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis),
+                if (subValue != null)
+                  Text(subValue,
+                      style: TextStyle(
+                          fontSize: 10,
+                          color: Theme.of(context).disabledColor,
+                          fontWeight: FontWeight.w600)),
+              ],
+            ),
+          );
+        },
+      ),
+    ).animate().fadeIn(delay: 200.ms).slideX(begin: 0.1);
+  }
+
   Widget _themedEmptyState(BuildContext context, String label, IconData icon) {
     final theme = Theme.of(context);
     return Container(
@@ -491,8 +572,11 @@ class WalletTabScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildThemedTransactionList(BuildContext context,
-      List<Transaction> transactions, CurrencyNotifier currencyNotifier) {
+  Widget _buildThemedTransactionList(
+      BuildContext context,
+      List<Transaction> transactions,
+      CurrencyNotifier currencyNotifier,
+      CurrencyState currencyState) {
     final theme = Theme.of(context);
     if (transactions.isEmpty) {
       return Center(
@@ -521,15 +605,25 @@ class WalletTabScreen extends ConsumerWidget {
 
     return Column(
       children: transactions
-          .map((tx) => _themedTxTile(context, tx, currencyNotifier))
+          .map((tx) =>
+              _themedTxTile(context, tx, currencyNotifier, currencyState))
           .toList(),
     );
   }
 
-  Widget _themedTxTile(
-      BuildContext context, Transaction tx, CurrencyNotifier currencyNotifier) {
+  Widget _themedTxTile(BuildContext context, Transaction tx,
+      CurrencyNotifier currencyNotifier, CurrencyState currencyState) {
     final theme = Theme.of(context);
     final isDebit = tx.type == TransactionType.debit;
+
+    // Convert transaction amount to selected currency
+    // final currencyState = ref.read(currencyProvider); // REMOVED
+    final fromCurrency = CurrencyType.values.firstWhere(
+        (e) => e.name == tx.currencyCode,
+        orElse: () => CurrencyType.USD);
+    final amountInSelected = currencyNotifier.convert(
+        tx.amount, fromCurrency, currencyState.selectedCurrency);
+    final metadata = getCurrencyMetadata(currencyState.selectedCurrency);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -574,7 +668,7 @@ class WalletTabScreen extends ConsumerWidget {
             ),
           ),
           Text(
-            "${isDebit ? '-' : '+'}${currencyNotifier.formatAmount(tx.amount)}",
+            "${isDebit ? '-' : '+'}${metadata.symbol}${amountInSelected.toStringAsFixed(2)}",
             style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w900,
                 color: isDebit

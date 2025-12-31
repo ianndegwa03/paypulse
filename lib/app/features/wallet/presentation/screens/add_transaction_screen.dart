@@ -66,6 +66,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
                       date: DateTime.now(),
                       categoryId: '', // TODO: Add category selection
                       paymentMethodId: '', // TODO: Add payment method selection
+                      currencyCode: 'USD',
                     );
                     ref
                         .read(walletStateProvider.notifier)

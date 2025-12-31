@@ -130,6 +130,11 @@ class AuthRepositoryImpl implements AuthRepository {
       final user = await localDataSource.getCachedUser();
 
       if (token == null || user == null) {
+        // If local cache is missing, check if Firebase has a session
+        final firebaseUser = remoteDataSource.currentUser;
+        if (firebaseUser != null) {
+          return const Right(true);
+        }
         return const Right(false);
       }
 
@@ -427,6 +432,26 @@ class AuthRepositoryImpl implements AuthRepository {
       return Left(CacheFailure(message: e.message));
     } catch (e) {
       return Left(GenericFailure(message: 'Apple sign-in failed: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> setOnboardingComplete(bool complete) async {
+    try {
+      await localDataSource.setOnboardingComplete(complete);
+      return const Right(null);
+    } catch (e) {
+      return Left(CacheFailure(message: 'Failed to set onboarding status: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, bool>> isOnboardingComplete() async {
+    try {
+      final complete = await localDataSource.isOnboardingComplete();
+      return Right(complete);
+    } catch (e) {
+      return Left(CacheFailure(message: 'Failed to get onboarding status: $e'));
     }
   }
 }

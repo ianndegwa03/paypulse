@@ -36,7 +36,9 @@ class TransactionRepositoryImpl implements TransactionRepository {
         categoryId: transaction.categoryId,
         paymentMethodId: transaction.paymentMethodId,
         type: transaction.type,
-        currency: transaction.currency,
+        currencyCode: transaction.currencyCode,
+        targetCurrencyCode: transaction.targetCurrencyCode,
+        exchangeRate: transaction.exchangeRate,
         status: transaction.status,
       );
 
@@ -113,8 +115,25 @@ class TransactionRepositoryImpl implements TransactionRepository {
   @override
   Future<Either<Failure, String>> exportTransactions(
       {String format = 'csv'}) async {
-    // Mock export
-    return const Right('https://example.com/export.csv');
+    try {
+      final result = await getTransactions(limit: 1000);
+      return result.fold(
+        (failure) => Left(failure),
+        (transactions) {
+          final buffer = StringBuffer();
+          buffer.writeln('ID,Amount,Description,Date,Category,Type,Status');
+          for (var tx in transactions) {
+            buffer.writeln(
+                '${tx.id},${tx.amount},"${tx.description}",${tx.date},${tx.categoryId},${tx.type.name},${tx.status.name}');
+          }
+          // In a real app, you might save this to a file and return the path
+          // For now, we return the CSV content as a proof of work
+          return Right(buffer.toString());
+        },
+      );
+    } catch (e) {
+      return Left(ServerFailure(message: 'Export failed: $e'));
+    }
   }
 
   @override

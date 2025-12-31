@@ -6,7 +6,7 @@ import 'package:paypulse/domain/entities/transaction_entity.dart' as domain;
 import 'package:paypulse/domain/entities/wallet_entity.dart';
 import 'package:paypulse/domain/entities/card_entity.dart';
 import 'package:paypulse/data/models/wallet_model.dart';
-import 'package:paypulse/domain/entities/enums.dart';
+
 import 'package:paypulse/data/models/vault_model.dart';
 import 'package:paypulse/data/models/virtual_card_model.dart';
 import 'package:paypulse/domain/entities/vault_entity.dart';
@@ -154,8 +154,8 @@ class WalletRepositoryImpl implements WalletRepository {
           // If wallet doesn't exist, create a new one with this card
           final newWallet = Wallet(
             id: _userId,
-            balance: 0,
-            currency: CurrencyType.USD,
+            balances: const {'USD': 0.0},
+            primaryCurrency: 'USD',
             linkedCards: [card],
           );
           return await updateWallet(newWallet);
@@ -211,6 +211,77 @@ class WalletRepositoryImpl implements WalletRepository {
       return const Right(null);
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> convertCurrency({
+    required String fromCurrency,
+    required String toCurrency,
+    required double amount,
+    required double rate,
+  }) async {
+    try {
+      if (_userId.isEmpty) {
+        return const Left(AuthFailure(message: 'User not authenticated'));
+      }
+
+      final walletResult = await getWallet();
+      return await walletResult.fold(
+        (failure) => Left(failure),
+        (wallet) async {
+          final balances = Map<String, double>.from(wallet.balances);
+          final costBasis = Map<String, double>.from(wallet.costBasis);
+
+          final fromBalance = balances[fromCurrency] ?? 0.0;
+          if (fromBalance < amount) {
+            return const Left(ServerFailure(message: 'Insufficient balance'));
+          }
+
+          // Update balances
+          balances[fromCurrency] = fromBalance - amount;
+          final addedAmount = amount * rate;
+          balances[toCurrency] = (balances[toCurrency] ?? 0.0) + addedAmount;
+
+          // Update cost basis for toCurrency
+          // New Basis = Total Units / Total USD Cost
+          if (toCurrency != 'USD') {
+            final oldUnits = balances[toCurrency]! - addedAmount;
+            final oldBasis = costBasis[toCurrency] ?? rate;
+
+            // USD value of previous units
+            final oldUSDCost = oldBasis > 0 ? oldUnits / oldBasis : 0.0;
+
+            // USD value of added units
+            // We need the rate of fromCurrency to USD to find the cost
+            // For now, let's assume we use the current market rate if fromCurrency != USD
+            // But if fromCurrency is USD, the cost is just 'amount'
+            double addedUSDCost = 0.0;
+            if (fromCurrency == 'USD') {
+              addedUSDCost = amount;
+            } else {
+              // Fallback: use current rate of fromCurrency to USD
+              // In a real app, we'd pass the USD cost or the current rate to USD
+              final fromBasis = costBasis[fromCurrency] ?? 1.0;
+              addedUSDCost = fromBasis > 0 ? amount / fromBasis : amount;
+            }
+
+            final newTotalUSDCost = oldUSDCost + addedUSDCost;
+            if (newTotalUSDCost > 0) {
+              costBasis[toCurrency] = balances[toCurrency]! / newTotalUSDCost;
+            }
+          }
+
+          final updatedWallet = wallet.copyWith(
+            balances: balances,
+            costBasis: costBasis,
+          );
+
+          return await updateWallet(updatedWallet);
+        },
+      );
+    } catch (e) {
+      return Left(ServerFailure(message: 'Conversion failed: $e'));
     }
   }
 }

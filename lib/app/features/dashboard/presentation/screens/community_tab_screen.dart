@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:paypulse/app/features/auth/presentation/state/auth_notifier.dart';
-import 'package:paypulse/data/models/community_post_model.dart';
+import 'package:paypulse/domain/entities/community_post_entity.dart';
+import 'package:paypulse/app/features/dashboard/presentation/state/community_notifier.dart';
 import 'package:go_router/go_router.dart';
 import 'package:paypulse/app/shared/widgets/user_avatar.dart';
 import 'dart:ui';
@@ -31,7 +31,7 @@ class _CommunityTabScreenState extends ConsumerState<CommunityTabScreen> {
 
   Future<void> _handleCreatePost() async {
     final content = _postController.text.trim();
-    if (content.isEmpty) return;
+    if (content.isEmpty && _pendingFinancialAction == null) return;
 
     final user = ref.read(authNotifierProvider).currentUser;
     if (user == null) return;
@@ -39,26 +39,39 @@ class _CommunityTabScreenState extends ConsumerState<CommunityTabScreen> {
     setState(() => _isPosting = true);
 
     try {
-      final newPost = CommunityPostModel(
+      final newPost = CommunityPost(
         id: '',
         userId: user.id,
-        username: user.firstName,
-        userProfileUrl: user.profileImageUrl,
+        username: _isGhostMode ? 'Ghost User' : user.username,
+        userProfileUrl: _isGhostMode ? null : user.profileImageUrl,
         content: content,
         createdAt: DateTime.now(),
         likes: 0,
-        likedBy: [],
+        likedBy: const [],
         financialAction: _pendingFinancialAction,
+        isGhost: _isGhostMode,
+        replySettings: _replySettings,
       );
 
-      await FirebaseFirestore.instance
-          .collection('community_posts')
-          .add(newPost.toDocument());
+      final success = await ref
+          .read(communityNotifierProvider.notifier)
+          .createPost(newPost);
 
-      _postController.clear();
-      if (mounted) {
-        FocusScope.of(context).unfocus();
-        HapticFeedback.lightImpact();
+      if (success) {
+        _postController.clear();
+        if (mounted) {
+          FocusScope.of(context).unfocus();
+          HapticFeedback.lightImpact();
+          _pendingFinancialAction = null;
+          _isGhostMode = false;
+          _replySettings = 'everyone';
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to post')),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -71,41 +84,28 @@ class _CommunityTabScreenState extends ConsumerState<CommunityTabScreen> {
     }
   }
 
-  Future<void> _handleLikePost(CommunityPostModel post) async {
+  Future<void> _handleLikePost(CommunityPost post) async {
     final user = ref.read(authNotifierProvider).currentUser;
     if (user == null) return;
 
     final isLiked = post.likedBy.contains(user.id);
-    final docRef =
-        FirebaseFirestore.instance.collection('community_posts').doc(post.id);
+    HapticFeedback.selectionClick();
 
-    try {
-      HapticFeedback.selectionClick();
-      if (isLiked) {
-        // Unlike
-        await docRef.update({
-          'likes': FieldValue.increment(-1),
-          'likedBy': FieldValue.arrayRemove([user.id]),
-        });
-      } else {
-        // Like
-        await docRef.update({
-          'likes': FieldValue.increment(1),
-          'likedBy': FieldValue.arrayUnion([user.id]),
-        });
-      }
-    } catch (e) {
-      debugPrint("Error toggling like: $e");
+    if (isLiked) {
+      await ref
+          .read(communityNotifierProvider.notifier)
+          .unlikePost(post.id, user.id);
+    } else {
+      await ref
+          .read(communityNotifierProvider.notifier)
+          .likePost(post.id, user.id);
     }
   }
 
   Future<void> _handleDeletePost(String postId) async {
     try {
       HapticFeedback.mediumImpact();
-      await FirebaseFirestore.instance
-          .collection('community_posts')
-          .doc(postId)
-          .delete();
+      await ref.read(communityNotifierProvider.notifier).deletePost(postId);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -194,8 +194,8 @@ class _CommunityTabScreenState extends ConsumerState<CommunityTabScreen> {
     try {
       HapticFeedback.mediumImpact();
 
-      final post = CommunityPostModel(
-        id: '', // Firestore will assign ID
+      final post = CommunityPost(
+        id: '', // Notifier/Repo handles ID generation effectively or Firestore does
         userId: user.id,
         username: _isGhostMode ? 'Ghost User' : user.username,
         userProfileUrl: _isGhostMode ? null : user.profileImageUrl,
@@ -206,24 +206,29 @@ class _CommunityTabScreenState extends ConsumerState<CommunityTabScreen> {
         financialAction: _pendingFinancialAction,
         isGhost: _isGhostMode,
         attachmentUrls: const [],
-        poll: null,
-        location: null,
         replySettings: _replySettings,
       );
 
-      await FirebaseFirestore.instance
-          .collection('community_posts')
-          .add(post.toDocument());
+      final success =
+          await ref.read(communityNotifierProvider.notifier).createPost(post);
 
-      if (mounted) {
-        Navigator.pop(context);
-        _postController.clear();
-        _pendingFinancialAction = null;
-        _isGhostMode = false;
-        _replySettings = 'everyone';
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Pulse shared!")),
-        );
+      if (success) {
+        if (mounted) {
+          Navigator.pop(context);
+          _postController.clear();
+          _pendingFinancialAction = null;
+          _isGhostMode = false;
+          _replySettings = 'everyone';
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Pulse shared!")),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Failed to share pulse")),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -251,19 +256,23 @@ class _CommunityTabScreenState extends ConsumerState<CommunityTabScreen> {
                   TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         ).animate().scale(delay: 500.ms, curve: Curves.easeOutBack),
       ),
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          _buildAppBar(theme),
-          if (_isPosting)
-            SliverToBoxAdapter(
-              child: LinearProgressIndicator(
-                  backgroundColor: theme.colorScheme.primary.withOpacity(0.2)),
-            ),
-          // _buildPostCreator(theme), // Removing old top box creator
-          _buildFeedStream(theme),
-          const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
-        ],
+      body: RefreshIndicator(
+        onRefresh: () => ref.read(communityNotifierProvider.notifier).refresh(),
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            _buildAppBar(theme),
+            if (_isPosting)
+              SliverToBoxAdapter(
+                child: LinearProgressIndicator(
+                    backgroundColor:
+                        theme.colorScheme.primary.withOpacity(0.2)),
+              ),
+            // _buildPostCreator(theme), // Removing old top box creator
+            _buildFeedStream(theme),
+            const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
+          ],
+        ),
       ),
     );
   }
@@ -455,57 +464,49 @@ class _CommunityTabScreenState extends ConsumerState<CommunityTabScreen> {
   // Deprecated: _buildPostCreator replaced by FAB Modal
 
   Widget _buildFeedStream(ThemeData theme) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('community_posts')
-          .orderBy('createdAt', descending: true)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return SliverFillRemaining(
-            child: Center(child: Text('Error: ${snapshot.error}')),
-          );
-        }
+    final state = ref.watch(communityNotifierProvider);
 
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SliverFillRemaining(
-            child: Center(child: CircularProgressIndicator()),
-          );
-        }
+    if (state.isLoading && state.posts.isEmpty) {
+      return const SliverFillRemaining(
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
 
-        final docs = snapshot.data?.docs ?? [];
+    if (state.error != null && state.posts.isEmpty) {
+      return SliverFillRemaining(
+        child: Center(child: Text('Error: ${state.error}')),
+      );
+    }
 
-        if (docs.isEmpty) {
-          return SliverFillRemaining(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.forum_outlined,
-                      size: 64, color: Colors.grey.withOpacity(0.3)),
-                  const SizedBox(height: 16),
-                  const Text("No threads yet. Start the conversation!",
-                      style: TextStyle(color: Colors.grey)),
-                ],
-              ),
-            ),
-          );
-        }
-
-        return SliverList(
-          delegate: SliverChildBuilderDelegate(
-            (context, index) {
-              final model = CommunityPostModel.fromSnapshot(docs[index]);
-              return _buildThreadedPost(theme, model);
-            },
-            childCount: docs.length,
+    if (state.posts.isEmpty) {
+      return SliverFillRemaining(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.forum_outlined,
+                  size: 64, color: Colors.grey.withOpacity(0.3)),
+              const SizedBox(height: 16),
+              const Text("No threads yet. Start the conversation!",
+                  style: TextStyle(color: Colors.grey)),
+            ],
           ),
-        );
-      },
+        ),
+      );
+    }
+
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
+          final post = state.posts[index];
+          return _buildThreadedPost(theme, post);
+        },
+        childCount: state.posts.length,
+      ),
     );
   }
 
-  Widget _buildThreadedPost(ThemeData theme, CommunityPostModel post) {
+  Widget _buildThreadedPost(ThemeData theme, CommunityPost post) {
     final currentUser = ref.watch(authNotifierProvider).currentUser;
     final isLiked =
         currentUser != null && post.likedBy.contains(currentUser.id);
@@ -715,7 +716,7 @@ class _CommunityTabScreenState extends ConsumerState<CommunityTabScreen> {
   }
 
   void _showPaymentConfirmation(
-      CommunityPostModel post, Map<String, dynamic> action) {
+      CommunityPost post, Map<String, dynamic> action) {
     final amount = action['amount']?.toString() ?? '0';
     final type = action['type']?.toString() ?? 'request';
 

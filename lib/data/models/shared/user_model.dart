@@ -27,6 +27,7 @@ class UserModel extends Equatable {
   final bool stealthModeEnabled;
   final bool isProfessionalProfileVisible;
   final String? professionalBio;
+  final bool isBanned;
 
   const UserModel({
     required this.id,
@@ -53,6 +54,7 @@ class UserModel extends Equatable {
     this.stealthModeEnabled = false,
     this.isProfessionalProfileVisible = false,
     this.professionalBio,
+    this.isBanned = false,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -108,6 +110,8 @@ class UserModel extends Equatable {
               false,
       professionalBio: json['professional_bio'] as String? ??
           json['professionalBio'] as String?,
+      isBanned:
+          json['is_banned'] as bool? ?? json['isBanned'] as bool? ?? false,
     );
   }
 
@@ -137,6 +141,7 @@ class UserModel extends Equatable {
       'stealth_mode_enabled': stealthModeEnabled,
       'is_professional_profile_visible': isProfessionalProfileVisible,
       'professional_bio': professionalBio,
+      'is_banned': isBanned,
     };
   }
 
@@ -165,6 +170,7 @@ class UserModel extends Equatable {
     bool? stealthModeEnabled,
     bool? isProfessionalProfileVisible,
     String? professionalBio,
+    bool? isBanned,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -192,6 +198,7 @@ class UserModel extends Equatable {
       isProfessionalProfileVisible:
           isProfessionalProfileVisible ?? this.isProfessionalProfileVisible,
       professionalBio: professionalBio ?? this.professionalBio,
+      isBanned: isBanned ?? this.isBanned,
     );
   }
 
@@ -229,5 +236,6 @@ class UserModel extends Equatable {
         stealthModeEnabled,
         isProfessionalProfileVisible,
         professionalBio,
+        isBanned,
       ];
 }

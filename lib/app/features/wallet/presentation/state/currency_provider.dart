@@ -29,6 +29,16 @@ CurrencyMetadata getCurrencyMetadata(CurrencyType type) {
       return CurrencyMetadata('₦', 'Nigerian Naira', flag: '🇳🇬');
     case CurrencyType.ZAR:
       return CurrencyMetadata('R', 'South African Rand', flag: '🇿🇦');
+    case CurrencyType.GHS:
+      return CurrencyMetadata('₵', 'Ghanaian Cedi', flag: '🇬🇭');
+    case CurrencyType.TZS:
+      return CurrencyMetadata('TSh', 'Tanzanian Shilling', flag: '🇹🇿');
+    case CurrencyType.UGX:
+      return CurrencyMetadata('USh', 'Ugandan Shilling', flag: '🇺🇬');
+    case CurrencyType.CNY:
+      return CurrencyMetadata('¥', 'Chinese Yuan', flag: '🇨🇳');
+    case CurrencyType.INR:
+      return CurrencyMetadata('₹', 'Indian Rupee', flag: '🇮🇳');
   }
 }
 

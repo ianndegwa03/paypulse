@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:paypulse/app/features/auth/presentation/state/auth_notifier.dart';
 import 'package:paypulse/app/features/wallet/presentation/state/wallet_providers.dart';
-import 'package:paypulse/core/theme/app_colors.dart';
+import 'package:paypulse/core/theme/design_system_v2.dart';
 import 'package:go_router/go_router.dart';
 import 'package:paypulse/app/features/dashboard/presentation/widgets/spending_chart.dart';
 import 'package:paypulse/app/features/contacts/presentation/state/contacts_provider.dart';
@@ -26,362 +26,254 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
     final authState = ref.watch(authNotifierProvider);
     final user = authState.currentUser;
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final walletState = ref.watch(walletStateProvider);
     final isProMode = ref.watch(proModeProvider).valueOrNull ?? false;
 
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          color: theme.scaffoldBackgroundColor,
-        ),
-        child: SafeArea(
-          bottom: false,
-          child: RefreshIndicator(
-            onRefresh: () async {
-              if (user != null) {
-                ref.read(walletStateProvider.notifier).loadWallet(user.id);
-              }
-            },
-            child: CustomScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              slivers: [
-                SliverPadding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                  sliver: SliverToBoxAdapter(
-                    child: _buildHeader(context, user, theme, isProMode),
-                  ),
-                ),
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  sliver: SliverToBoxAdapter(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 24),
-                        if (isProMode)
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildProDashboard(context, theme),
-                              const SizedBox(height: 40),
-                              _sectionHeader(theme, "Quick Actions"),
-                              const SizedBox(height: 16),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceAround,
-                                children: [
-                                  _buildQuickAction(
-                                      context,
-                                      Icons.receipt_long,
-                                      "New Invoice",
-                                      () => context.push('/invoice-generator'),
-                                      theme),
-                                  _buildQuickAction(
-                                      context,
-                                      Icons.analytics_outlined,
-                                      "Analytics",
-                                      () => context.push('/analytics'),
-                                      theme),
-                                ],
-                              ),
-                            ],
-                          ).animate().fadeIn(duration: 600.ms).slideY(
-                              begin: 0.2, end: 0, curve: Curves.easeOutBack)
-                        else if (walletState.wallet != null)
-                          (walletState.wallet!.linkedCards.isEmpty
-                                  ? _buildLinkCardHero(context, theme)
-                                  : _buildBalanceCard(
-                                      context, walletState, user, theme))
-                              .animate()
-                              .fadeIn(duration: 600.ms)
-                              .slideY(
-                                  begin: 0.2, end: 0, curve: Curves.easeOutBack)
-                        else if (walletState.isLoading)
-                          const SkeletonLoader(
-                              height: 200, width: double.infinity)
-                        else
-                          _buildEmptyWalletState(context, theme),
-
-                        const SizedBox(height: 40),
-                        _sectionHeader(theme, "Send Again",
-                            onAction: () => context.push('/contacts')),
-                        const SizedBox(height: 16),
-                        _buildRecentContacts(context, theme)
+      backgroundColor: theme.scaffoldBackgroundColor,
+      body: SafeArea(
+        bottom: false,
+        child: RefreshIndicator(
+          onRefresh: () async {
+            if (user != null) {
+              ref.read(walletStateProvider.notifier).loadWallet(user.id);
+            }
+          },
+          child: CustomScrollView(
+            physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics()),
+            slivers: [
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(PulseDesign.l),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildHeader(context, user, theme, isProMode),
+                      const SizedBox(height: 24),
+                      _buildSearchAnchor(theme, isDark),
+                      const SizedBox(height: 32),
+                      if (isProMode)
+                        _buildProDashboard(context, theme)
                             .animate()
-                            .fadeIn(delay: 200.ms),
-
-                        const SizedBox(height: 40),
-                        _sectionHeader(theme, "Social Finance"),
-                        const SizedBox(height: 16),
-                        _buildSocialFinanceCards(context, theme)
+                            .fadeIn(duration: 600.ms)
+                            .slideY(begin: 0.1)
+                      else if (walletState.wallet != null)
+                        _buildModernCard(context, walletState, user)
                             .animate()
-                            .fadeIn(delay: 300.ms),
-
-                        const SizedBox(height: 40),
-                        _sectionHeader(theme, "Spending Analysis"),
-                        const SizedBox(height: 16),
-                        _buildSpendingOverview(context, theme, walletState)
-                            .animate()
-                            .fadeIn(delay: 400.ms),
-
-                        const SizedBox(height: 120), // Padding for FloatingDock
+                            .fadeIn(duration: 600.ms)
+                            .slideY(begin: 0.1)
+                      else if (walletState.isLoading)
+                        const SkeletonLoader(
+                            height: 200, width: double.infinity)
+                      else
+                        _buildNoCardState(context),
+                      const SizedBox(height: 32),
+                      _buildPulseScoreCard(context, user),
+                      if (user?.isPremiumUser ?? false) ...[
+                        const SizedBox(height: 20),
+                        _buildAIInsightCard(context),
                       ],
-                    ),
+                      const SizedBox(height: 40),
+                      _buildSectionTitle(context, "Quick Actions"),
+                      const SizedBox(height: 20),
+                      _buildQuickActionsRow(context, theme, isDark),
+                      const SizedBox(height: 40),
+                      _buildSectionTitle(context, "Send Again",
+                          onAction: () => context.push('/contacts')),
+                      const SizedBox(height: 16),
+                      _buildRecentContacts(context, theme),
+                      const SizedBox(height: 40),
+                      _buildSectionTitle(context, "Spending Analysis"),
+                      const SizedBox(height: 20),
+                      _buildSpendingOverview(context, theme, walletState),
+                      const SizedBox(height: 120),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _sectionHeader(ThemeData theme, String title,
-      {VoidCallback? onAction}) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          title,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w900,
-            letterSpacing: -0.5,
-          ),
-        ),
-        if (onAction != null)
-          TextButton(
-            onPressed: onAction,
-            child: const Text("View All"),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildHeader(BuildContext context, dynamic user, ThemeData theme,
-      [bool isProMode = false]) {
+  Widget _buildHeader(
+      BuildContext context, dynamic user, ThemeData theme, bool isProMode) {
     final displayName = user?.firstName ?? user?.username ?? "User";
-    final proProfile = ref.watch(proProfileProvider).valueOrNull;
 
     return Row(
       children: [
-        IconButton(
-          icon: const Icon(Icons.menu_rounded, size: 28),
-          onPressed: () => _showMenu(context),
+        GestureDetector(
+          onTap: () => _showMenu(context),
+          child: CircleAvatar(
+            radius: 20,
+            backgroundColor: theme.colorScheme.surfaceContainerHighest,
+            child: Icon(Icons.menu_rounded,
+                size: 20, color: theme.colorScheme.onSurface),
+          ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 14),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Row(
+                children: [
+                  Text(
+                    isProMode ? "Pro Dashboard" : _getGreeting(),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: Colors.grey,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(_getGreetingEmoji(),
+                      style: const TextStyle(fontSize: 12)),
+                ],
+              ),
               Text(
-                isProMode ? "Pro Dashboard" : _getGreeting(),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: Colors.grey,
-                  fontWeight: FontWeight.bold,
+                displayName,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 22,
+                  letterSpacing: -0.5,
                 ),
               ),
-              if (isProMode)
-                Text(
-                  proProfile?.businessName ?? "Business Owner",
-                  style: theme.textTheme.titleLarge
-                      ?.copyWith(fontWeight: FontWeight.w900, fontSize: 20),
-                )
-              else
-                Text(
-                  displayName,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 20,
-                  ),
-                ),
             ],
           ),
         ),
         IconButton(
-          icon: const Icon(Icons.qr_code_scanner_rounded),
           onPressed: () => context.push('/scan'),
+          icon: const Icon(Icons.qr_code_scanner_rounded),
         ),
-        Stack(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.notifications_none_rounded),
-              onPressed: () => context.push('/notifications'),
-            ),
-            Positioned(
-              right: 12,
-              top: 12,
-              child: Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: Colors.red,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(width: 4),
-        GestureDetector(
-          onTap: () => context.push('/profile'),
-          child: Hero(
-            tag: 'profile_avatar',
-            child: CircleAvatar(
-              radius: 20,
-              backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
-              backgroundImage: user?.profileImageUrl != null &&
-                      user!.profileImageUrl!.isNotEmpty
-                  ? NetworkImage(user!.profileImageUrl!)
-                  : null,
-              child: user?.profileImageUrl == null ||
-                      user!.profileImageUrl!.isEmpty
-                  ? Text(
-                      displayName.isNotEmpty
-                          ? displayName[0].toUpperCase()
-                          : 'U',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary,
-                      ),
-                    )
-                  : null,
-            ),
-          ),
+        IconButton(
+          onPressed: () => context.push('/notifications'),
+          icon: const Icon(Icons.notifications_none_rounded),
         ),
       ],
     );
   }
 
-  void _showMenu(BuildContext context) {
-    showGeneralDialog(
-      context: context,
-      barrierDismissible: true,
-      barrierLabel: "Menu",
-      transitionDuration: const Duration(milliseconds: 300),
-      pageBuilder: (context, anim1, anim2) => const NavigationOverlay(),
-      transitionBuilder: (context, anim1, anim2, child) {
-        return FadeTransition(opacity: anim1, child: child);
-      },
-    );
-  }
-
-  Widget _buildBalanceCard(BuildContext context, dynamic walletState,
-      dynamic user, ThemeData theme) {
-    final analyticsState = ref.watch(analyticsProvider);
-
+  Widget _buildSearchAnchor(ThemeData theme, bool isDark) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        gradient: AppColors.premiumGradient,
-        borderRadius: BorderRadius.circular(35),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withOpacity(0.3),
-            blurRadius: 30,
-            offset: const Offset(0, 15),
+        color: isDark ? PulseDesign.glassDark : PulseDesign.glassLight,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: theme.dividerColor.withOpacity(0.05)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.search_rounded,
+              color: theme.colorScheme.onSurface.withOpacity(0.4), size: 20),
+          const SizedBox(width: 12),
+          Text(
+            "Search transactions, contacts...",
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.4),
+            ),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    );
+  }
+
+  Widget _buildModernCard(
+      BuildContext context, dynamic walletState, dynamic user) {
+    return Container(
+      height: 200,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [PulseDesign.primary, PulseDesign.primaryDark],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: [
+          BoxShadow(
+            color: PulseDesign.primary.withOpacity(0.3),
+            blurRadius: 25,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: Stack(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                "NET BALANCE",
-                style: TextStyle(
-                    color: Colors.white60,
-                    fontSize: 10,
-                    letterSpacing: 2,
-                    fontWeight: FontWeight.w900),
-              ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20)),
-                child: const Row(
+          Positioned(
+            right: -20,
+            top: -20,
+            child: Opacity(
+              opacity: 0.1,
+              child: Icon(Icons.blur_circular, size: 200, color: Colors.white),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(28),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    CircleAvatar(
-                        radius: 3, backgroundColor: Colors.greenAccent),
-                    SizedBox(width: 6),
-                    Text("Live",
+                    const Text("Current Balance",
+                        style: TextStyle(color: Colors.white70, fontSize: 14)),
+                    const Icon(Icons.nfc_rounded, color: Colors.white38),
+                  ],
+                ),
+                Text(
+                  "KES ${walletState.wallet?.balance.toStringAsFixed(2) ?? '0.00'}",
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 36,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -1,
+                  ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      user?.fullName?.toUpperCase() ?? "USER HOLDER",
+                      style: const TextStyle(
+                        color: Colors.white60,
+                        fontSize: 11,
+                        letterSpacing: 1.5,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Text("PAYPULSE PREMIUM",
                         style: TextStyle(
-                            color: Colors.white,
+                            color: Colors.white30,
                             fontSize: 10,
                             fontWeight: FontWeight.bold)),
                   ],
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            "\$${walletState.wallet?.balance.toStringAsFixed(2) ?? '0.00'}",
-            style: const TextStyle(
-                color: Colors.white,
-                fontSize: 44,
-                fontWeight: FontWeight.w900,
-                letterSpacing: -2),
-          ),
-          const SizedBox(height: 32),
-          Row(
-            children: [
-              _balanceStat(
-                  "Income",
-                  "+\$${analyticsState.totalIncome.toStringAsFixed(0)}",
-                  Colors.greenAccent),
-              const SizedBox(width: 32),
-              _balanceStat(
-                  "Expense",
-                  "-\$${analyticsState.totalExpense.toStringAsFixed(0)}",
-                  Colors.orangeAccent),
-            ],
+              ],
+            ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _balanceStat(String label, String value, Color color) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label,
-            style: const TextStyle(
-                color: Colors.white54,
-                fontSize: 11,
-                fontWeight: FontWeight.bold)),
-        const SizedBox(height: 4),
-        Text(value,
-            style: TextStyle(
-                color: color, fontSize: 16, fontWeight: FontWeight.w900)),
-      ],
     );
   }
 
   Widget _buildProDashboard(BuildContext context, ThemeData theme) {
     final analyticsState = ref.watch(analyticsProvider);
-    final proProfile = ref.watch(proProfileProvider).valueOrNull;
-
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
-        color: Colors.black, // Pro theme is dark
-        borderRadius: BorderRadius.circular(35),
+        color: Colors.black,
+        borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 30,
-            offset: const Offset(0, 15),
-          ),
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 30,
+              offset: const Offset(0, 15))
         ],
       ),
       child: Column(
@@ -411,38 +303,161 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          Text("\$${analyticsState.totalIncome.toStringAsFixed(2)}",
+          Text("KES ${analyticsState.totalIncome.toStringAsFixed(2)}",
               style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 44,
+                  fontSize: 40,
                   fontWeight: FontWeight.w900,
-                  letterSpacing: -2)),
-          const SizedBox(height: 32),
+                  letterSpacing: -1)),
+          const SizedBox(height: 24),
           Row(
             children: [
-              _balanceStat("Pending", "N/A", Colors.amberAccent),
+              _proStat("Invoices", "12", Colors.blueAccent),
               const SizedBox(width: 32),
-              _balanceStat("Profession", proProfile?.profession ?? "Freelancer",
-                  Colors.blueAccent),
+              _proStat("Clients", "8", Colors.tealAccent),
             ],
           ),
           const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () => context.push('/invoice-generator'),
-              icon: const Icon(Icons.add_circle_outline, color: Colors.black),
-              label: const Text("New Invoice",
-                  style: TextStyle(
-                      color: Colors.black, fontWeight: FontWeight.bold)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                padding: const EdgeInsets.all(16),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16)),
-              ),
+          ElevatedButton(
+            onPressed: () => context.push('/invoice-generator'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              minimumSize: const Size(double.infinity, 50),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
             ),
+            child: const Text("Create Invoice",
+                style: TextStyle(
+                    color: Colors.black, fontWeight: FontWeight.bold)),
           )
+        ],
+      ),
+    );
+  }
+
+  Widget _proStat(String label, String value, Color color) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: const TextStyle(
+                color: Colors.white54,
+                fontSize: 11,
+                fontWeight: FontWeight.bold)),
+        const SizedBox(height: 4),
+        Text(value,
+            style: TextStyle(
+                color: color, fontSize: 18, fontWeight: FontWeight.w900)),
+      ],
+    );
+  }
+
+  Widget _buildPulseScoreCard(BuildContext context, dynamic user) {
+    final theme = Theme.of(context);
+    final isPremium = user?.isPremiumUser ?? false;
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: theme.cardColor.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: theme.dividerColor.withOpacity(0.05)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                      color: PulseDesign.success.withOpacity(0.1),
+                      shape: BoxShape.circle),
+                  child: const Icon(Icons.bolt_rounded,
+                      color: PulseDesign.success, size: 20)),
+              const SizedBox(width: 14),
+              Expanded(
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                    const Text("Financial Pulse",
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    Text(
+                        isPremium
+                            ? "Optimal health detected"
+                            : "Score: 78/100 · Strong",
+                        style: TextStyle(fontSize: 12, color: Colors.grey)),
+                  ])),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: const LinearProgressIndicator(
+                  value: 0.78,
+                  minHeight: 6,
+                  backgroundColor: Colors.grey,
+                  valueColor: AlwaysStoppedAnimation(PulseDesign.success))),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAIInsightCard(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+          color: PulseDesign.accent.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: PulseDesign.accent.withOpacity(0.2))),
+      child: const Row(children: [
+        Icon(Icons.auto_awesome, color: PulseDesign.accent, size: 20),
+        const SizedBox(width: 14),
+        Expanded(
+            child: Text("You saved 15% more than last week! 🎉",
+                style: TextStyle(
+                    color: PulseDesign.accent,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13))),
+      ]),
+    );
+  }
+
+  Widget _buildQuickActionsRow(
+      BuildContext context, ThemeData theme, bool isDark) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        _quickAction(context, Icons.send_rounded, "Send", PulseDesign.primary,
+            () => context.push('/send-money'), isDark),
+        _quickAction(context, Icons.account_balance_rounded, "Bank",
+            PulseDesign.warning, () => context.push('/connect-wallet'), isDark),
+        _quickAction(context, Icons.splitscreen_rounded, "Split",
+            PulseDesign.accent, () => context.push('/split-bill'), isDark),
+        _quickAction(context, Icons.grid_view_rounded, "More", Colors.grey,
+            () => _showMoreActions(context), isDark),
+      ],
+    );
+  }
+
+  Widget _quickAction(BuildContext context, IconData icon, String label,
+      Color color, VoidCallback onTap, bool isDark) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+                color: color.withOpacity(isDark ? 0.15 : 0.1),
+                borderRadius: BorderRadius.circular(20)),
+            child: Icon(icon, color: color, size: 24),
+          ),
+          const SizedBox(height: 8),
+          Text(label,
+              style:
+                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
         ],
       ),
     );
@@ -453,34 +468,36 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
       height: 100,
       child: ref.watch(contactsProvider).when(
             data: (contacts) {
-              if (contacts.isEmpty) return const SizedBox.shrink();
+              if (contacts.isEmpty)
+                return const Center(
+                    child: Text("No recent contacts",
+                        style: TextStyle(color: Colors.grey, fontSize: 12)));
               return ListView.separated(
-                padding: EdgeInsets.zero,
                 scrollDirection: Axis.horizontal,
-                itemCount: contacts.take(8).length,
-                separatorBuilder: (_, __) => const SizedBox(width: 20),
+                itemCount: contacts.take(6).length,
+                separatorBuilder: (_, __) => const SizedBox(width: 16),
                 itemBuilder: (context, index) {
                   final contact = contacts[index];
-                  return Column(
-                    children: [
+                  return GestureDetector(
+                    onTap: () => context.push('/send-money', extra: contact),
+                    child: Column(children: [
                       CircleAvatar(
-                        radius: 30,
-                        backgroundColor: theme.colorScheme.surface,
-                        backgroundImage: contact.photo != null
-                            ? MemoryImage(contact.photo!)
-                            : null,
-                        child: contact.photo == null
-                            ? Text(contact.displayName[0],
-                                style: TextStyle(
-                                    color: theme.colorScheme.primary,
-                                    fontWeight: FontWeight.bold))
-                            : null,
-                      ),
-                      const SizedBox(height: 8),
+                          radius: 28,
+                          backgroundColor:
+                              theme.colorScheme.surfaceContainerHighest,
+                          backgroundImage: contact.photo != null
+                              ? MemoryImage(contact.photo!)
+                              : null,
+                          child: contact.photo == null
+                              ? Text(contact.displayName[0],
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold))
+                              : null),
+                      const SizedBox(height: 6),
                       Text(contact.displayName.split(' ').first,
-                          style: theme.textTheme.labelSmall
-                              ?.copyWith(fontWeight: FontWeight.bold)),
-                    ],
+                          style: const TextStyle(
+                              fontSize: 11, fontWeight: FontWeight.w600)),
+                    ]),
                   );
                 },
               );
@@ -497,219 +514,96 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
       height: 220,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(35),
-        boxShadow: AppColors.softShadow,
-      ),
+          color: theme.cardColor.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(color: theme.dividerColor.withOpacity(0.05))),
       child: walletState.transactions.isEmpty
           ? const Center(
-              child: Text("Start spending to see pulses",
+              child: Text("No transactions yet",
                   style: TextStyle(color: Colors.grey)))
           : SpendingChart(transactions: walletState.transactions),
     );
   }
 
-  Widget _buildEmptyWalletState(BuildContext context, ThemeData theme) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(40),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(35),
-        border: Border.all(color: theme.colorScheme.primary.withOpacity(0.1)),
-      ),
-      child: Column(
-        children: [
-          Icon(Icons.auto_awesome_rounded,
-              size: 48, color: theme.colorScheme.primary),
-          const SizedBox(height: 24),
-          const Text("Financial Pulse Not Detected",
-              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
-          const SizedBox(height: 8),
-          const Text("Initialize your wallet to begin.",
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey)),
-          const SizedBox(height: 32),
-          ElevatedButton(
-            onPressed: () => context.push('/connect-wallet'),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20)),
-            ),
-            child: const Text("Wake Up Wallet"),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLinkCardHero(BuildContext context, ThemeData theme) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(35),
-        border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 30,
-            offset: const Offset(0, 15),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.credit_card_off_rounded,
-              size: 48, color: theme.colorScheme.primary),
-          const SizedBox(height: 24),
-          Text(
-            "No Cards Integrated",
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            "Link your bank or credit card to unlock the full potential of PayPulse.",
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: Colors.grey,
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 32),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => context.push('/link-card'),
-              style: ElevatedButton.styleFrom(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                backgroundColor: theme.colorScheme.primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20)),
-                elevation: 0,
-              ),
-              child: const Text("Integrate Card",
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSocialFinanceCards(BuildContext context, ThemeData theme) {
+  Widget _buildSectionTitle(BuildContext context, String title,
+      {VoidCallback? onAction}) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(
-          child: GestureDetector(
-            onTap: () => context.push('/split-bill'),
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: theme.cardColor,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: theme.dividerColor.withOpacity(0.05)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                        color: Colors.purpleAccent.withOpacity(0.1),
-                        shape: BoxShape.circle),
-                    child: const Icon(Icons.receipt_long_rounded,
-                        color: Colors.purpleAccent),
-                  ),
-                  const SizedBox(height: 16),
-                  Text("Bill Crusher",
-                      style: theme.textTheme.titleMedium
-                          ?.copyWith(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 4),
-                  Text("Split & Settle",
-                      style: theme.textTheme.bodySmall
-                          ?.copyWith(color: Colors.grey)),
-                ],
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: GestureDetector(
-            onTap: () {
-              context.push('/money-circle');
-            },
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: theme.cardColor,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: theme.dividerColor.withOpacity(0.05)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                        color: Colors.tealAccent.withValues(alpha: 0.1),
-                        shape: BoxShape.circle),
-                    child: const Icon(Icons.groups_rounded,
-                        color: Colors.tealAccent),
-                  ),
-                  const SizedBox(height: 16),
-                  Text("Money Circle",
-                      style: theme.textTheme.titleMedium
-                          ?.copyWith(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 4),
-                  Text("Group Savings",
-                      style: theme.textTheme.bodySmall
-                          ?.copyWith(color: Colors.grey)),
-                ],
-              ),
-            ),
-          ),
-        ),
+        Text(title,
+            style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+                letterSpacing: -0.5)),
+        if (onAction != null)
+          TextButton(onPressed: onAction, child: const Text("See All")),
       ],
     );
   }
 
-  Widget _buildQuickAction(BuildContext context, IconData icon, String label,
-      VoidCallback onTap, ThemeData theme) {
+  Widget _buildNoCardState(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: theme.cardColor,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Icon(icon, color: theme.colorScheme.primary),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: theme.textTheme.labelSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
+      onTap: () => context.push('/connect-wallet'),
+      child: Container(
+        height: 180,
+        width: double.infinity,
+        decoration: BoxDecoration(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(
+                color: PulseDesign.primary.withOpacity(0.2),
+                width: 2,
+                style: BorderStyle.solid)),
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Icon(Icons.add_card_rounded,
+              size: 40, color: PulseDesign.primary.withOpacity(0.5)),
+          const SizedBox(height: 12),
+          const Text("Link a payment method",
+              style: TextStyle(fontWeight: FontWeight.bold)),
+        ]),
+      ),
+    );
+  }
+
+  void _showMenu(BuildContext context) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: "Menu",
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, anim1, anim2) => const NavigationOverlay(),
+      transitionBuilder: (context, anim1, anim2, child) =>
+          FadeTransition(opacity: anim1, child: child),
+    );
+  }
+
+  void _showMoreActions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          const Text("More Actions",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 16),
+          ListTile(
+              leading: const Icon(Icons.qr_code_2_rounded),
+              title: const Text("My QR Code"),
+              onTap: () => Navigator.pop(context)),
+          ListTile(
+              leading: const Icon(Icons.security_rounded),
+              title: const Text("Security"),
+              onTap: () {
+                Navigator.pop(context);
+                context.push('/security-settings');
+              }),
+          ListTile(
+              leading: const Icon(Icons.help_outline_rounded),
+              title: const Text("Support"),
+              onTap: () => Navigator.pop(context)),
+        ]),
       ),
     );
   }
@@ -719,5 +613,12 @@ class _HomeTabScreenState extends ConsumerState<HomeTabScreen> {
     if (hour < 12) return 'Rise & Shine';
     if (hour < 17) return 'Good Afternoon';
     return 'Good Evening';
+  }
+
+  String _getGreetingEmoji() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return '☀️';
+    if (hour < 17) return '🌤️';
+    return '🌙';
   }
 }

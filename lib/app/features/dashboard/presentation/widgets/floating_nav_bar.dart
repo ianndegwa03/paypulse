@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:paypulse/core/theme/design_system_v2.dart';
 
 class FloatingNavBar extends StatelessWidget {
   final int selectedIndex;
@@ -17,82 +18,77 @@ class FloatingNavBar extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Container(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Center(
-        heightFactor: 1.0,
-        child: Container(
-          height: 68,
-          margin: const EdgeInsets.symmetric(horizontal: 24),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(30),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.12),
-                blurRadius: 30,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(30),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
+    return Center(
+      heightFactor: 1.0,
+      child: Container(
+        height: 75,
+        margin: const EdgeInsets.only(left: 20, right: 20, bottom: 30),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(35),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.15),
+              blurRadius: 40,
+              offset: const Offset(0, 15),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(35),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: isDark ? PulseDesign.glassDark : PulseDesign.glassLight,
+                borderRadius: BorderRadius.circular(35),
+                border: Border.all(
                   color: isDark
-                      ? Colors.black.withOpacity(0.6)
-                      : Colors.white.withOpacity(0.7),
-                  borderRadius: BorderRadius.circular(30),
-                  border: Border.all(
-                    color: isDark
-                        ? Colors.white.withOpacity(0.08)
-                        : Colors.black.withOpacity(0.05),
-                    width: 0.5,
+                      ? Colors.white.withOpacity(0.08)
+                      : Colors.black.withOpacity(0.05),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _NavBarItem(
+                    icon: Icons.home_outlined,
+                    activeIcon: Icons.home_rounded,
+                    label: 'Home',
+                    index: 0,
+                    isSelected: selectedIndex == 0,
+                    onTap: () => onItemSelected(0),
                   ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _NavBarItem(
-                      icon: Icons.home_outlined,
-                      activeIcon: Icons.home_rounded,
-                      label: 'Home',
-                      index: 0,
-                      isSelected: selectedIndex == 0,
-                      onTap: () => onItemSelected(0),
-                    ),
-                    _NavBarItem(
-                      icon: Icons.account_balance_wallet_outlined,
-                      activeIcon: Icons.account_balance_wallet_rounded,
-                      label: 'Wallet',
-                      index: 1,
-                      isSelected: selectedIndex == 1,
-                      onTap: () => onItemSelected(1),
-                    ),
+                  _NavBarItem(
+                    icon: Icons.account_balance_wallet_outlined,
+                    activeIcon: Icons.account_balance_wallet_rounded,
+                    label: 'Wallet',
+                    index: 1,
+                    isSelected: selectedIndex == 1,
+                    onTap: () => onItemSelected(1),
+                  ),
 
-                    // The Pulse / Action Hub
-                    _PulseHub(onTap: () => onItemSelected(4)),
+                  // The Pulse / Action Hub
+                  _PulseHub(onTap: () => onItemSelected(4)),
 
-                    _NavBarItem(
-                      icon: Icons.auto_graph_outlined,
-                      activeIcon: Icons.auto_graph_rounded,
-                      label: 'Insights',
-                      index: 2,
-                      isSelected: selectedIndex == 2,
-                      onTap: () => onItemSelected(2),
-                    ),
-                    _NavBarItem(
-                      icon: Icons.alternate_email_rounded, // Threads-like icon
-                      activeIcon: Icons.alternate_email_rounded,
-                      label: 'Threads',
-                      index: 3,
-                      isSelected: selectedIndex == 3,
-                      onTap: () => onItemSelected(3),
-                    ),
-                  ],
-                ),
+                  _NavBarItem(
+                    icon: Icons.auto_graph_outlined,
+                    activeIcon: Icons.auto_graph_rounded,
+                    label: 'Insights',
+                    index: 2,
+                    isSelected: selectedIndex == 2,
+                    onTap: () => onItemSelected(2),
+                  ),
+                  _NavBarItem(
+                    icon: Icons.alternate_email_rounded, // Threads-like icon
+                    activeIcon: Icons.alternate_email_rounded,
+                    label: 'Threads',
+                    index: 3,
+                    isSelected: selectedIndex == 3,
+                    onTap: () => onItemSelected(3),
+                  ),
+                ],
               ),
             ),
           ),

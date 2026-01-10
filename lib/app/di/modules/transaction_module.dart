@@ -12,6 +12,7 @@ import 'package:paypulse/domain/use_cases/transaction/filter_transactions_use_ca
 import 'package:paypulse/domain/use_cases/transaction/search_transactions_use_case.dart';
 import 'package:paypulse/data/remote/datasources/transaction_datasource.dart';
 import 'package:paypulse/data/remote/datasources/transaction_datasource_impl.dart';
+import 'package:paypulse/data/local/datasources/hive_transaction_data_source.dart';
 
 class TransactionModule {
   Future<void> init() async {
@@ -26,11 +27,18 @@ class TransactionModule {
       );
     }
 
+    if (!getIt.isRegistered<TransactionLocalDataSource>()) {
+      getIt.registerLazySingleton<TransactionLocalDataSource>(
+        () => HiveTransactionDataSourceImpl(),
+      );
+    }
+
     // Repositories
     if (!getIt.isRegistered<TransactionRepository>()) {
       getIt.registerLazySingleton<TransactionRepository>(
         () => TransactionRepositoryImpl(
-          dataSource: getIt<TransactionDataSource>(),
+          remoteDataSource: getIt<TransactionDataSource>(),
+          localDataSource: getIt<TransactionLocalDataSource>(),
           firebaseAuth: getIt<FirebaseAuth>(),
         ),
       );

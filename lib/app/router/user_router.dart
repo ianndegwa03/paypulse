@@ -16,27 +16,20 @@ import 'package:paypulse/app/features/dashboard/presentation/screens/profile_tab
 import 'package:paypulse/app/features/wallet/presentation/screens/link_card_screen.dart';
 import 'package:paypulse/app/features/auth/presentation/screens/pin_setup_screen.dart';
 import 'package:paypulse/app/features/auth/presentation/screens/pin_login_screen.dart';
-import 'package:flutter_contacts/flutter_contacts.dart';
-import 'package:paypulse/app/features/dashboard/presentation/screens/pulse_detail_screen.dart';
-import 'package:paypulse/data/models/community_post_model.dart';
-import 'package:paypulse/app/features/dashboard/presentation/screens/notifications_screen.dart';
-import 'package:paypulse/app/features/dashboard/presentation/screens/goals_screen.dart';
-import 'package:paypulse/app/features/analytics/presentation/screens/analytics_screen.dart';
-import 'package:paypulse/app/features/settings/presentation/screens/privacy_settings_screen.dart';
-import 'package:paypulse/app/features/split_bill/presentation/screens/split_bill_screen.dart';
-import 'package:paypulse/app/features/money_circle/presentation/screens/money_circle_screen.dart';
-import 'package:paypulse/app/features/pro/presentation/screens/invoice_generator_screen.dart';
+import 'package:paypulse/app/features/analytics/presentation/screens/analytics_screen.dart'
+    deferred as premium_insights;
+import 'package:paypulse/app/features/multicurrency/presentation/screens/multi_currency_wallet_screen.dart';
 import 'package:paypulse/app/features/cards/presentation/screens/virtual_cards_screen.dart';
-import 'package:paypulse/app/features/multicurrency/presentation/screens/currency_trends_screen.dart';
-import 'package:paypulse/app/features/money_circle/presentation/screens/create_circle_screen.dart';
-import 'package:paypulse/app/features/auth/presentation/screens/auth_selection_screen.dart';
+import 'package:paypulse/app/features/social/presentation/screens/chat_list_screen.dart';
+import 'package:paypulse/app/features/admin/presentation/screens/admin_dashboard_screen.dart'
+    deferred as admin_dashboard;
 
 class UserRouter {
-  static final GoRouter router = GoRouter(
-    initialLocation: '/',
+  static final router = GoRouter(
+    initialLocation: '/splash',
     routes: [
       GoRoute(
-        path: '/',
+        path: '/splash',
         builder: (context, state) => const SplashScreen(),
       ),
       GoRoute(
@@ -56,58 +49,6 @@ class UserRouter {
         builder: (context, state) => const ForgotPasswordScreen(),
       ),
       GoRoute(
-        path: '/dashboard',
-        builder: (context, state) => const DashboardScreen(),
-      ),
-      GoRoute(
-        path: '/edit-profile',
-        builder: (context, state) => const EditProfileScreen(),
-      ),
-      GoRoute(
-        path: '/security-settings',
-        builder: (context, state) => const SecurityPrivacyScreen(),
-      ),
-      GoRoute(
-        path: '/theme-settings',
-        builder: (context, state) => const ThemeSettingsScreen(),
-      ),
-      GoRoute(
-        path: '/send-money',
-        builder: (context, state) =>
-            SendMoneyScreen(initialContact: state.extra as Contact?),
-      ),
-      GoRoute(
-        path: '/contacts',
-        builder: (context, state) => const ContactsListScreen(),
-      ),
-      GoRoute(
-        path: '/transaction-history',
-        builder: (context, state) => const TransactionHistoryScreen(),
-      ),
-      GoRoute(
-        path: '/profile',
-        builder: (context, state) => const ProfileTabScreen(),
-      ),
-      GoRoute(
-        path: '/notifications',
-        builder: (context, state) => const NotificationsScreen(),
-      ),
-      GoRoute(
-        path: '/goals',
-        builder: (context, state) => const GoalsScreen(),
-      ),
-      GoRoute(
-        path: '/scan',
-        builder: (context, state) => Scaffold(
-          appBar: AppBar(title: const Text("Scan QR")),
-          body: const Center(child: Text("QR Scanner coming soon")),
-        ),
-      ),
-      GoRoute(
-        path: '/link-card',
-        builder: (context, state) => const LinkCardScreen(),
-      ),
-      GoRoute(
         path: '/pin-setup',
         builder: (context, state) => const PinSetupScreen(),
       ),
@@ -116,48 +57,82 @@ class UserRouter {
         builder: (context, state) => const PinLoginScreen(),
       ),
       GoRoute(
-        path: '/pulse-detail',
-        builder: (context, state) {
-          final post = state.extra as CommunityPostModel;
-          return PulseDetailScreen(post: post);
-        },
+        path: '/',
+        builder: (context, state) => const DashboardScreen(),
       ),
       GoRoute(
-        path: '/split-bill',
-        builder: (context, state) => const SplitBillScreen(),
+        path: '/edit-profile',
+        builder: (context, state) => const EditProfileScreen(),
       ),
       GoRoute(
-        path: '/money-circle',
-        builder: (context, state) => const MoneyCircleScreen(),
+        path: '/theme-settings',
+        builder: (context, state) => const ThemeSettingsScreen(),
       ),
       GoRoute(
-        path: '/create-money-circle',
-        builder: (context, state) => const CreateCircleScreen(),
+        path: '/send-money',
+        builder: (context, state) => const SendMoneyScreen(),
       ),
       GoRoute(
-        path: '/invoice-generator',
-        builder: (context, state) => const InvoiceGeneratorScreen(),
+        path: '/privacy-controls',
+        builder: (context, state) => const SecurityPrivacyScreen(),
       ),
       GoRoute(
-        path: '/virtual-cards',
+        path: '/contacts',
+        builder: (context, state) => const ContactsListScreen(),
+      ),
+      GoRoute(
+        path: '/transactions',
+        builder: (context, state) => const TransactionHistoryScreen(),
+      ),
+      GoRoute(
+        path: '/profile',
+        builder: (context, state) => const ProfileTabScreen(),
+      ),
+      GoRoute(
+        path: '/link-card',
+        builder: (context, state) => const LinkCardScreen(),
+      ),
+      GoRoute(
+        path: '/multi-currency',
+        builder: (context, state) => const MultiCurrencyWalletScreen(),
+      ),
+      GoRoute(
+        path: '/cards',
         builder: (context, state) => const VirtualCardsScreen(),
       ),
       GoRoute(
+        path: '/messages',
+        builder: (context, state) => const ChatListScreen(),
+      ),
+      GoRoute(
+        path: '/admin',
+        builder: (context, state) => _deferredWidget(
+          admin_dashboard.loadLibrary(),
+          () => admin_dashboard.AdminDashboardScreen(),
+        ),
+      ),
+      GoRoute(
         path: '/analytics',
-        builder: (context, state) => const AnalyticsScreen(),
-      ),
-      GoRoute(
-        path: '/privacy-transparency',
-        builder: (context, state) => const PrivacySettingsScreen(),
-      ),
-      GoRoute(
-        path: '/currency-trends',
-        builder: (context, state) => const CurrencyTrendsScreen(),
-      ),
-      GoRoute(
-        path: '/auth-selection',
-        builder: (context, state) => const AuthSelectionScreen(),
+        builder: (context, state) => _deferredWidget(
+          premium_insights.loadLibrary(),
+          () => premium_insights.AnalyticsScreen(),
+        ),
       ),
     ],
   );
+
+  static Widget _deferredWidget(
+      Future<void> loading, Widget Function() builder) {
+    return FutureBuilder(
+      future: loading,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.done) {
+          return builder();
+        }
+        return const Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        );
+      },
+    );
+  }
 }

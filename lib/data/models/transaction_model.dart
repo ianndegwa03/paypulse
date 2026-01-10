@@ -19,22 +19,30 @@ class TransactionModel extends entity.Transaction {
 
   factory TransactionModel.fromSnapshot(DocumentSnapshot snap) {
     final data = snap.data() as Map<String, dynamic>? ?? {};
+    return TransactionModel.fromJson(data..['id'] = snap.id);
+  }
+
+  factory TransactionModel.fromJson(Map<String, dynamic> json) {
     return TransactionModel(
-      id: snap.id,
-      amount: (data['amount'] as num?)?.toDouble() ?? 0.0,
-      description: data['description'] as String? ?? '',
-      date: (data['date'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      categoryId: data['categoryId'] as String? ?? '',
-      paymentMethodId: data['paymentMethodId'] as String? ?? '',
+      id: json['id'] as String? ?? '',
+      amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
+      description: json['description'] as String? ?? '',
+      date: json['date'] is Timestamp
+          ? (json['date'] as Timestamp).toDate()
+          : (json['date'] is String
+              ? DateTime.tryParse(json['date']) ?? DateTime.now()
+              : DateTime.now()),
+      categoryId: json['categoryId'] as String? ?? '',
+      paymentMethodId: json['paymentMethodId'] as String? ?? '',
       type: TransactionType.values.firstWhere(
-        (e) => e.name == (data['type'] as String? ?? 'debit'),
+        (e) => e.name == (json['type'] as String? ?? 'debit'),
         orElse: () => TransactionType.debit,
       ),
-      currencyCode: data['currency'] as String? ?? 'USD',
-      targetCurrencyCode: data['targetCurrency'],
-      exchangeRate: (data['exchangeRate'] as num?)?.toDouble(),
+      currencyCode: json['currency'] as String? ?? 'USD',
+      targetCurrencyCode: json['targetCurrency'],
+      exchangeRate: (json['exchangeRate'] as num?)?.toDouble(),
       status: TransactionStatus.values.firstWhere(
-        (e) => e.name == (data['status'] as String? ?? 'completed'),
+        (e) => e.name == (json['status'] as String? ?? 'completed'),
         orElse: () => TransactionStatus.completed,
       ),
     );
@@ -73,6 +81,22 @@ class TransactionModel extends entity.Transaction {
       'amount': amount,
       'description': description,
       'date': Timestamp.fromDate(date),
+      'categoryId': categoryId,
+      'paymentMethodId': paymentMethodId,
+      'type': type.name,
+      'currency': currencyCode,
+      'targetCurrency': targetCurrencyCode,
+      'exchangeRate': exchangeRate,
+      'status': status.name,
+    };
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'amount': amount,
+      'description': description,
+      'date': date.toIso8601String(),
       'categoryId': categoryId,
       'paymentMethodId': paymentMethodId,
       'type': type.name,
